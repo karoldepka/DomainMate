@@ -7,11 +7,13 @@ import { compareRegistrarPrices } from './registrars.js'
 import { isAiConfigured, suggestSimilarWords } from './ai.js'
 
 const app = express()
+app.disable('x-powered-by')
 const port = Number(process.env.PORT) || 8787
 const domainPattern = /^(?=.{1,253}$)(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}$/i
 const wordPattern = /^[a-z]{2,20}$/
 
 app.use(express.json())
+app.use(securityHeaders)
 app.use('/api', rateLimit)
 
 app.post('/api/favorites/sync', (req, res) => {
@@ -193,6 +195,14 @@ function getAllowedOrigin(req) {
   const origin = String(req.headers.origin || '')
   if (/^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin)) return origin
   throw new PaymentError('Set APP_URL before accepting production payments.', 400)
+}
+
+/** Baseline hardening headers; the SPA and JSON API need no inline scripts or framing. */
+function securityHeaders(_req, res, next) {
+  res.setHeader('X-Content-Type-Options', 'nosniff')
+  res.setHeader('X-Frame-Options', 'DENY')
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin')
+  next()
 }
 
 const rateLimitWindowMs = 60_000
