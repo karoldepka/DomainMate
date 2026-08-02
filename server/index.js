@@ -12,6 +12,7 @@ const domainPattern = /^(?=.{1,253}$)(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+
 const wordPattern = /^[a-z]{2,20}$/
 
 app.use(express.json())
+app.use('/api', rateLimit)
 
 app.post('/api/favorites/sync', (req, res) => {
   const clientId = String(req.body?.clientId || '')
@@ -193,6 +194,28 @@ function getAllowedOrigin(req) {
   if (/^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin)) return origin
   throw new PaymentError('Set APP_URL before accepting production payments.', 400)
 }
+
+const rateLimitWindowMs = 60_000
+const rateLimitMax = 300
+const rateLimitBuckets = new Map()
+
+/** Cap requests per client IP to protect upstream RDAP/DNS/search/AI quotas from abuse. */
+function rateLimit(req, res, next) {
+  const now = Date.now()
+  const bucket = rateLimitBuckets.get(req.ip)
+  if (!bucket || now - bucket.windowStart > rateLimitWindowMs) {
+    rateLimitBuckets.set(req.ip, { windowStart: now, count: 1 })
+    return next()
+  }
+  bucket.count += 1
+  if (bucket.count > rateLimitMax) return res.status(429).json({ error: 'Too many requests. Please slow down.' })
+  next()
+}
+
+setInterval(() => {
+  const cutoff = Date.now() - rateLimitWindowMs
+  for (const [key, bucket] of rateLimitBuckets) if (bucket.windowStart < cutoff) rateLimitBuckets.delete(key)
+}, rateLimitWindowMs).unref()
 
 /** Validate untrusted browser synchronization records. */
 function normalizeFavorite(record) {
