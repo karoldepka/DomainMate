@@ -34,7 +34,10 @@ function detectLocale() {
 
 export const locale = ref(detectLocale())
 
-watch(locale, (value) => localStorage.setItem(storageKey, value))
+watch(locale, (value) => {
+  localStorage.setItem(storageKey, value)
+  document.documentElement.lang = value
+}, { immediate: true })
 
 /** Look up a dot-separated key, falling back to English, then the key itself. */
 export function t(path, vars) {

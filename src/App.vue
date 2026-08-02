@@ -1,12 +1,13 @@
 <script setup>
-import { computed, onMounted, ref, useTemplateRef, watch } from 'vue'
+import { computed, defineAsyncComponent, onMounted, ref, useTemplateRef, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { ArrowDown, ArrowUpRight, BadgeDollarSign, Check, CircleAlert, Copy, Globe2, LoaderCircle, Search as SearchIcon, Sparkles, Star } from 'lucide-vue-next'
 import { useDomainStore } from './stores/domain'
 import PaymentDialog from './components/PaymentDialog.vue'
 import { loadAndSyncFavorites, saveRating } from './services/favorites'
 import { locale, locales, t } from './i18n'
-import PriceComparison from './components/PriceComparison.vue'
+
+const PriceComparison = defineAsyncComponent(() => import('./components/PriceComparison.vue'))
 
 const store = useDomainStore()
 const { brief, effectiveQuery, keywords, maxSyllables, maxConsonants, maxNames, substitutions, strategies, useThesaurus, enriching, results, running, checkedCount, availableCount } = storeToRefs(store)
