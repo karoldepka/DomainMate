@@ -1,0 +1,11 @@
+node_modules
+dist
+.env
+.DS_Store
+data/*.sqlite*
+*.stdout.log
+*.stderr.log
+test-results
+playwright-report
+blob-report
+playwright/.cache
