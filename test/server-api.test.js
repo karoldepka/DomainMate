@@ -117,6 +117,19 @@ test('POST /api/favorites/sync accepts a valid record and echoes it back', async
   assert.equal(data.records[0].rating, 4)
 })
 
+test('malformed JSON bodies get a clean JSON error, not an HTML stack trace', async () => {
+  const response = await fetch(`${baseUrl}/api/favorites/sync`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: '{not valid json',
+  })
+  assert.equal(response.status, 400)
+  assert.match(response.headers.get('content-type') || '', /application\/json/)
+  const data = await response.json()
+  assert.equal(typeof data.error, 'string')
+  assert.doesNotMatch(data.error, /node_modules|SyntaxError|at [A-Za-z]/)
+})
+
 test('responses carry baseline security headers and hide the framework', async () => {
   const response = await fetch(`${baseUrl}/api/health`)
   assert.equal(response.headers.get('x-content-type-options'), 'nosniff')

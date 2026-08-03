@@ -185,6 +185,17 @@ async function checkSearch(domain, keywords) {
   }
 }
 
+// Registered after every route: catches malformed JSON bodies and any other
+// unhandled error so the API always responds with JSON, never an HTML page
+// with a stack trace leaking internal file paths.
+app.use((error, _req, res, _next) => {
+  if (error?.type === 'entity.parse.failed' || error instanceof SyntaxError) {
+    return res.status(400).json({ error: 'Invalid JSON in request body.' })
+  }
+  console.error(error)
+  res.status(500).json({ error: 'Internal server error.' })
+})
+
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   app.listen(port, () => {
     console.log(`DomainMate API listening on http://localhost:${port}`)
