@@ -1,0 +1,14 @@
+node_modules
+dist
+data
+test-results
+playwright-report
+blob-report
+e2e
+test
+.git
+.github
+.vscode
+*.stdout.log
+*.stderr.log
+.env

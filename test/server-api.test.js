@@ -1,6 +1,11 @@
 import assert from 'node:assert/strict'
+import { existsSync } from 'node:fs'
+import { dirname, join } from 'node:path'
+import { fileURLToPath } from 'node:url'
 import test, { after, before } from 'node:test'
 import { app } from '../server/index.js'
+
+const distDir = join(dirname(fileURLToPath(import.meta.url)), '..', 'dist')
 
 let baseUrl
 let server
@@ -136,4 +141,19 @@ test('responses carry baseline security headers and hide the framework', async (
   assert.equal(response.headers.get('x-frame-options'), 'DENY')
   assert.equal(response.headers.get('referrer-policy'), 'strict-origin-when-cross-origin')
   assert.equal(response.headers.get('x-powered-by'), null)
+})
+
+test('serves the built SPA for unknown routes, never raw unbundled source', { skip: !existsSync(distDir) && 'run `pnpm build` first' }, async () => {
+  const response = await fetch(`${baseUrl}/some/deep/link`)
+  assert.equal(response.status, 200)
+  assert.match(response.headers.get('content-type') || '', /text\/html/)
+  const html = await response.text()
+  assert.doesNotMatch(html, /src="\/src\/main\.js"/)
+  assert.match(html, /<script type="module"[^>]*src="\/assets\//)
+})
+
+test('API routes are not shadowed by the SPA fallback', { skip: !existsSync(distDir) && 'run `pnpm build` first' }, async () => {
+  const response = await fetch(`${baseUrl}/api/health`)
+  const data = await response.json()
+  assert.equal(data.ok, true)
 })

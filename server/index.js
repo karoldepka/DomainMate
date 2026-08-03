@@ -1,4 +1,6 @@
 import 'dotenv/config'
+import { existsSync } from 'node:fs'
+import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import express from 'express'
 import { getSearchProvider, getSearchProviderStatus } from './searchProviders.js'
@@ -183,6 +185,19 @@ async function checkSearch(domain, keywords) {
   } catch (error) {
     return { provider: getSearchProvider().name, status: 'error', query, message: error instanceof Error ? error.message : 'Search failed.' }
   }
+}
+
+// Serve the built frontend (vite build output) when it's present, so a single
+// process can host both the API and the SPA in production. In local dev the
+// frontend is served separately by the Vite dev server, and dist/ won't exist
+// yet, so this is a no-op until the first build.
+const distDir = join(dirname(fileURLToPath(import.meta.url)), '..', 'dist')
+if (existsSync(distDir)) {
+  app.use(express.static(distDir, { index: false }))
+  app.use((req, res, next) => {
+    if (req.method !== 'GET' || req.path.startsWith('/api/')) return next()
+    res.sendFile(join(distDir, 'index.html'))
+  })
 }
 
 // Registered after every route: catches malformed JSON bodies and any other

@@ -1,0 +1,35 @@
+# Fly.io app config. Verify `app` and `primary_region` match your existing
+# domainmate.fly.dev deployment (`fly status`) before running `fly deploy` -
+# these are placeholders since this file wasn't previously in the repo.
+app = "domainmate"
+primary_region = "waw"
+
+[build]
+
+[env]
+  PORT = "8787"
+
+[http_service]
+  internal_port = 8787
+  force_https = true
+  auto_stop_machines = "stop"
+  auto_start_machines = true
+  min_machines_running = 0
+
+  [[http_service.checks]]
+    grace_period = "10s"
+    interval = "30s"
+    method = "GET"
+    timeout = "5s"
+    path = "/api/health"
+
+# SQLite (server/favorites.js) needs a real persistent disk - create the volume
+# once with `fly volumes create domainmate_data --size 1` before first deploy.
+[mounts]
+  source = "domainmate_data"
+  destination = "/app/data"
+
+[[vm]]
+  cpu_kind = "shared"
+  cpus = 1
+  memory_mb = 512
