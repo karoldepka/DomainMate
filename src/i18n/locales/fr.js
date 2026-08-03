@@ -65,10 +65,21 @@ export default {
     checkDomainAria: 'Vérifier {name}',
     searchGoogle: 'Rechercher sur Google',
     searchGoogleAria: 'Rechercher {name} sur Google',
+    comparePrices: 'Comparer les prix et les bureaux d’enregistrement',
+    comparePricesAria: 'Comparer les prix et les bureaux d’enregistrement pour {name}',
   },
   rating: {
     groupAria: 'Noter {name}',
     starAria: 'Noter {name} {n} sur 5 étoiles',
+  },
+  prices: {
+    title: 'Prix des bureaux d’enregistrement', loading: 'Chargement des prix en direct', failed: 'Échec de la comparaison des prix.',
+    registrar: 'Bureau d’enregistrement', firstYear: 'Première année', renewal: 'Renouvellement', liveQuote: 'Devis en direct du domaine',
+    listPrice: 'Prix catalogue du TLD', premium: 'Premium', lowest: 'Le plus bas', none: 'Aucun bureau d’enregistrement n’a renvoyé de prix.',
+    moreProviders: '{count} fournisseurs supplémentaires disponibles avec des identifiants API.',
+    confirm: 'Confirmez le prix premium, les taxes et les promotions lors du paiement.',
+    popularRegistrars: 'Bureaux d’enregistrement populaires', directSearches: '10 recherches de domaine directes',
+    openRegistrarAria: 'Rechercher {name} chez {registrar}',
   },
   footer: {
     rdap: 'La disponibilité est vérifiée via RDAP et doit être confirmée auprès d’un bureau d’enregistrement.',

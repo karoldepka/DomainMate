@@ -65,10 +65,21 @@ export default {
     checkDomainAria: 'Comprova {name}',
     searchGoogle: 'Cerca a Google',
     searchGoogleAria: 'Cerca {name} a Google',
+    comparePrices: 'Compara preus i registradors',
+    comparePricesAria: 'Compara preus i registradors per a {name}',
   },
   rating: {
     groupAria: 'Valora {name}',
     starAria: 'Valora {name} amb {n} de 5 estrelles',
+  },
+  prices: {
+    title: 'Preus dels registradors', loading: 'Carregant preus en directe', failed: 'Ha fallat la comparació de preus.',
+    registrar: 'Registrador', firstYear: 'Primer any', renewal: 'Renovació', liveQuote: 'Cotització en directe del domini',
+    listPrice: 'Preu de llista del TLD', premium: 'Premium', lowest: 'Més baix', none: 'Cap registrador ha retornat un preu.',
+    moreProviders: '{count} proveïdors addicionals disponibles amb credencials d’API.',
+    confirm: 'Confirma el preu premium, els impostos i les promocions en finalitzar la compra.',
+    popularRegistrars: 'Registradors populars', directSearches: '10 cerques directes de domini',
+    openRegistrarAria: 'Cerca {name} a {registrar}',
   },
   footer: {
     rdap: 'La disponibilitat es comprova mitjançant RDAP i s’ha de confirmar amb un registrador.',

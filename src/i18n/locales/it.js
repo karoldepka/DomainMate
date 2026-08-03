@@ -65,10 +65,21 @@ export default {
     checkDomainAria: 'Verifica {name}',
     searchGoogle: 'Cerca su Google',
     searchGoogleAria: 'Cerca {name} su Google',
+    comparePrices: 'Confronta prezzi e registrar',
+    comparePricesAria: 'Confronta prezzi e registrar per {name}',
   },
   rating: {
     groupAria: 'Valuta {name}',
     starAria: 'Valuta {name} con {n} di 5 stelle',
+  },
+  prices: {
+    title: 'Prezzi dei registrar', loading: 'Caricamento prezzi in tempo reale', failed: 'Confronto prezzi non riuscito.',
+    registrar: 'Registrar', firstYear: 'Primo anno', renewal: 'Rinnovo', liveQuote: 'Preventivo in tempo reale del dominio',
+    listPrice: 'Prezzo di listino del TLD', premium: 'Premium', lowest: 'Più basso', none: 'Nessun registrar ha restituito un prezzo.',
+    moreProviders: '{count} fornitori aggiuntivi disponibili con credenziali API.',
+    confirm: 'Conferma il prezzo premium, le tasse e le promozioni al momento del pagamento.',
+    popularRegistrars: 'Registrar popolari', directSearches: '10 ricerche dirette del dominio',
+    openRegistrarAria: 'Cerca {name} su {registrar}',
   },
   footer: {
     rdap: 'La disponibilità viene verificata tramite RDAP e deve essere confermata con un registrar.',

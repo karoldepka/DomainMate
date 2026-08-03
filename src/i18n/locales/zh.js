@@ -65,10 +65,21 @@ export default {
     checkDomainAria: '检查 {name}',
     searchGoogle: '在 Google 中搜索',
     searchGoogleAria: '在 Google 中搜索 {name}',
+    comparePrices: '比较价格与注册商',
+    comparePricesAria: '比较 {name} 的价格与注册商',
   },
   rating: {
     groupAria: '为 {name} 评分',
     starAria: '给 {name} 评 {n} 星（满分 5 星）',
+  },
+  prices: {
+    title: '注册商价格', loading: '正在加载实时价格', failed: '价格比较失败。',
+    registrar: '注册商', firstYear: '首年', renewal: '续费', liveQuote: '实时域名报价',
+    listPrice: 'TLD 标价', premium: '溢价', lowest: '最低', none: '没有注册商返回价格。',
+    moreProviders: '还有 {count} 个提供商需要 API 凭证才能显示。',
+    confirm: '请在结账时确认溢价、税费和促销信息。',
+    popularRegistrars: '热门注册商', directSearches: '10 个直达域名搜索',
+    openRegistrarAria: '在 {registrar} 搜索 {name}',
   },
   footer: {
     rdap: '可用性通过 RDAP 检查，请与注册商进一步确认。',

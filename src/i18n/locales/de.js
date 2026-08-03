@@ -65,10 +65,21 @@ export default {
     checkDomainAria: '{name} prüfen',
     searchGoogle: 'Bei Google suchen',
     searchGoogleAria: '{name} bei Google suchen',
+    comparePrices: 'Preise und Registrare vergleichen',
+    comparePricesAria: 'Preise und Registrare für {name} vergleichen',
   },
   rating: {
     groupAria: '{name} bewerten',
     starAria: '{name} mit {n} von 5 Sternen bewerten',
+  },
+  prices: {
+    title: 'Registrar-Preise', loading: 'Aktuelle Preise werden geladen', failed: 'Preisvergleich fehlgeschlagen.',
+    registrar: 'Registrar', firstYear: 'Erstes Jahr', renewal: 'Verlängerung', liveQuote: 'Live-Domainpreis',
+    listPrice: 'TLD-Listenpreis', premium: 'Premium', lowest: 'Günstigster', none: 'Kein Registrar hat einen Preis zurückgegeben.',
+    moreProviders: '{count} weitere Anbieter mit API-Zugangsdaten verfügbar.',
+    confirm: 'Bestätige Premium-Preise, Steuern und Aktionen beim Bezahlvorgang.',
+    popularRegistrars: 'Beliebte Registrare', directSearches: '10 direkte Domain-Suchen',
+    openRegistrarAria: '{name} bei {registrar} suchen',
   },
   footer: {
     rdap: 'Die Verfügbarkeit wird per RDAP geprüft und sollte bei einer Registrierstelle bestätigt werden.',
