@@ -157,7 +157,9 @@ export const useDomainStore = defineStore('domains', () => {
   /** Check unchecked domains in small batches to avoid hammering RDAP services. */
   async function checkAll() {
     running.value = true
-    const queue = results.value.filter((item) => item.status === 'idle' || item.status === 'error')
+    const queue = results.value
+      .filter((item) => item.status === 'idle' || item.status === 'error')
+      .sort((a, b) => a.name.length - b.name.length || a.name.localeCompare(b.name))
     for (let index = 0; index < queue.length; index += 4) {
       await Promise.all(queue.slice(index, index + 4).map(checkOne))
       if (index + 4 < queue.length) await delay(180)

@@ -24,22 +24,25 @@ export const locales = [
   { code: 'zh', label: '中文' },
 ]
 
-/** Pick a stored preference, then the closest supported browser language, then English. */
-function detectLocale() {
-  if (!import.meta.client) return 'en'
-  const stored = localStorage.getItem(storageKey)
-  if (stored && dictionaries[stored]) return stored
-  const browser = (navigator.language || 'en').toLowerCase().split('-')[0]
-  return dictionaries[browser] ? browser : 'en'
-}
-
-export const locale = ref(detectLocale())
+// Always starts as English, matching the prerendered/SSR shell exactly, so client
+// hydration never mismatches. The real stored/browser preference (if any) is applied
+// after mount via hydrateLocaleFromStorage(), which is a plain reactive update at
+// that point rather than a hydration comparison.
+export const locale = ref('en')
 
 watch(locale, (value) => {
   if (!import.meta.client) return
   localStorage.setItem(storageKey, value)
   document.documentElement.lang = value
-}, { immediate: true })
+})
+
+/** Apply a stored preference, then the closest supported browser language, once mounted. */
+export function hydrateLocaleFromStorage() {
+  const stored = localStorage.getItem(storageKey)
+  if (stored && dictionaries[stored]) { locale.value = stored; return }
+  const browser = (navigator.language || 'en').toLowerCase().split('-')[0]
+  if (dictionaries[browser]) locale.value = browser
+}
 
 /** Look up a dot-separated key, falling back to English, then the key itself. */
 export function t(path, vars) {
