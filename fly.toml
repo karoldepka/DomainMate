@@ -1,8 +1,6 @@
-# Fly.io app config. Verify `app` and `primary_region` match your existing
-# domainmate.fly.dev deployment (`fly status`) before running `fly deploy` -
-# these are placeholders since this file wasn't previously in the repo.
+# Fly.io app config for domainmate.fly.dev.
 app = "domainmate"
-primary_region = "waw"
+primary_region = "iad"
 
 [build]
 
@@ -23,8 +21,10 @@ primary_region = "waw"
     timeout = "5s"
     path = "/api/health"
 
-# SQLite (server/favorites.js) needs a real persistent disk - create the volume
-# once with `fly volumes create domainmate_data --size 1` before first deploy.
+# SQLite (server/favorites.js) is a single file with no multi-writer support,
+# so this app must stay on exactly one machine/volume - do not `fly scale count`
+# above 1 without first moving favorites to a real hosted database.
+# One-time setup: fly volumes create domainmate_data -r iad -n 1
 [mounts]
   source = "domainmate_data"
   destination = "/app/data"

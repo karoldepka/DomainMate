@@ -41,8 +41,8 @@ export const useDomainStore = defineStore('domains', () => {
     const { iRoots, tRoots, tlds, words } = parseBrief(brief.value)
 
     effectiveQuery.value = [
-      `I: ${expandRoots(iRoots).join(', ')}`,
-      `T: ${expandRoots(tRoots).join(', ')}`,
+      `I: ${expandRoots(iRoots).join(' ')}`,
+      `T: ${expandRoots(tRoots).join(' ')}`,
       `TLD: ${(tlds.length ? tlds : ['.com', '.ai', '.tech']).join(', ')}`,
       `CONTEXT: ${words.join(' ')}`,
       `SUBSTITUTIONS: ${substitutions.value.join(', ')}`,
@@ -58,8 +58,8 @@ export const useDomainStore = defineStore('domains', () => {
   function getBriefDefaults() {
     const parsed = parseBrief(brief.value)
     return {
-      i: expandRoots(parsed.iRoots).join(', '),
-      t: expandRoots(parsed.tRoots).join(', '),
+      i: expandRoots(parsed.iRoots).join(' '),
+      t: expandRoots(parsed.tRoots).join(' '),
       tlds: (parsed.tlds.length ? parsed.tlds : ['.com', '.ai', '.tech']).join(', '),
       context: parsed.words.join(' '),
     }
@@ -127,7 +127,7 @@ export const useDomainStore = defineStore('domains', () => {
     const index = lines.findIndex((line) => line.startsWith(`${key}:`))
     if (index < 0) return
     const existing = lines[index].slice(2).split(/[\s,]+/).map(clean)
-    lines[index] = `${key}: ${unique([...existing, ...additions]).join(', ')}`
+    lines[index] = `${key}: ${unique([...existing, ...additions]).join(' ')}`
     effectiveQuery.value = lines.join('\n')
   }
 

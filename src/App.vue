@@ -236,8 +236,8 @@ function normalizeList(value) { return value.split(/[\s,]+/).filter(Boolean).joi
 
           <div class="parts-editor">
             <div class="parts-fields">
-              <div class="field"><label for="i-parts">{{ t('form.iLabel') }}</label><input id="i-parts" v-model="iParts" type="text" placeholder="inno, inn, inter" /></div>
-              <div class="field"><label for="t-parts">{{ t('form.tLabel') }}</label><input id="t-parts" v-model="tParts" type="text" placeholder="tech, tec, tek" /></div>
+              <div class="field"><label for="i-parts">{{ t('form.iLabel') }}</label><textarea id="i-parts" v-model="iParts" rows="3" placeholder="inno inn inter"></textarea></div>
+              <div class="field"><label for="t-parts">{{ t('form.tLabel') }}</label><textarea id="t-parts" v-model="tParts" rows="3" placeholder="tech tec tek"></textarea></div>
             </div>
             <fieldset class="substitution-fieldset">
               <legend>{{ t('form.substitutionsLegend') }}</legend>
