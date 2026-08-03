@@ -90,6 +90,7 @@ fieldset { min-width: 0; margin: 0; padding: 0; border: 0; }
 .domain-cell a:hover strong { text-decoration: underline; }
 .copy-button, .icon-button { width: 36px; height: 36px; display: grid; place-items: center; border: 1px solid #dde3e0; border-radius: 6px; background: white; color: #66736d; cursor: pointer; text-decoration: none; flex: 0 0 auto; }
 .copy-button:hover, .icon-button:hover { color: #176b52; border-color: #8dbca9; }
+.icon-button.active { color: #176b52; border-color: #8dbca9; background: #eef9f4; }
 .rating-stars { display: flex; align-items: center; gap: 1px; }
 .star-button { width: 20px; height: 36px; display: grid; place-items: center; border: 0; background: transparent; color: #cdd5d1; cursor: pointer; }
 .star-button:hover, .star-button.active { color: #d39a2c; }
