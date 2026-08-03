@@ -3,11 +3,11 @@ import test from 'node:test'
 import { createPinia, setActivePinia } from 'pinia'
 import { useDomainStore } from '../src/stores/domain.js'
 
-/** Create a fresh store configured for a representative I/T search. */
+/** Create a fresh store configured for a representative two-part search. */
 function createStore() {
   setActivePinia(createPinia())
   const store = useDomainStore()
-  store.brief = 'inno inter tech tek topic .dev .ai .com'
+  store.brief = 'inno inter\ntech tek topic\n.dev .ai .com'
   store.maxLength = 24
   store.expandBrief()
   store.generate()
@@ -15,11 +15,16 @@ function createStore() {
 }
 
 test('ranks clean compounds before edited variants', () => {
-  const names = [...new Set(createStore().results.map(({ brand }) => brand.toLowerCase()))]
-  assert.ok(names.indexOf('intertech') >= 0)
+  setActivePinia(createPinia())
+  const store = useDomainStore()
+  store.brief = 'inno\ntech\n.dev'
+  store.maxLength = 24
+  store.expandBrief()
+  store.generate()
+  const names = [...new Set(store.results.map(({ brand }) => brand.toLowerCase()))]
   assert.ok(names.indexOf('innotech') >= 0)
-  assert.ok(names.indexOf('innotech') < names.indexOf('innitek'))
-  if (names.includes('innottech')) assert.ok(names.indexOf('innotech') < names.indexOf('innottech'))
+  assert.ok(names.indexOf('innotek') >= 0)
+  assert.ok(names.indexOf('innotech') < names.indexOf('innotek'))
 })
 
 test('honors generation limits and produces unique valid domains', () => {
@@ -27,7 +32,6 @@ test('honors generation limits and produces unique valid domains', () => {
   assert.equal(store.results.length, 255)
   assert.equal(new Set(store.results.map(({ name }) => name)).size, 255)
   assert.ok(store.results.every(({ name }) => /^[a-z0-9]+\.(dev|ai|com)$/.test(name)))
-  assert.ok(store.results.every(({ brand }) => brand.toLowerCase().startsWith('i') && brand.toLowerCase().includes('t')))
   assert.ok(store.results.every(({ brand }) => Math.max(0, ...(brand.toLowerCase().match(/[^aeiouy]+/g) || []).map((part) => part.length)) <= 2))
 })
 
@@ -40,7 +44,7 @@ test('generation order is deterministic', () => {
 test('the skip:first substitution drops a leading letter that survives the naming filters', () => {
   setActivePinia(createPinia())
   const withSkip = useDomainStore()
-  withSkip.brief = 'idea test .dev'
+  withSkip.brief = 'idea\ntest\n.dev'
   withSkip.substitutions = ['skip:first']
   withSkip.strategies = ['direct']
   withSkip.expandBrief()
@@ -49,7 +53,7 @@ test('the skip:first substitution drops a leading letter that survives the namin
 
   setActivePinia(createPinia())
   const withoutSkip = useDomainStore()
-  withoutSkip.brief = 'idea test .dev'
+  withoutSkip.brief = 'idea\ntest\n.dev'
   withoutSkip.substitutions = []
   withoutSkip.strategies = ['direct']
   withoutSkip.expandBrief()
@@ -57,10 +61,10 @@ test('the skip:first substitution drops a leading letter that survives the namin
   assert.ok(!withoutSkip.results.some(({ brand }) => brand.toLowerCase() === 'ideaest'))
 })
 
-test('the reverse strategy allows brands that start with the T root', () => {
+test('the reverse strategy allows brands that start with the second part', () => {
   setActivePinia(createPinia())
   const store = useDomainStore()
-  store.brief = 'idea test .dev'
+  store.brief = 'idea\ntest\n.dev'
   store.substitutions = []
   store.strategies = ['reverse']
   store.expandBrief()
@@ -70,18 +74,44 @@ test('the reverse strategy allows brands that start with the T root', () => {
   assert.ok(store.results.every(({ name }) => name.endsWith('.dev')))
 })
 
-test('non-reverse strategies only keep brands starting with I and containing T', () => {
-  const store = createStore()
-  assert.ok(store.results.every(({ brand }) => {
-    const lower = brand.toLowerCase()
-    return lower.startsWith('i') && lower.includes('t')
-  }))
+test('generation is not restricted to parts starting with I and T', () => {
+  setActivePinia(createPinia())
+  const store = useDomainStore()
+  store.brief = 'cloud\nsync\n.dev'
+  store.maxLength = 20
+  store.substitutions = []
+  store.strategies = ['direct']
+  store.expandBrief()
+  store.generate()
+  assert.ok(store.results.some(({ brand }) => brand.toLowerCase() === 'cloudsync'))
+})
+
+test('a brief with only one line reuses it for both parts', () => {
+  setActivePinia(createPinia())
+  const store = useDomainStore()
+  store.brief = 'acme\n.dev'
+  store.maxLength = 20
+  store.substitutions = []
+  store.strategies = ['direct']
+  store.expandBrief()
+  store.generate()
+  assert.ok(store.results.some(({ brand }) => brand.toLowerCase() === 'acmeacme'))
+})
+
+test('a leading dot marks a TLD on any line, not just the extensions line', () => {
+  setActivePinia(createPinia())
+  const store = useDomainStore()
+  store.brief = 'inno .dev\ntech'
+  store.expandBrief()
+  store.generate()
+  assert.ok(store.results.length > 0)
+  assert.ok(store.results.every(({ name }) => name.endsWith('.dev')))
 })
 
 test('maxNames caps the base names before multiplying by the TLD count', () => {
   setActivePinia(createPinia())
   const store = useDomainStore()
-  store.brief = 'inno inter tech tek topic .dev .ai .com'
+  store.brief = 'inno inter\ntech tek topic\n.dev .ai .com'
   store.maxNames = 10
   store.expandBrief()
   store.generate()
@@ -96,7 +126,7 @@ test('maxLength defaults to "innotek".length and excludes longer base names', ()
   setActivePinia(createPinia())
   const defaultStore = useDomainStore()
   assert.equal(defaultStore.maxLength, 'innotek'.length)
-  defaultStore.brief = 'inno inter tech tek topic .dev .ai .com'
+  defaultStore.brief = 'inno inter\ntech tek topic\n.dev .ai .com'
   defaultStore.expandBrief()
   defaultStore.generate()
   const names = [...new Set(defaultStore.results.map(({ brand }) => brand.toLowerCase()))]

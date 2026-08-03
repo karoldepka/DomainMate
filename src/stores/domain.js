@@ -1,20 +1,19 @@
 import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
 import { flags } from '../featureFlags.js'
+import { readCachedLookup, writeCachedLookup } from '../services/domainCache.js'
 
 /** @typedef {'idle'|'checking'|'done'|'error'} CheckStatus */
 /** @typedef {'available'|'registered'|'unknown'|null} Availability */
 /** @typedef {{provider?: string, status: string, query?: string, totalResults?: number, countKind?: 'exact'|'estimated'|'returned'}} SearchResult */
 /** @typedef {{id: string, name: string, brand: string, tld: string, status: CheckStatus, availability: Availability, availabilityNote?: string, search: SearchResult|null, copied?: boolean}} DomainCandidate */
-/** @typedef {{iRoots: string[], tRoots: string[], tlds: string[], context: string, substitutions: string[], strategies: string[], maxSyllables: number, maxConsonants: number, maxLength: number, maxNames: number}} EffectiveQuery */
+/** @typedef {{part1Roots: string[], part2Roots: string[], tlds: string[], context: string, substitutions: string[], strategies: string[], maxSyllables: number, maxConsonants: number, maxLength: number, maxNames: number}} EffectiveQuery */
 
 /** @param {string} value */
 const clean = (value) => value.toLowerCase().replace(/[^a-z0-9]/g, '')
 /** @param {string[]} items */
 const unique = (items) => [...new Set(items.filter(Boolean))]
-const lookupCacheKey = 'domainmate.lookupCache.v2'
-const lookupCacheTtl = 15 * 60 * 1000
-const defaultBrief = 'inno Inter tech tek .dev .ai .com'
+const defaultBrief = 'inno Inter\ntech tek\n.dev .ai .com'
 const defaultSubstitutions = ['ch:k', 'ch:ck', 'ch:kk', 'cs:x', 'c:k', 'c:ck', 'c:kk', 'ph:f', 'x:ks', 's:z', 'double:n', 'double:t', 'double:k']
 const defaultStrategies = ['direct', 'blend', 'overlap', 'bridge', 'compact', 'suffix']
 
@@ -38,11 +37,11 @@ export const useDomainStore = defineStore('domains', () => {
 
   /** Expand a terse naming brief into an explicit query that remains user-editable. */
   function expandBrief() {
-    const { iRoots, tRoots, tlds, words } = parseBrief(brief.value)
+    const { part1Roots, part2Roots, tlds, words } = parseBrief(brief.value)
 
     effectiveQuery.value = [
-      `I: ${expandRoots(iRoots).join(' ')}`,
-      `T: ${expandRoots(tRoots).join(' ')}`,
+      `PART1: ${expandRoots(part1Roots).join(' ')}`,
+      `PART2: ${expandRoots(part2Roots).join(' ')}`,
       `TLD: ${(tlds.length ? tlds : ['.com', '.ai', '.tech']).join(', ')}`,
       `CONTEXT: ${words.join(' ')}`,
       `SUBSTITUTIONS: ${substitutions.value.join(', ')}`,
@@ -58,8 +57,8 @@ export const useDomainStore = defineStore('domains', () => {
   function getBriefDefaults() {
     const parsed = parseBrief(brief.value)
     return {
-      i: expandRoots(parsed.iRoots).join(' '),
-      t: expandRoots(parsed.tRoots).join(' '),
+      part1: expandRoots(parsed.part1Roots).join(' '),
+      part2: expandRoots(parsed.part2Roots).join(' '),
       tlds: (parsed.tlds.length ? parsed.tlds : ['.com', '.ai', '.tech']).join(', '),
       context: parsed.words.join(' '),
     }
@@ -69,7 +68,7 @@ export const useDomainStore = defineStore('domains', () => {
   function generate() {
     if (!effectiveQuery.value.trim()) expandBrief()
     const query = parseEffectiveQuery(effectiveQuery.value)
-    if (!query.iRoots.length || !query.tRoots.length || !query.tlds.length) return
+    if (!query.part1Roots.length || !query.part2Roots.length || !query.tlds.length) return
     keywords.value = query.context || keywords.value
     maxSyllables.value = query.maxSyllables
     maxConsonants.value = query.maxConsonants
@@ -78,14 +77,13 @@ export const useDomainStore = defineStore('domains', () => {
     strategies.value = query.strategies
     maxNames.value = query.maxNames
 
-    const iVariants = dedupeVariants(query.iRoots.flatMap((root) => spellingVariantRecords(root, query.substitutions)))
-    const tVariants = dedupeVariants(query.tRoots.flatMap((root) => spellingVariantRecords(root, query.substitutions)))
-    const candidates = dedupeCandidates(iVariants.flatMap((left) => tVariants.flatMap((right) =>
+    const part1Variants = dedupeVariants(query.part1Roots.flatMap((root) => spellingVariantRecords(root, query.substitutions)))
+    const part2Variants = dedupeVariants(query.part2Roots.flatMap((root) => spellingVariantRecords(root, query.substitutions)))
+    const candidates = dedupeCandidates(part1Variants.flatMap((left) => part2Variants.flatMap((right) =>
       generateCreativeNames(left.name, right.name, query.strategies, query.maxConsonants, left.editCost + right.editCost))))
       .filter(({ name }) => name.length >= 4 && name.length <= query.maxLength)
       .filter(({ name }) => countSyllables(name) <= query.maxSyllables)
       .filter(({ name }) => longestConsonantRun(name) <= query.maxConsonants)
-      .filter(({ name, strategy }) => strategy === 'reverse' || (name.startsWith('i') && name.includes('t')))
       .sort((a, b) => candidateScore(b) - candidateScore(a) || a.name.length - b.name.length)
     const names = selectDiverseNames(candidates, query.maxNames)
 
@@ -100,40 +98,47 @@ export const useDomainStore = defineStore('domains', () => {
     })))
   }
 
-  /** Expand I/T parts with short, same-initial semantic alternatives from Datamuse and an LLM. */
+  /** Expand both name parts with short, semantically related alternatives from Datamuse and an LLM. */
   async function enrichWithThesaurus() {
     if (!useThesaurus.value) return
     enriching.value = true
     try {
-      const words = unique(brief.value.split(/[\s,]+/).map(clean).filter((word) => /^[it][a-z]{2,}$/.test(word))).slice(0, 6)
-      const additions = await Promise.all(words.map(async (word) => {
-        const [datamuse, ai] = await Promise.all([
-          fetchSynonyms(word, maxSyllables.value),
-          flags.aiSuggestions ? fetchAiSynonyms(word, maxSyllables.value) : Promise.resolve([]),
-        ])
-        return unique([...datamuse, ...ai])
-      }))
-      const iAdditions = unique(additions.flat().filter((word) => word.startsWith('i')))
-      const tAdditions = unique(additions.flat().filter((word) => word.startsWith('t')))
-      appendQueryParts('I', iAdditions)
-      appendQueryParts('T', tAdditions)
+      const { part1Roots, part2Roots } = parseBrief(brief.value)
+      const [part1Additions, part2Additions] = await Promise.all([
+        enrichWords(part1Roots.slice(0, 3)),
+        enrichWords(part2Roots.slice(0, 3)),
+      ])
+      appendQueryParts('PART1', part1Additions)
+      appendQueryParts('PART2', part2Additions)
     } finally { enriching.value = false }
   }
 
-  /** @param {'I'|'T'} key @param {string[]} additions */
+  /** @param {string[]} words @returns {Promise<string[]>} */
+  async function enrichWords(words) {
+    const additions = await Promise.all(words.map(async (word) => {
+      const [datamuse, ai] = await Promise.all([
+        fetchSynonyms(word, maxSyllables.value),
+        flags.aiSuggestions ? fetchAiSynonyms(word, maxSyllables.value) : Promise.resolve([]),
+      ])
+      return unique([...datamuse, ...ai])
+    }))
+    return unique(additions.flat())
+  }
+
+  /** @param {'PART1'|'PART2'} key @param {string[]} additions */
   function appendQueryParts(key, additions) {
     if (!additions.length) return
     const lines = effectiveQuery.value.split('\n')
     const index = lines.findIndex((line) => line.startsWith(`${key}:`))
     if (index < 0) return
-    const existing = lines[index].slice(2).split(/[\s,]+/).map(clean)
+    const existing = lines[index].slice(key.length + 1).split(/[\s,]+/).map(clean)
     lines[index] = `${key}: ${unique([...existing, ...additions]).join(' ')}`
     effectiveQuery.value = lines.join('\n')
   }
 
   /** @param {DomainCandidate} item */
   async function checkOne(item) {
-    const cached = readCachedLookup(item.name, keywords.value)
+    const cached = await readCachedLookup(item.name, keywords.value)
     if (cached) {
       applyLookup(item, cached)
       return
@@ -145,7 +150,7 @@ export const useDomainStore = defineStore('domains', () => {
         flags.searchResults ? checkSearchOnServer(item.name, keywords.value) : Promise.resolve(null),
       ])
       const data = { ...availability, search }
-      writeCachedLookup(item.name, keywords.value, data)
+      await writeCachedLookup(item.name, keywords.value, data)
       applyLookup(item, data)
     } catch {
       item.status = 'error'
@@ -172,19 +177,30 @@ export const useDomainStore = defineStore('domains', () => {
   return { brief, effectiveQuery, keywords, maxSyllables, maxConsonants, maxLength, maxNames, substitutions, strategies, useThesaurus, enriching, results, running, checkedCount, availableCount, defaults, getBriefDefaults, expandBrief, enrichWithThesaurus, generate, checkOne, checkAll }
 })
 
-/** Parse free-form words and extensions into their semantic groups. */
+/**
+ * Read the brief line by line: line 1 is part 1's words, line 2 is part 2's
+ * words, and any further lines add extra context keywords. A leading dot
+ * marks a TLD on any line, independent of that line-based structure.
+ * @param {string} source
+ */
 function parseBrief(source) {
-  const tokens = source.split(/[\s,]+/).map((token) => token.trim()).filter(Boolean)
-  const tlds = unique(tokens.filter((token) => token.startsWith('.')).map((token) => `.${clean(token)}`))
-  const words = unique(tokens.filter((token) => !token.startsWith('.')).map(clean))
-  let iRoots = words.filter((word) => word.startsWith('i'))
-  let tRoots = words.filter((word) => word.startsWith('t'))
-  const unassigned = words.filter((word) => !word.startsWith('i') && !word.startsWith('t'))
-  if (!iRoots.length && words[0]) iRoots = [words[0]]
-  if (!tRoots.length) tRoots = unassigned.length ? unassigned : words.slice(1)
-  if (!iRoots.length) iRoots = ['inno']
-  if (!tRoots.length) tRoots = ['tech']
-  return { iRoots, tRoots, tlds, words }
+  const lines = source.split('\n')
+  const tlds = unique(source.split(/[\s,]+/).map((token) => token.trim()).filter((token) => token.startsWith('.')).map((token) => `.${clean(token)}`))
+
+  let part1Roots = wordsOfLine(lines[0])
+  let part2Roots = wordsOfLine(lines[1])
+  const extraWords = lines.slice(2).flatMap(wordsOfLine)
+  const words = unique([...part1Roots, ...part2Roots, ...extraWords])
+
+  if (!part2Roots.length) part2Roots = part1Roots
+  if (!part1Roots.length) part1Roots = ['inno']
+  if (!part2Roots.length) part2Roots = ['tech']
+  return { part1Roots, part2Roots, tlds, words }
+}
+
+/** @param {string|undefined} line */
+function wordsOfLine(line) {
+  return unique((line || '').split(/[\s,]+/).map((token) => token.trim()).filter((token) => token && !token.startsWith('.')).map(clean))
 }
 
 /** @param {string} word @param {number} maxSyllables @returns {Promise<string[]>} */
@@ -352,25 +368,6 @@ function applyLookup(item, data) {
   item.status = 'done'
 }
 
-/** @param {string} domain @param {string} keywords */
-function readCachedLookup(domain, keywords) {
-  try {
-    const cache = JSON.parse(sessionStorage.getItem(lookupCacheKey) || '{}')
-    const entry = cache[`${domain}|${keywords}`]
-    return entry && Date.now() - entry.savedAt < lookupCacheTtl ? entry.data : null
-  } catch { return null }
-}
-
-/** @param {string} domain @param {string} keywords @param {object} data */
-function writeCachedLookup(domain, keywords, data) {
-  try {
-    const cache = JSON.parse(sessionStorage.getItem(lookupCacheKey) || '{}')
-    const freshEntries = Object.fromEntries(Object.entries(cache).filter(([, entry]) => Date.now() - entry.savedAt < lookupCacheTtl))
-    freshEntries[`${domain}|${keywords}`] = { savedAt: Date.now(), data }
-    sessionStorage.setItem(lookupCacheKey, JSON.stringify(freshEntries))
-  } catch { /* Storage can be unavailable in privacy modes. */ }
-}
-
 /**
  * Produce common brandable phonetic substitutions without recursively
  * expanding generated variants. Terminal "ch" is treated as a single sound,
@@ -451,7 +448,7 @@ function generateCreativeNames(left, right, enabled, maxConsonants, editCost) {
     if (boundaryConsonantRun(left, right) > maxConsonants) add(`${left}${bridgeVowel(left)}${right}`, 'bridge', 4)
   }
   if (use('compact')) {
-    if (!/^([a-z])\1/.test(right)) add(`i${right}`, 'compact', 4)
+    if (!/^([a-z])\1/.test(right)) add(`${left[0]}${right}`, 'compact', 4)
     add(`${left.slice(0, 4)}${right.slice(0, 3)}`, 'compact', 6)
     add(`${left.slice(0, 3)}${right.slice(0, 4)}`, 'compact', 5)
     add(`${left.slice(0, 2)}${right}`, 'compact', 3)
@@ -538,14 +535,14 @@ function phoneticFamily(name) {
 /** @param {string} source @returns {EffectiveQuery} */
 function parseEffectiveQuery(source) {
   /** @type {EffectiveQuery} */
-  const parsed = { iRoots: [], tRoots: [], tlds: [], context: '', substitutions: [], strategies: [], maxSyllables: 3, maxConsonants: 2, maxLength: 'innotek'.length, maxNames: 150 }
+  const parsed = { part1Roots: [], part2Roots: [], tlds: [], context: '', substitutions: [], strategies: [], maxSyllables: 3, maxConsonants: 2, maxLength: 'innotek'.length, maxNames: 150 }
   for (const line of source.split('\n')) {
     const [rawKey, ...rest] = line.split(':')
     const key = rawKey.trim().toUpperCase()
     const value = rest.join(':').trim()
     const values = value.split(/[\s,]+/).map(clean).filter(Boolean)
-    if (key === 'I') parsed.iRoots = unique(values)
-    if (key === 'T') parsed.tRoots = unique(values)
+    if (key === 'PART1') parsed.part1Roots = unique(values)
+    if (key === 'PART2') parsed.part2Roots = unique(values)
     if (key === 'TLD') parsed.tlds = unique(values)
     if (key === 'CONTEXT') parsed.context = value
     if (key === 'SUBSTITUTIONS') parsed.substitutions = value.split(/[\s,]+/).filter((rule) => /^[a-z]+:[a-z]+$/.test(rule))
@@ -581,9 +578,7 @@ function score(name) {
   const syllables = countSyllables(name)
   const lengthScore = Math.max(0, 12 - Math.abs(name.length - 9) * 2)
   const repeatedPenalty = /([a-z])\1\1/.test(name) ? 8 : 0
-  return (name.startsWith('i') ? 20 : 0)
-    + (name.includes('t') ? 12 : 0)
-    + lengthScore
+  return lengthScore
     + (syllables >= 2 && syllables <= 3 ? 5 : 0)
     - repeatedPenalty
 }

@@ -16,14 +16,15 @@ const favorites = ref(new Map())
 const showFlagsPanel = ref(false)
 const logoClicks = ref(0)
 const languageItems = computed(() => locales.map((item) => ({ label: item.label, value: item.code })))
+const briefPlaceholder = 'inno inter\ntech tek\n.dev .ai .com'
 let logoClickResetTimer
 /** Highest rated first, then shortest first among equally rated candidates. */
 const displayedResults = computed(() => {
   const items = availableOnly.value ? results.value.filter((item) => item.availability !== 'registered') : [...results.value]
   return items.sort((a, b) => ratingRank(a) - ratingRank(b) || a.name.length - b.name.length || a.name.localeCompare(b.name))
 })
-const iParts = computed({ get: () => getQueryLine('I'), set: (value) => setQueryLine('I', value) })
-const tParts = computed({ get: () => getQueryLine('T'), set: (value) => setQueryLine('T', value) })
+const part1 = computed({ get: () => getQueryLine('PART1'), set: (value) => setQueryLine('PART1', value) })
+const part2 = computed({ get: () => getQueryLine('PART2'), set: (value) => setQueryLine('PART2', value) })
 const substitutionOptions = [
   ['ch:k', 'ch → k'], ['ch:ck', 'ch → ck'], ['ch:kk', 'ch → kk'],
   ['cs:x', 'cs → x'], ['c:k', 'c → k'], ['c:ck', 'c → ck'], ['c:kk', 'c → kk'],
@@ -111,7 +112,9 @@ async function setRating(item, value) {
 /** @param {string} key */
 function getQueryLine(key) {
   const line = effectiveQuery.value.split('\n').find((item) => item.toUpperCase().startsWith(`${key}:`))
-  return line?.split(':').slice(1).join(':').trim() || ''
+  // Only trim the leading "KEY: " space, not trailing whitespace - trimming both ends here
+  // would erase a space the user just typed at the end of a live-bound textarea (issue #3).
+  return line?.split(':').slice(1).join(':').replace(/^\s+/, '') || ''
 }
 
 /** @param {string} key @param {string} value */
@@ -141,8 +144,8 @@ function restoreQueryParams() {
   if (params.has('maxNames')) maxNames.value = Number(params.get('maxNames')) || 150
   if (params.has('available')) availableOnly.value = params.get('available') === '1'
   store.expandBrief()
-  if (params.has('i')) setQueryLine('I', params.get('i') || '')
-  if (params.has('t')) setQueryLine('T', params.get('t') || '')
+  if (params.has('part1')) setQueryLine('PART1', params.get('part1') || '')
+  if (params.has('part2')) setQueryLine('PART2', params.get('part2') || '')
   if (params.has('tlds')) setQueryLine('TLD', params.get('tlds') || '')
   if (params.has('context')) setQueryLine('CONTEXT', params.get('context') || '')
   if (params.has('subs')) {
@@ -163,8 +166,8 @@ function syncQueryParams() {
   const params = new URLSearchParams()
   const baseline = store.getBriefDefaults()
   setOverride(params, 'brief', brief.value, store.defaults.brief)
-  setOverride(params, 'i', iParts.value, baseline.i)
-  setOverride(params, 't', tParts.value, baseline.t)
+  setOverride(params, 'part1', part1.value, baseline.part1)
+  setOverride(params, 'part2', part2.value, baseline.part2)
   setOverride(params, 'tlds', getQueryLine('TLD'), baseline.tlds)
   setOverride(params, 'context', getQueryLine('CONTEXT'), baseline.context)
   setOverride(params, 'subs', normalizeList(getQueryLine('SUBSTITUTIONS')), store.defaults.substitutions.join(','))
@@ -217,7 +220,7 @@ function normalizeList(value) { return value.split(/[\s,]+/).filter(Boolean).joi
               <label for="brief">{{ t('form.briefLabel') }}</label>
               <div class="input-wrap featured-input">
                 <UIcon name="i-lucide-sparkles" class="size-5" />
-                <textarea id="brief" v-model.trim="brief" name="brief" rows="3" required minlength="2" maxlength="240" placeholder="inno Inter tech tek .dev .ai .com" autocomplete="off" @change="store.expandBrief"></textarea>
+                <textarea id="brief" v-model="brief" name="brief" rows="3" required minlength="2" maxlength="240" :placeholder="briefPlaceholder" autocomplete="off" @change="store.expandBrief"></textarea>
                 <UButton class="expand-button" variant="soft" color="primary" trailing-icon="i-lucide-arrow-down" @click="store.expandBrief">{{ t('form.expand') }}</UButton>
               </div>
             </div>
@@ -229,8 +232,8 @@ function normalizeList(value) { return value.split(/[\s,]+/).filter(Boolean).joi
 
           <div class="parts-editor">
             <div class="parts-fields">
-              <div class="field"><label for="i-parts">{{ t('form.iLabel') }}</label><textarea id="i-parts" v-model="iParts" rows="3" placeholder="inno inn inter"></textarea></div>
-              <div class="field"><label for="t-parts">{{ t('form.tLabel') }}</label><textarea id="t-parts" v-model="tParts" rows="3" placeholder="tech tec tek"></textarea></div>
+              <div class="field"><label for="name-part1">{{ t('form.part1Label') }}</label><textarea id="name-part1" v-model="part1" rows="3" placeholder="inno inn inter"></textarea></div>
+              <div class="field"><label for="name-part2">{{ t('form.part2Label') }}</label><textarea id="name-part2" v-model="part2" rows="3" placeholder="tech tec tek"></textarea></div>
             </div>
             <fieldset class="substitution-fieldset">
               <legend>{{ t('form.substitutionsLegend') }}</legend>
@@ -281,8 +284,10 @@ function normalizeList(value) { return value.split(/[\s,]+/).filter(Boolean).joi
           <div class="table-head" aria-hidden="true">
             <span>{{ t('table.candidate') }}</span><span>{{ t('table.status') }}</span><span>{{ t('table.google') }}</span><span></span>
           </div>
-          <article v-for="item in displayedResults" :key="item.id" class="result-row">
+          <TransitionGroup name="result-row">
+          <article v-for="(item, index) in displayedResults" :key="item.id" class="result-row">
             <div class="domain-cell">
+              <span class="row-index" aria-hidden="true">{{ index + 1 }}</span>
               <button class="copy-button" type="button" :aria-label="t('actions.copy', { name: item.name })" @click="copyDomain(item)">
                 <UIcon :name="item.copied ? 'i-lucide-check' : 'i-lucide-copy'" class="size-4.25" />
               </button>
@@ -310,6 +315,7 @@ function normalizeList(value) { return value.split(/[\s,]+/).filter(Boolean).joi
             </div>
             <LazyPriceComparison v-if="flags.priceComparison && item.showPrices" :domain="item.name" />
           </article>
+          </TransitionGroup>
           <p v-if="availableOnly && displayedResults.length === 0" class="empty-results">{{ t('results.empty') }}</p>
         </div>
       </section>

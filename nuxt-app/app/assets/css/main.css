@@ -96,8 +96,10 @@ fieldset { min-width: 0; margin: 0; padding: 0; border: 0; }
 .table-head { min-height: 42px; padding: 0 18px; background: #f8f9f8; border-bottom: 1px solid #e6eae8; color: #77827d; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .8px; }
 .result-row { min-height: 70px; padding: 0 18px; border-bottom: 1px solid #edf0ee; }
 .result-row:last-child { border-bottom: 0; }
+.result-row-move { transition: transform .4s ease; }
 .result-row:hover { background: #fbfcfb; }
 .domain-cell { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.row-index { flex: 0 0 auto; width: 22px; color: #a3aca6; font: 600 12px ui-monospace, SFMono-Regular, Consolas, monospace; text-align: right; font-variant-numeric: tabular-nums; }
 .domain-cell strong { font-family: Manrope, sans-serif; font-size: 16px; }
 .domain-cell a { display: inline-flex; align-items: baseline; min-width: 0; color: inherit; text-decoration: none; }
 .domain-cell a span { color: #718079; }
