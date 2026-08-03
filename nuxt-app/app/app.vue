@@ -1,0 +1,32 @@
+<script setup>
+useHead({
+  meta: [
+    { name: 'viewport', content: 'width=device-width, initial-scale=1' },
+    { name: 'theme-color', content: '#f4f6f8' }
+  ],
+  link: [
+    { rel: 'icon', type: 'image/svg+xml', href: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23176b52'/%3E%3Ccircle cx='16' cy='16' r='9' fill='none' stroke='white' stroke-width='2'/%3E%3Cpath d='M7 16h18M16 7c3 3 3 15 0 18M16 7c-3 3-3 15 0 18' fill='none' stroke='white' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E" }
+  ],
+  htmlAttrs: {
+    lang: 'en'
+  }
+})
+
+const title = 'DomainMate - Domain name research'
+const description = 'Generate and research memorable technology domain names.'
+
+useSeoMeta({
+  title,
+  description,
+  ogType: 'website',
+  ogTitle: title,
+  ogDescription: description,
+  twitterCard: 'summary'
+})
+</script>
+
+<template>
+  <UApp>
+    <NuxtPage />
+  </UApp>
+</template>
