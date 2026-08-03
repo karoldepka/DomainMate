@@ -1,4 +1,5 @@
 export default {
+  brand: { homeAria: 'Strona główna DomainMate' },
   topbar: { meta: 'Weryfikacja w rejestrach RDAP', credits: 'kredytów' },
   intro: {
     eyebrow: 'Warsztat nazewnictwa',

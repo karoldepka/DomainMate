@@ -1,4 +1,5 @@
 export default {
+  brand: { homeAria: 'DomainMate 首页' },
   topbar: { meta: 'RDAP 注册局核验', credits: '积分' },
   intro: {
     eyebrow: '命名工作台',

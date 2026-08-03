@@ -190,7 +190,7 @@ function normalizeList(value) { return value.split(/[\s,]+/).filter(Boolean).joi
 <template>
   <div class="app-shell">
     <header class="topbar">
-      <a class="brand" href="/" aria-label="DomainMate home">
+      <a class="brand" href="/" :aria-label="t('brand.homeAria')">
         <span class="brand-mark"><Globe2 :size="21" stroke-width="2.2" /></span>
         <span>Domain<span>Mate</span></span>
       </a>

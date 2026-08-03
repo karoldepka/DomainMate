@@ -1,4 +1,5 @@
 export default {
+  brand: { homeAria: 'DomainMate home' },
   topbar: { meta: 'RDAP registry checks', credits: 'credits' },
   intro: {
     eyebrow: 'Naming workspace',
