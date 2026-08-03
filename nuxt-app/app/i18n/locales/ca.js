@@ -1,9 +1,9 @@
 export default {
   brand: { homeAria: 'Inici de DomainMate' },
-  topbar: { meta: 'Verificació als registres RDAP', credits: 'crèdits', freeTier: 'Nivell gratuït' },
+  topbar: { meta: 'Verificació als registres RDAP', credits: 'crèdits', freeTier: 'Nivell gratuït', unlockPro: 'Desbloqueja el nivell pro', proUnlocked: 'Pro desbloquejat' },
   intro: {
     eyebrow: 'Espai de treball de noms',
-    title: 'Troba el nom abans que ho faci algú altre.',
+    title: 'Troba un nom de domini atractiu.',
     subtitle: 'Combina fragments de paraules amb sentit, comprova dominis tecnològics i mesura com d’ocupat està ja el nom.',
   },
   form: {
@@ -97,4 +97,15 @@ export default {
     methods: { card: 'Targeta', secure: 'Pagament segur gestionat per Stripe' },
   },
   language: { label: 'Idioma' },
+  feedback: {
+    eyebrow: 'La teva opinió',
+    title: 'Desbloqueja el nivell pro',
+    close: 'Tanca el diàleg de comentaris',
+    hint: 'Digues-nos què funciona o què hi falta, i desbloquejarem els recomptes de resultats de Google, els suggeriments d’IA, la comparació de preus i la sincronització de valoracions en aquest dispositiu, sense pagament.',
+    placeholder: 'Què milloraria DomainMate per a tu?',
+    submit: 'Envia comentaris i desbloqueja',
+    submitting: 'Enviant…',
+    success: 'Gràcies! Les funcions pro ja estan desbloquejades en aquest dispositiu.',
+    errors: { submitFailed: 'No s’ha pogut enviar el comentari. Torna-ho a provar.' },
+  },
 }

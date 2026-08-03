@@ -1,9 +1,9 @@
 export default {
   brand: { homeAria: 'DomainMate home' },
-  topbar: { meta: 'RDAP registry checks', credits: 'credits', freeTier: 'Free tier' },
+  topbar: { meta: 'RDAP registry checks', credits: 'credits', freeTier: 'Free tier', unlockPro: 'Unlock pro tier', proUnlocked: 'Pro unlocked' },
   intro: {
     eyebrow: 'Naming workspace',
-    title: 'Find the name before someone else does.',
+    title: 'Find an attractive domain name.',
     subtitle: 'Combine meaningful word parts, check tech-focused domains, and measure how crowded the name already is.',
   },
   form: {
@@ -97,4 +97,15 @@ export default {
     methods: { card: 'Card', secure: 'Secure checkout by Stripe' },
   },
   language: { label: 'Language' },
+  feedback: {
+    eyebrow: 'Your feedback',
+    title: 'Unlock the pro tier',
+    close: 'Close feedback dialog',
+    hint: 'Tell us what’s working or what’s missing, and we’ll unlock Google result counts, AI suggestions, price comparison, and rating sync on this device — no payment required.',
+    placeholder: 'What would make DomainMate better for you?',
+    submit: 'Send feedback & unlock',
+    submitting: 'Sending…',
+    success: 'Thanks! Pro features are now unlocked on this device.',
+    errors: { submitFailed: 'Could not send feedback. Please try again.' },
+  },
 }

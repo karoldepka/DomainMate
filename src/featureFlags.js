@@ -9,6 +9,7 @@ const defaultFlags = {
   priceComparison: false,
   payments: false,
   favoritesSync: false,
+  crashReporting: false,
 }
 
 export const flagList = [
@@ -17,6 +18,7 @@ export const flagList = [
   { key: 'priceComparison', label: 'Registrar price comparison', description: 'Calls the backend to fetch live registrar pricing.' },
   { key: 'payments', label: 'Credits & payments', description: 'Enables the Stripe checkout flow for buying research credits.' },
   { key: 'favoritesSync', label: 'Sync ratings to server', description: 'Syncs star ratings to the backend so they follow you across browsers.' },
+  { key: 'crashReporting', label: 'Send crash reports', description: 'Sends unexpected error details to the backend to help fix bugs.' },
 ]
 
 /** @returns {typeof defaultFlags} */

@@ -24,7 +24,7 @@ function openDatabase() {
 }
 
 /** @returns {Promise<string>} */
-async function getClientId() {
+export async function getClientId() {
   if (clientIdPromise) return clientIdPromise
   clientIdPromise = (async () => {
     const existing = await getValue('meta', 'clientId')

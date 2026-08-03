@@ -1,10 +1,4 @@
-import { mkdirSync } from 'node:fs'
-import { join } from 'node:path'
-import { DatabaseSync } from 'node:sqlite'
-
-const dataDirectory = join(process.cwd(), 'data')
-mkdirSync(dataDirectory, { recursive: true })
-const database = new DatabaseSync(join(dataDirectory, 'domainmate.sqlite'))
+import { database } from './database.js'
 
 database.exec(`
   CREATE TABLE IF NOT EXISTS favorites (

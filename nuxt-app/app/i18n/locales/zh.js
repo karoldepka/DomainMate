@@ -1,9 +1,9 @@
 export default {
   brand: { homeAria: 'DomainMate 首页' },
-  topbar: { meta: 'RDAP 注册局核验', credits: '积分', freeTier: '免费版' },
+  topbar: { meta: 'RDAP 注册局核验', credits: '积分', freeTier: '免费版', unlockPro: '解锁专业版', proUnlocked: '专业版已解锁' },
   intro: {
     eyebrow: '命名工作台',
-    title: '在别人之前找到这个名字。',
+    title: '寻找一个有吸引力的域名。',
     subtitle: '组合有意义的词根，检查科技类域名，并衡量该名称的拥挤程度。',
   },
   form: {
@@ -97,4 +97,15 @@ export default {
     methods: { card: '银行卡', secure: '由 Stripe 提供安全支付' },
   },
   language: { label: '语言' },
+  feedback: {
+    eyebrow: '您的反馈',
+    title: '解锁专业版',
+    close: '关闭反馈对话框',
+    hint: '告诉我们哪些功能好用、哪些还缺，我们将在此设备上解锁 Google 结果数量、AI 建议、价格比较和评分同步 — 无需付费。',
+    placeholder: '怎样才能让 DomainMate 对您更好用？',
+    submit: '发送反馈并解锁',
+    submitting: '发送中…',
+    success: '谢谢！专业版功能现已在此设备上解锁。',
+    errors: { submitFailed: '无法发送反馈，请重试。' },
+  },
 }

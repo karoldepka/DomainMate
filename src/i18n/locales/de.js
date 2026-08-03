@@ -1,9 +1,9 @@
 export default {
   brand: { homeAria: 'DomainMate Startseite' },
-  topbar: { meta: 'Prüfung in RDAP-Registern', credits: 'Credits', freeTier: 'Kostenlose Version' },
+  topbar: { meta: 'Prüfung in RDAP-Registern', credits: 'Credits', freeTier: 'Kostenlose Version', unlockPro: 'Pro-Version freischalten', proUnlocked: 'Pro freigeschaltet' },
   intro: {
     eyebrow: 'Namens-Werkstatt',
-    title: 'Finde den Namen, bevor es jemand anderes tut.',
+    title: 'Finde einen attraktiven Domainnamen.',
     subtitle: 'Kombiniere sinnvolle Wortteile, prüfe technikorientierte Domains und miss, wie überlaufen der Name bereits ist.',
   },
   form: {
@@ -97,4 +97,15 @@ export default {
     methods: { card: 'Karte', secure: 'Sichere Zahlung über Stripe' },
   },
   language: { label: 'Sprache' },
+  feedback: {
+    eyebrow: 'Dein Feedback',
+    title: 'Pro-Version freischalten',
+    close: 'Feedback-Dialog schließen',
+    hint: 'Sag uns, was gut funktioniert oder fehlt, und wir schalten Google-Ergebniszahlen, KI-Vorschläge, Preisvergleich und Bewertungssynchronisierung auf diesem Gerät frei — ohne Zahlung.',
+    placeholder: 'Was würde DomainMate für dich besser machen?',
+    submit: 'Feedback senden & freischalten',
+    submitting: 'Wird gesendet…',
+    success: 'Danke! Pro-Funktionen sind jetzt auf diesem Gerät freigeschaltet.',
+    errors: { submitFailed: 'Feedback konnte nicht gesendet werden. Bitte versuche es erneut.' },
+  },
 }

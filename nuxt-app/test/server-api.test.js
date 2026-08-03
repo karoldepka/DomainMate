@@ -137,6 +137,59 @@ test('POST /api/favorites/sync accepts a valid record and echoes it back', async
   assert.equal(data.records[0].rating, 4)
 })
 
+test('POST /api/feedback rejects a malformed client id', async () => {
+  const response = await fetch(`${baseUrl}/api/feedback`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ clientId: 'not-a-uuid', message: 'hello' }),
+  })
+  assert.equal(response.status, 400)
+})
+
+test('POST /api/feedback rejects an empty message', async () => {
+  const response = await fetch(`${baseUrl}/api/feedback`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ clientId: '33333333-3333-3333-3333-333333333333', message: '  ' }),
+  })
+  assert.equal(response.status, 400)
+})
+
+test('POST /api/feedback unlocks pro status for that client, and GET /api/feedback/status reports it', async () => {
+  const clientId = '44444444-4444-4444-4444-444444444444'
+  const submitResponse = await fetch(`${baseUrl}/api/feedback`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ clientId, message: 'More registrars please!' }),
+  })
+  assert.equal(submitResponse.status, 200)
+
+  const statusResponse = await fetch(`${baseUrl}/api/feedback/status?clientId=${clientId}`)
+  assert.equal(statusResponse.status, 200)
+  const statusData = await statusResponse.json()
+  assert.equal(statusData.unlocked, true)
+
+  const otherStatusResponse = await fetch(`${baseUrl}/api/feedback/status?clientId=55555555-5555-5555-5555-555555555555`)
+  const otherStatusData = await otherStatusResponse.json()
+  assert.equal(otherStatusData.unlocked, false)
+})
+
+test('POST /api/client-errors accepts a report and rejects a missing message', async () => {
+  const okResponse = await fetch(`${baseUrl}/api/client-errors`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ message: 'TypeError: boom', stack: 'at x.js:1:1', url: 'http://localhost/', userAgent: 'test-agent' }),
+  })
+  assert.equal(okResponse.status, 200)
+
+  const badResponse = await fetch(`${baseUrl}/api/client-errors`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ message: '' }),
+  })
+  assert.equal(badResponse.status, 400)
+})
+
 test('malformed JSON bodies get a clean JSON error, not an HTML stack trace', async () => {
   const response = await fetch(`${baseUrl}/api/favorites/sync`, {
     method: 'POST',

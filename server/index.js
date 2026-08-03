@@ -8,6 +8,8 @@ import { createCheckout, creditPacks, PaymentError, verifyCheckout } from './pay
 import { syncFavorites } from './favorites.js'
 import { compareRegistrarPrices } from './registrars.js'
 import { isAiConfigured, suggestSimilarWords } from './ai.js'
+import { hasSubmittedFeedback, submitFeedback } from './feedback.js'
+import { recordClientError } from './clientErrors.js'
 
 const app = express()
 app.disable('x-powered-by')
@@ -27,6 +29,33 @@ app.post('/api/favorites/sync', (req, res) => {
   const normalized = records.map(normalizeFavorite).filter(Boolean)
   if (normalized.length !== records.length) return res.status(400).json({ error: 'Invalid favorite record.' })
   res.json({ records: syncFavorites(clientId, normalized) })
+})
+
+app.post('/api/feedback', (req, res) => {
+  const clientId = String(req.body?.clientId || '')
+  const message = String(req.body?.message || '').trim()
+  if (!/^[0-9a-f-]{36}$/i.test(clientId)) return res.status(400).json({ error: 'Invalid client ID.' })
+  if (!message || message.length > 4000) return res.status(400).json({ error: 'Feedback must be between 1 and 4000 characters.' })
+  submitFeedback(clientId, message)
+  res.json({ ok: true })
+})
+
+app.get('/api/feedback/status', (req, res) => {
+  const clientId = String(req.query.clientId || '')
+  if (!/^[0-9a-f-]{36}$/i.test(clientId)) return res.status(400).json({ error: 'Invalid client ID.' })
+  res.json({ unlocked: hasSubmittedFeedback(clientId) })
+})
+
+app.post('/api/client-errors', (req, res) => {
+  const message = String(req.body?.message || '').trim()
+  if (!message) return res.status(400).json({ error: 'A message is required.' })
+  recordClientError({
+    message,
+    stack: req.body?.stack,
+    url: req.body?.url,
+    userAgent: req.body?.userAgent,
+  })
+  res.json({ ok: true })
 })
 
 app.get('/api/registrars/compare', async (req, res) => {

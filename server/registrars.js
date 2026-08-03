@@ -33,10 +33,13 @@ async function quotePorkbun(domain) {
 /** Domain-specific GoDaddy quote through the Domains v3 API. */
 async function quoteGoDaddy(domain) {
   const url = `https://www.godaddy.com/domainsearch/find?domainToCheck=${encodeURIComponent(domain)}`
-  if (!process.env.GODADDY_PAT) return notConfigured('GoDaddy', url)
+  const apiKey = process.env.GODADDY_API_KEY
+  const apiSecret = process.env.GODADDY_API_SECRET
+  if (!apiKey || !apiSecret) return notConfigured('GoDaddy', url)
   try {
+    // GoDaddy authenticates with an SSO key pair, not a bearer token: https://developer.godaddy.com/getstarted
     const data = await requestJson(`https://api.godaddy.com/v3/domains/check-availability?domain=${encodeURIComponent(domain)}`, {
-      headers: { Authorization: `Bearer ${process.env.GODADDY_PAT}`, Accept: 'application/json' },
+      headers: { Authorization: `sso-key ${apiKey}:${apiSecret}`, Accept: 'application/json' },
     })
     const annual = data.prices?.find((price) => price.term === 'YEAR' && price.period === 1) || data.prices?.[0]
     if (!data.available || !annual) return { registrar: 'GoDaddy', status: 'unavailable', url, message: 'Domain unavailable or unquoted.' }

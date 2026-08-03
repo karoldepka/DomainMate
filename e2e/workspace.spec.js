@@ -57,7 +57,7 @@ test.describe('naming workspace', () => {
     await page.goto('/')
     await expect(page.locator('.result-row').first()).toBeVisible()
     await page.locator('.language-select select').selectOption('pl')
-    await expect(page.locator('h1')).toHaveText('Znajdź nazwę, zanim zrobi to ktoś inny.')
+    await expect(page.locator('h1')).toHaveText('Znajdź atrakcyjną nazwę domeny.')
     await expect(page.locator('.result-row').first().locator('.status')).toHaveText('Niesprawdzone')
   })
 

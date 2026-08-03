@@ -1,9 +1,9 @@
 export default {
   brand: { homeAria: 'Inicio de DomainMate' },
-  topbar: { meta: 'Verificación en registros RDAP', credits: 'créditos', freeTier: 'Nivel gratuito' },
+  topbar: { meta: 'Verificación en registros RDAP', credits: 'créditos', freeTier: 'Nivel gratuito', unlockPro: 'Desbloquear nivel pro', proUnlocked: 'Pro desbloqueado' },
   intro: {
     eyebrow: 'Espacio de trabajo de nombres',
-    title: 'Encuentra el nombre antes de que lo haga otro.',
+    title: 'Encuentra un nombre de dominio atractivo.',
     subtitle: 'Combina fragmentos de palabras con sentido, comprueba dominios tecnológicos y mide cuán saturado está ya el nombre.',
   },
   form: {
@@ -97,4 +97,15 @@ export default {
     methods: { card: 'Tarjeta', secure: 'Pago seguro gestionado por Stripe' },
   },
   language: { label: 'Idioma' },
+  feedback: {
+    eyebrow: 'Tu opinión',
+    title: 'Desbloquea el nivel pro',
+    close: 'Cerrar diálogo de comentarios',
+    hint: 'Cuéntanos qué funciona o qué falta, y desbloquearemos los recuentos de resultados de Google, las sugerencias de IA, la comparación de precios y la sincronización de valoraciones en este dispositivo, sin necesidad de pago.',
+    placeholder: '¿Qué mejoraría DomainMate para ti?',
+    submit: 'Enviar comentarios y desbloquear',
+    submitting: 'Enviando…',
+    success: '¡Gracias! Las funciones pro ya están desbloqueadas en este dispositivo.',
+    errors: { submitFailed: 'No se pudieron enviar los comentarios. Inténtalo de nuevo.' },
+  },
 }

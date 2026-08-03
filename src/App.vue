@@ -4,7 +4,8 @@ import { storeToRefs } from 'pinia'
 import { ArrowDown, ArrowUpRight, BadgeDollarSign, Check, CircleAlert, Copy, Globe2, LoaderCircle, Search as SearchIcon, Sparkles, Star } from 'lucide-vue-next'
 import { useDomainStore } from './stores/domain'
 import PaymentDialog from './components/PaymentDialog.vue'
-import { loadAndSyncFavorites, saveRating } from './services/favorites'
+import FeedbackDialog from './components/FeedbackDialog.vue'
+import { getClientId, loadAndSyncFavorites, saveRating } from './services/favorites'
 import { locale, locales, t } from './i18n'
 import { flags } from './featureFlags'
 
@@ -15,12 +16,15 @@ const store = useDomainStore()
 const { brief, effectiveQuery, keywords, maxSyllables, maxConsonants, maxLength, maxNames, substitutions, strategies, useThesaurus, enriching, results, running, checkedCount, availableCount } = storeToRefs(store)
 const progressText = computed(() => t('results.progress', { checked: checkedCount.value, total: results.value.length }))
 const paymentDialog = useTemplateRef('paymentDialog')
+const feedbackDialog = useTemplateRef('feedbackDialog')
+const proUnlocked = computed(() => flags.searchResults && flags.aiSuggestions && flags.priceComparison && flags.favoritesSync)
 const credits = ref(Number(localStorage.getItem('domainmate.credits') || 5))
 const availableOnly = ref(true)
 const favorites = ref(new Map())
 const showFlagsPanel = ref(false)
 const logoClicks = ref(0)
 const briefPlaceholder = 'inno inter\ntech tek\n.dev .ai .com'
+const workspaceStorageKey = 'domainmate.workspace'
 let logoClickResetTimer
 /** Highest rated first, then shortest first among equally rated candidates. */
 const displayedResults = computed(() => {
@@ -45,11 +49,36 @@ const strategyOptions = [
 ]
 
 onMounted(async () => {
+  restoreSavedWorkspace()
   restoreQueryParams()
   store.generate()
   syncQueryParams()
   favorites.value = await loadAndSyncFavorites()
+  restoreProUnlock()
 })
+
+/** Restore pro-tier flags for a returning visitor who already sent feedback from this device. */
+async function restoreProUnlock() {
+  try {
+    const clientId = await getClientId()
+    const response = await fetch(`/api/feedback/status?clientId=${encodeURIComponent(clientId)}`)
+    if (!response.ok) return
+    const data = await response.json()
+    if (data.unlocked) {
+      flags.searchResults = true
+      flags.aiSuggestions = true
+      flags.priceComparison = true
+      flags.favoritesSync = true
+    }
+  } catch { /* Stay on free tier if the check fails. */ }
+}
+
+/** When there's no shareable link, re-apply the last-used workspace before restoring from the URL. */
+function restoreSavedWorkspace() {
+  if (window.location.search) return
+  const saved = localStorage.getItem(workspaceStorageKey)
+  if (saved) window.history.replaceState({}, '', `${window.location.pathname}?${saved}`)
+}
 
 watch([brief, effectiveQuery, maxSyllables, maxConsonants, maxLength, maxNames, availableOnly, useThesaurus], syncQueryParams)
 
@@ -183,6 +212,7 @@ function syncQueryParams() {
   if (!availableOnly.value) params.set('available', '0')
   const query = params.toString()
   window.history.replaceState({}, '', `${window.location.pathname}${query ? `?${query}` : ''}`)
+  try { localStorage.setItem(workspaceStorageKey, query) } catch { /* Storage can be unavailable in privacy modes. */ }
 }
 
 /** @param {URLSearchParams} params @param {string} key @param {string} value @param {string} baseline */
@@ -209,7 +239,8 @@ function normalizeList(value) { return value.split(/[\s,]+/).filter(Boolean).joi
           </select>
         </label>
         <button v-if="flags.payments" class="credit-button" type="button" @click="paymentDialog?.open()"><span>{{ credits }}</span> {{ t('topbar.credits') }}</button>
-        <span v-else class="free-tier-badge">{{ t('topbar.freeTier') }}</span>
+        <span v-else-if="proUnlocked" class="free-tier-badge">{{ t('topbar.proUnlocked') }}</span>
+        <button v-else class="free-tier-badge" type="button" @click="feedbackDialog?.open()">{{ t('topbar.unlockPro') }}</button>
       </div>
     </header>
 
@@ -334,5 +365,6 @@ function normalizeList(value) { return value.split(/[\s,]+/).filter(Boolean).joi
     <footer><span>{{ t('footer.rdap') }}</span><span>{{ t('footer.vocabularyBy') }} <a href="https://www.datamuse.com/api/" target="_blank" rel="noreferrer">Datamuse</a> · DomainMate</span></footer>
     <PaymentDialog v-if="flags.payments" ref="paymentDialog" :credits="credits" @credited="addCredits" />
     <FeatureFlagsPanel v-model="showFlagsPanel" />
+    <FeedbackDialog v-if="!proUnlocked" ref="feedbackDialog" />
   </div>
 </template>

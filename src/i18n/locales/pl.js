@@ -1,9 +1,9 @@
 export default {
   brand: { homeAria: 'Strona główna DomainMate' },
-  topbar: { meta: 'Weryfikacja w rejestrach RDAP', credits: 'kredytów', freeTier: 'Plan darmowy' },
+  topbar: { meta: 'Weryfikacja w rejestrach RDAP', credits: 'kredytów', freeTier: 'Plan darmowy', unlockPro: 'Odblokuj wersję pro', proUnlocked: 'Pro odblokowane' },
   intro: {
     eyebrow: 'Warsztat nazewnictwa',
-    title: 'Znajdź nazwę, zanim zrobi to ktoś inny.',
+    title: 'Znajdź atrakcyjną nazwę domeny.',
     subtitle: 'Łącz sensowne fragmenty słów, sprawdzaj domeny technologiczne i mierz, jak zatłoczona jest już dana nazwa.',
   },
   form: {
@@ -97,4 +97,15 @@ export default {
     methods: { card: 'Karta', secure: 'Bezpieczna płatność obsługiwana przez Stripe' },
   },
   language: { label: 'Język' },
+  feedback: {
+    eyebrow: 'Twoja opinia',
+    title: 'Odblokuj wersję pro',
+    close: 'Zamknij okno opinii',
+    hint: 'Powiedz nam, co działa dobrze, a czego brakuje, a odblokujemy liczby wyników Google, sugestie AI, porównanie cen i synchronizację ocen na tym urządzeniu — bez płatności.',
+    placeholder: 'Co poprawiłoby DomainMate dla Ciebie?',
+    submit: 'Wyślij opinię i odblokuj',
+    submitting: 'Wysyłanie…',
+    success: 'Dzięki! Funkcje pro są teraz odblokowane na tym urządzeniu.',
+    errors: { submitFailed: 'Nie udało się wysłać opinii. Spróbuj ponownie.' },
+  },
 }
