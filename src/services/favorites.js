@@ -1,3 +1,5 @@
+import { flags } from '../featureFlags.js'
+
 /** @typedef {{domain: string, rating: number, updatedAt: number}} FavoriteRecord */
 
 const databaseName = 'domainmate'
@@ -34,10 +36,11 @@ async function getClientId() {
   return clientIdPromise
 }
 
-/** Hydrate IndexedDB, migrate legacy favorites, and reconcile with the server. */
+/** Hydrate IndexedDB, and reconcile with the server only when cloud sync is enabled. */
 export async function loadAndSyncFavorites() {
   await migrateLegacyFavorites()
   const records = await getAllFavorites()
+  if (!flags.favoritesSync) return new Map(records.map((record) => [record.domain, record.rating]))
   try {
     const clientId = await getClientId()
     const response = await fetch('/api/favorites/sync', {
@@ -54,11 +57,12 @@ export async function loadAndSyncFavorites() {
   }
 }
 
-/** Persist a user rating locally first, then attempt server synchronization. */
+/** Persist a user rating locally, then sync to the server only when cloud sync is enabled. */
 export async function saveRating(domain, rating) {
   /** @type {FavoriteRecord} */
   const record = { domain, rating, updatedAt: Date.now() }
   await putValue('favorites', record)
+  if (!flags.favoritesSync) return
   try {
     const clientId = await getClientId()
     await fetch('/api/favorites/sync', {

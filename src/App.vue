@@ -6,8 +6,10 @@ import { useDomainStore } from './stores/domain'
 import PaymentDialog from './components/PaymentDialog.vue'
 import { loadAndSyncFavorites, saveRating } from './services/favorites'
 import { locale, locales, t } from './i18n'
+import { flags } from './featureFlags'
 
 const PriceComparison = defineAsyncComponent(() => import('./components/PriceComparison.vue'))
+const FeatureFlagsPanel = defineAsyncComponent(() => import('./components/FeatureFlagsPanel.vue'))
 
 const store = useDomainStore()
 const { brief, effectiveQuery, keywords, maxSyllables, maxConsonants, maxLength, maxNames, substitutions, strategies, useThesaurus, enriching, results, running, checkedCount, availableCount } = storeToRefs(store)
@@ -17,6 +19,9 @@ const credits = ref(Number(localStorage.getItem('domainmate.credits') || 5))
 const availableOnly = ref(true)
 const sortMode = ref('rating')
 const favorites = ref(new Map())
+const showFlagsPanel = ref(false)
+const logoClicks = ref(0)
+let logoClickResetTimer
 const displayedResults = computed(() => {
   const items = availableOnly.value ? results.value.filter((item) => item.availability !== 'registered') : [...results.value]
   if (sortMode.value === 'shortest') return items.sort((a, b) => ratingRank(a) - ratingRank(b) || availabilityRank(a) - availabilityRank(b) || a.name.length - b.name.length || a.name.localeCompare(b.name))
@@ -80,6 +85,17 @@ async function copyDomain(item) {
 function addCredits(amount) {
   credits.value += Number(amount)
   localStorage.setItem('domainmate.credits', String(credits.value))
+}
+
+/** Five clicks on the logo within two seconds reveals the hidden feature-flags panel. */
+function handleLogoClick() {
+  logoClicks.value += 1
+  window.clearTimeout(logoClickResetTimer)
+  logoClickResetTimer = window.setTimeout(() => { logoClicks.value = 0 }, 2000)
+  if (logoClicks.value >= 5) {
+    logoClicks.value = 0
+    showFlagsPanel.value = true
+  }
 }
 
 /** @param {{availability: string|null}} item */
@@ -190,7 +206,7 @@ function normalizeList(value) { return value.split(/[\s,]+/).filter(Boolean).joi
 <template>
   <div class="app-shell">
     <header class="topbar">
-      <a class="brand" href="/" :aria-label="t('brand.homeAria')">
+      <a class="brand" href="/" :aria-label="t('brand.homeAria')" @click.prevent="handleLogoClick">
         <span class="brand-mark"><Globe2 :size="21" stroke-width="2.2" /></span>
         <span>Domain<span>Mate</span></span>
       </a>
@@ -201,7 +217,8 @@ function normalizeList(value) { return value.split(/[\s,]+/).filter(Boolean).joi
             <option v-for="item in locales" :key="item.code" :value="item.code">{{ item.label }}</option>
           </select>
         </label>
-        <button class="credit-button" type="button" @click="paymentDialog?.open()"><span>{{ credits }}</span> {{ t('topbar.credits') }}</button>
+        <button v-if="flags.payments" class="credit-button" type="button" @click="paymentDialog?.open()"><span>{{ credits }}</span> {{ t('topbar.credits') }}</button>
+        <span v-else class="free-tier-badge">{{ t('topbar.freeTier') }}</span>
       </div>
     </header>
 
@@ -315,11 +332,11 @@ function normalizeList(value) { return value.split(/[\s,]+/).filter(Boolean).joi
               <div class="rating-stars" role="group" :aria-label="t('rating.groupAria', { name: item.name })">
                 <button v-for="n in 5" :key="n" type="button" class="star-button" :class="{ active: ratingOf(item) >= n }" :aria-label="t('rating.starAria', { n, name: item.name })" :aria-pressed="ratingOf(item) >= n" @click="setRating(item, n)"><Star :size="14" :fill="ratingOf(item) >= n ? 'currentColor' : 'none'" /></button>
               </div>
-              <button class="icon-button" :class="{ active: item.showPrices }" type="button" :title="t('actions.comparePrices')" :aria-label="t('actions.comparePricesAria', { name: item.name })" :aria-expanded="Boolean(item.showPrices)" @click="item.showPrices = !item.showPrices"><BadgeDollarSign :size="18" /></button>
+              <button v-if="flags.priceComparison" class="icon-button" :class="{ active: item.showPrices }" type="button" :title="t('actions.comparePrices')" :aria-label="t('actions.comparePricesAria', { name: item.name })" :aria-expanded="Boolean(item.showPrices)" @click="item.showPrices = !item.showPrices"><BadgeDollarSign :size="18" /></button>
               <button v-if="item.status === 'idle' || item.status === 'error'" class="icon-button" type="button" :title="t('actions.checkDomain')" :aria-label="t('actions.checkDomainAria', { name: item.name })" @click="store.checkOne(item)"><SearchIcon :size="17" /></button>
               <a class="icon-button" :href="googleUrl(item)" target="_blank" rel="noreferrer" :title="t('actions.searchGoogle')" :aria-label="t('actions.searchGoogleAria', { name: item.name })"><ArrowUpRight :size="18" /></a>
             </div>
-            <PriceComparison v-if="item.showPrices" :domain="item.name" />
+            <PriceComparison v-if="flags.priceComparison && item.showPrices" :domain="item.name" />
           </article>
           <p v-if="availableOnly && displayedResults.length === 0" class="empty-results">{{ t('results.empty') }}</p>
         </div>
@@ -327,6 +344,7 @@ function normalizeList(value) { return value.split(/[\s,]+/).filter(Boolean).joi
     </main>
 
     <footer><span>{{ t('footer.rdap') }}</span><span>{{ t('footer.vocabularyBy') }} <a href="https://www.datamuse.com/api/" target="_blank" rel="noreferrer">Datamuse</a> · DomainMate</span></footer>
-    <PaymentDialog ref="paymentDialog" :credits="credits" @credited="addCredits" />
+    <PaymentDialog v-if="flags.payments" ref="paymentDialog" :credits="credits" @credited="addCredits" />
+    <FeatureFlagsPanel v-model="showFlagsPanel" />
   </div>
 </template>

@@ -1,5 +1,6 @@
 import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
+import { flags } from '../featureFlags.js'
 
 /** @typedef {'idle'|'checking'|'done'|'error'} CheckStatus */
 /** @typedef {'available'|'registered'|'unknown'|null} Availability */
@@ -106,7 +107,10 @@ export const useDomainStore = defineStore('domains', () => {
     try {
       const words = unique(brief.value.split(/[\s,]+/).map(clean).filter((word) => /^[it][a-z]{2,}$/.test(word))).slice(0, 6)
       const additions = await Promise.all(words.map(async (word) => {
-        const [datamuse, ai] = await Promise.all([fetchSynonyms(word, maxSyllables.value), fetchAiSynonyms(word, maxSyllables.value)])
+        const [datamuse, ai] = await Promise.all([
+          fetchSynonyms(word, maxSyllables.value),
+          flags.aiSuggestions ? fetchAiSynonyms(word, maxSyllables.value) : Promise.resolve([]),
+        ])
         return unique([...datamuse, ...ai])
       }))
       const iAdditions = unique(additions.flat().filter((word) => word.startsWith('i')))
@@ -138,7 +142,7 @@ export const useDomainStore = defineStore('domains', () => {
     try {
       const [availability, search] = await Promise.all([
         checkDomainInBrowser(item.name),
-        checkSearchOnServer(item.name, keywords.value),
+        flags.searchResults ? checkSearchOnServer(item.name, keywords.value) : Promise.resolve(null),
       ])
       const data = { ...availability, search }
       writeCachedLookup(item.name, keywords.value, data)

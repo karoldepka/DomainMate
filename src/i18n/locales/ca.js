@@ -1,6 +1,6 @@
 export default {
   brand: { homeAria: 'Inici de DomainMate' },
-  topbar: { meta: 'Verificació als registres RDAP', credits: 'crèdits' },
+  topbar: { meta: 'Verificació als registres RDAP', credits: 'crèdits', freeTier: 'Nivell gratuït' },
   intro: {
     eyebrow: 'Espai de treball de noms',
     title: 'Troba el nom abans que ho faci algú altre.',

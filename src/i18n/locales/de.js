@@ -1,6 +1,6 @@
 export default {
   brand: { homeAria: 'DomainMate Startseite' },
-  topbar: { meta: 'Prüfung in RDAP-Registern', credits: 'Credits' },
+  topbar: { meta: 'Prüfung in RDAP-Registern', credits: 'Credits', freeTier: 'Kostenlose Version' },
   intro: {
     eyebrow: 'Namens-Werkstatt',
     title: 'Finde den Namen, bevor es jemand anderes tut.',
