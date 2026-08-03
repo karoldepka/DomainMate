@@ -11,8 +11,6 @@ import { defineStore } from 'pinia'
 const clean = (value) => value.toLowerCase().replace(/[^a-z0-9]/g, '')
 /** @param {string[]} items */
 const unique = (items) => [...new Set(items.filter(Boolean))]
-/** @param {string} value */
-const caps = (value) => value ? value[0].toUpperCase() + value.slice(1) : ''
 const lookupCacheKey = 'domainmate.lookupCache.v2'
 const lookupCacheTtl = 15 * 60 * 1000
 const defaultBrief = 'inno Inter tech tek .dev .ai .com'
@@ -93,7 +91,7 @@ export const useDomainStore = defineStore('domains', () => {
     results.value = names.flatMap((name) => query.tlds.map((tld) => ({
       id: `${name}.${tld}`,
       name: `${name}.${tld}`,
-      brand: caps(name),
+      brand: name,
       tld,
       status: 'idle',
       availability: null,
