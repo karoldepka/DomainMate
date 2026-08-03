@@ -45,3 +45,22 @@ test('checking domains updates their status, and Available only keeps just the a
   await page.getByLabel('Available only').uncheck()
   await expect(registeredRow.locator('.status.registered')).toBeVisible()
 })
+
+test('a live HTTPS response marks a domain registered without reaching DNS or RDAP', async ({ page }) => {
+  await page.goto('/')
+  const rows = page.locator('.result-row')
+  await expect(rows.first()).toBeVisible()
+  const href = await page.locator('.domain-link').first().getAttribute('href')
+  const domain = new URL(href).hostname
+  const row = rows.filter({ has: page.locator(`a[href="${href}"]`) })
+
+  let dnsOrRdapCalled = false
+  await page.route(`https://${domain}/`, (route) => route.fulfill({ status: 200, body: '' }))
+  await page.route('https://dns.google/**', (route) => { dnsOrRdapCalled = true; return route.abort() })
+  await page.route('https://rdap.org/**', (route) => { dnsOrRdapCalled = true; return route.abort() })
+
+  await page.getByLabel('Available only').uncheck()
+  await row.getByRole('button', { name: `Check ${domain}` }).click()
+  await expect(row.locator('.status.registered')).toBeVisible({ timeout: 10000 })
+  expect(dnsOrRdapCalled).toBe(false)
+})

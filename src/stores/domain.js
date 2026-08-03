@@ -276,8 +276,9 @@ async function checkDomainInBrowser(domain) {
 /** A successful opaque response proves that the domain has an HTTPS endpoint. */
 async function respondsOverHttps(domain) {
   try {
+    // no-cors requests only support redirect:'follow'; 'manual'/'error' throw immediately.
     await fetch(`https://${domain}/`, {
-      method: 'HEAD', mode: 'no-cors', cache: 'no-store', redirect: 'manual',
+      method: 'HEAD', mode: 'no-cors', cache: 'no-store', redirect: 'follow',
       referrerPolicy: 'no-referrer', signal: AbortSignal.timeout(2500),
     })
     return true
