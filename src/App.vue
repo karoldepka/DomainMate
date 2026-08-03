@@ -17,17 +17,14 @@ const progressText = computed(() => t('results.progress', { checked: checkedCoun
 const paymentDialog = useTemplateRef('paymentDialog')
 const credits = ref(Number(localStorage.getItem('domainmate.credits') || 5))
 const availableOnly = ref(true)
-const sortMode = ref('rating')
 const favorites = ref(new Map())
 const showFlagsPanel = ref(false)
 const logoClicks = ref(0)
 let logoClickResetTimer
+/** Highest rated first, then shortest first among equally rated candidates. */
 const displayedResults = computed(() => {
   const items = availableOnly.value ? results.value.filter((item) => item.availability !== 'registered') : [...results.value]
-  if (sortMode.value === 'shortest') return items.sort((a, b) => ratingRank(a) - ratingRank(b) || availabilityRank(a) - availabilityRank(b) || a.name.length - b.name.length || a.name.localeCompare(b.name))
-  if (sortMode.value === 'longest') return items.sort((a, b) => ratingRank(a) - ratingRank(b) || availabilityRank(a) - availabilityRank(b) || b.name.length - a.name.length || a.name.localeCompare(b.name))
-  if (sortMode.value === 'available') return items.sort((a, b) => ratingRank(a) - ratingRank(b) || availabilityRank(a) - availabilityRank(b))
-  return items.sort((a, b) => ratingRank(a) - ratingRank(b))
+  return items.sort((a, b) => ratingRank(a) - ratingRank(b) || a.name.length - b.name.length || a.name.localeCompare(b.name))
 })
 const iParts = computed({ get: () => getQueryLine('I'), set: (value) => setQueryLine('I', value) })
 const tParts = computed({ get: () => getQueryLine('T'), set: (value) => setQueryLine('T', value) })
@@ -53,7 +50,7 @@ onMounted(async () => {
   favorites.value = await loadAndSyncFavorites()
 })
 
-watch([brief, effectiveQuery, maxSyllables, maxConsonants, maxLength, maxNames, availableOnly, useThesaurus, sortMode], syncQueryParams)
+watch([brief, effectiveQuery, maxSyllables, maxConsonants, maxLength, maxNames, availableOnly, useThesaurus], syncQueryParams)
 
 /** Enrich parts, generate candidates, and begin availability checks. */
 async function submit() { await store.enrichWithThesaurus(); store.generate(); store.checkAll() }
@@ -96,13 +93,6 @@ function handleLogoClick() {
     logoClicks.value = 0
     showFlagsPanel.value = true
   }
-}
-
-/** @param {{availability: string|null}} item */
-function availabilityRank(item) {
-  if (item.availability === 'available') return 0
-  if (item.availability === 'registered') return 2
-  return 1
 }
 
 /** @param {{name: string}} item */
@@ -153,7 +143,6 @@ function restoreQueryParams() {
   if (params.has('length')) maxLength.value = Number(params.get('length')) || 'innotek'.length
   if (params.has('maxNames')) maxNames.value = Number(params.get('maxNames')) || 150
   if (params.has('available')) availableOnly.value = params.get('available') === '1'
-  sortMode.value = params.get('sort') || 'rating'
   store.expandBrief()
   if (params.has('i')) setQueryLine('I', params.get('i') || '')
   if (params.has('t')) setQueryLine('T', params.get('t') || '')
@@ -189,7 +178,6 @@ function syncQueryParams() {
   setOverride(params, 'maxNames', getQueryLine('MAX_NAMES'), String(store.defaults.maxNames))
   if (!useThesaurus.value) params.set('thesaurus', '0')
   if (!availableOnly.value) params.set('available', '0')
-  if (sortMode.value !== 'rating') params.set('sort', sortMode.value)
   const query = params.toString()
   window.history.replaceState({}, '', `${window.location.pathname}${query ? `?${query}` : ''}`)
 }
@@ -236,7 +224,7 @@ function normalizeList(value) { return value.split(/[\s,]+/).filter(Boolean).joi
               <label for="brief">{{ t('form.briefLabel') }}</label>
               <div class="input-wrap featured-input">
                 <Sparkles :size="20" />
-                <input id="brief" v-model.trim="brief" name="brief" type="text" required minlength="2" maxlength="240" placeholder="inno Inter tech tek .dev .ai .com" autocomplete="off" @change="store.expandBrief" />
+                <textarea id="brief" v-model.trim="brief" name="brief" rows="3" required minlength="2" maxlength="240" placeholder="inno Inter tech tek .dev .ai .com" autocomplete="off" @change="store.expandBrief"></textarea>
                 <button class="expand-button" type="button" @click="store.expandBrief">{{ t('form.expand') }} <ArrowDown :size="16" /></button>
               </div>
             </div>
@@ -293,12 +281,6 @@ function normalizeList(value) { return value.split(/[\s,]+/).filter(Boolean).joi
             <p v-if="results.length">{{ progressText }}<template v-if="availableCount"> · <strong>{{ t('results.available', { count: availableCount }) }}</strong></template></p>
           </div>
           <div class="result-filters">
-            <select v-model="sortMode" class="sort-select" :aria-label="t('results.sortAria')">
-              <option value="rating">{{ t('sort.rating') }}</option>
-              <option value="available">{{ t('sort.available') }}</option>
-              <option value="shortest">{{ t('sort.shortest') }}</option>
-              <option value="longest">{{ t('sort.longest') }}</option>
-            </select>
             <label class="available-filter"><input v-model="availableOnly" type="checkbox" />{{ t('filters.availableOnly') }}</label>
             <button v-if="results.length && !running && checkedCount < results.length" class="secondary-button" type="button" @click="store.checkAll">{{ t('filters.checkAll') }}</button>
           </div>

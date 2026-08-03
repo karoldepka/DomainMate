@@ -34,16 +34,9 @@ export default {
   },
   results: {
     heading: 'Domain candidates',
-    sortAria: 'Sort domain candidates',
     progress: '{checked} of {total} checked',
     available: '{count} available',
     empty: 'No available domains in the checked results.',
-  },
-  sort: {
-    rating: 'Highest rated first',
-    available: 'Available first',
-    shortest: 'Available: shortest first',
-    longest: 'Available: longest first',
   },
   filters: { availableOnly: 'Available only', checkAll: 'Check all' },
   table: { candidate: 'Candidate', status: 'Domain status', google: 'Google results' },

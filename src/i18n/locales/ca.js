@@ -34,16 +34,9 @@ export default {
   },
   results: {
     heading: 'Dominis candidats',
-    sortAria: 'Ordena els dominis candidats',
     progress: '{checked} de {total} comprovats',
     available: '{count} disponibles',
     empty: 'No hi ha dominis disponibles en els resultats comprovats.',
-  },
-  sort: {
-    rating: 'Millor valorats primer',
-    available: 'Disponibles primer',
-    shortest: 'Disponibles: més curts primer',
-    longest: 'Disponibles: més llargs primer',
   },
   filters: { availableOnly: 'Només disponibles', checkAll: 'Comprova-ho tot' },
   table: { candidate: 'Candidat', status: 'Estat del domini', google: 'Resultats de Google' },

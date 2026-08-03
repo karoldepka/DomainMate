@@ -34,16 +34,9 @@ export default {
   },
   results: {
     heading: '候选域名',
-    sortAria: '对候选域名排序',
     progress: '已检查 {checked} / {total}',
     available: '{count} 个可用',
     empty: '已检查的结果中没有可用域名。',
-  },
-  sort: {
-    rating: '评分最高优先',
-    available: '可用优先',
-    shortest: '可用：从最短开始',
-    longest: '可用：从最长开始',
   },
   filters: { availableOnly: '仅显示可用', checkAll: '全部检查' },
   table: { candidate: '候选名称', status: '域名状态', google: 'Google 结果' },

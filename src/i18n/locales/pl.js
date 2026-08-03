@@ -34,16 +34,9 @@ export default {
   },
   results: {
     heading: 'Kandydaci na domenę',
-    sortAria: 'Sortuj kandydatów na domenę',
     progress: 'Sprawdzono {checked} z {total}',
     available: '{count} dostępnych',
     empty: 'Brak dostępnych domen w sprawdzonych wynikach.',
-  },
-  sort: {
-    rating: 'Od najwyżej ocenionych',
-    available: 'Najpierw dostępne',
-    shortest: 'Dostępne: od najkrótszych',
-    longest: 'Dostępne: od najdłuższych',
   },
   filters: { availableOnly: 'Tylko dostępne', checkAll: 'Sprawdź wszystkie' },
   table: { candidate: 'Kandydat', status: 'Status domeny', google: 'Wyniki Google' },

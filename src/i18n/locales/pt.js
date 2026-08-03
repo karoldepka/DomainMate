@@ -34,16 +34,9 @@ export default {
   },
   results: {
     heading: 'Domínios candidatos',
-    sortAria: 'Ordenar domínios candidatos',
     progress: '{checked} de {total} verificados',
     available: '{count} disponíveis',
     empty: 'Não há domínios disponíveis nos resultados verificados.',
-  },
-  sort: {
-    rating: 'Mais bem avaliados primeiro',
-    available: 'Disponíveis primeiro',
-    shortest: 'Disponíveis: mais curtos primeiro',
-    longest: 'Disponíveis: mais longos primeiro',
   },
   filters: { availableOnly: 'Apenas disponíveis', checkAll: 'Verificar tudo' },
   table: { candidate: 'Candidato', status: 'Estado do domínio', google: 'Resultados do Google' },

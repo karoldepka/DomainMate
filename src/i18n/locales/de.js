@@ -34,16 +34,9 @@ export default {
   },
   results: {
     heading: 'Domain-Kandidaten',
-    sortAria: 'Domain-Kandidaten sortieren',
     progress: '{checked} von {total} geprüft',
     available: '{count} verfügbar',
     empty: 'Keine verfügbaren Domains in den geprüften Ergebnissen.',
-  },
-  sort: {
-    rating: 'Beste Bewertung zuerst',
-    available: 'Verfügbare zuerst',
-    shortest: 'Verfügbar: kürzeste zuerst',
-    longest: 'Verfügbar: längste zuerst',
   },
   filters: { availableOnly: 'Nur verfügbare', checkAll: 'Alle prüfen' },
   table: { candidate: 'Kandidat', status: 'Domain-Status', google: 'Google-Ergebnisse' },

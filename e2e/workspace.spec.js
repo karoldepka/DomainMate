@@ -26,10 +26,9 @@ test.describe('naming workspace', () => {
     await expect(link).toHaveAttribute('target', '_blank')
   })
 
-  test('sorting by shortest orders unrated results by name length', async ({ page }) => {
+  test('unrated results are sorted shortest first by default', async ({ page }) => {
     await page.goto('/')
     await expect(page.locator('.result-row').first()).toBeVisible()
-    await page.locator('.sort-select').selectOption('shortest')
     const hrefs = await page.locator('.domain-link').evaluateAll((links) => links.slice(0, 20).map((link) => link.getAttribute('href')))
     const lengths = hrefs.map((href) => new URL(href).hostname.length)
     expect(lengths).toEqual([...lengths].sort((a, b) => a - b))
