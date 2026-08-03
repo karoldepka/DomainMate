@@ -17,6 +17,7 @@ export default {
     strategiesLegend: 'Estratègies de generació',
     maxSyllables: 'Màx. de síl·labes',
     maxConsonants: 'Màx. de consonants seguides',
+    maxLength: 'Màx. de caràcters',
     baseNames: 'Noms base',
     checking: 'Comprovant noms',
     generate: 'Genera i comprova',

@@ -1,4 +1,5 @@
 import 'dotenv/config'
+import { fileURLToPath } from 'node:url'
 import express from 'express'
 import { getSearchProvider, getSearchProviderStatus } from './searchProviders.js'
 import { createCheckout, creditPacks, PaymentError, verifyCheckout } from './payments.js'
@@ -184,9 +185,13 @@ async function checkSearch(domain, keywords) {
   }
 }
 
-app.listen(port, () => {
-  console.log(`DomainMate API listening on http://localhost:${port}`)
-})
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  app.listen(port, () => {
+    console.log(`DomainMate API listening on http://localhost:${port}`)
+  })
+}
+
+export { app }
 
 /** Only return known local or explicitly configured origins for Stripe redirects. */
 function getAllowedOrigin(req) {

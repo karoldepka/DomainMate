@@ -17,6 +17,7 @@ export default {
     strategiesLegend: 'Stratégies de génération',
     maxSyllables: 'Syllabes max.',
     maxConsonants: 'Consonnes consécutives max.',
+    maxLength: 'Caractères max.',
     baseNames: 'Noms de base',
     checking: 'Vérification des noms',
     generate: 'Générer et vérifier',

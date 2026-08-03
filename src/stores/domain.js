@@ -5,7 +5,7 @@ import { defineStore } from 'pinia'
 /** @typedef {'available'|'registered'|'unknown'|null} Availability */
 /** @typedef {{provider?: string, status: string, query?: string, totalResults?: number, countKind?: 'exact'|'estimated'|'returned'}} SearchResult */
 /** @typedef {{id: string, name: string, brand: string, tld: string, status: CheckStatus, availability: Availability, availabilityNote?: string, search: SearchResult|null, copied?: boolean}} DomainCandidate */
-/** @typedef {{iRoots: string[], tRoots: string[], tlds: string[], context: string, substitutions: string[], strategies: string[], maxSyllables: number, maxConsonants: number, maxNames: number}} EffectiveQuery */
+/** @typedef {{iRoots: string[], tRoots: string[], tlds: string[], context: string, substitutions: string[], strategies: string[], maxSyllables: number, maxConsonants: number, maxLength: number, maxNames: number}} EffectiveQuery */
 
 /** @param {string} value */
 const clean = (value) => value.toLowerCase().replace(/[^a-z0-9]/g, '')
@@ -25,6 +25,7 @@ export const useDomainStore = defineStore('domains', () => {
   const keywords = ref('innovation technology')
   const maxSyllables = ref(3)
   const maxConsonants = ref(2)
+  const maxLength = ref('innotek'.length)
   const substitutions = ref([...defaultSubstitutions])
   const useThesaurus = ref(true)
   const enriching = ref(false)
@@ -49,6 +50,7 @@ export const useDomainStore = defineStore('domains', () => {
       `STRATEGIES: ${strategies.value.join(', ')}`,
       `MAX_SYLLABLES: ${maxSyllables.value}`,
       `MAX_CONSONANTS: ${maxConsonants.value}`,
+      `MAX_LENGTH: ${maxLength.value}`,
       `MAX_NAMES: ${maxNames.value}`,
     ].join('\n')
   }
@@ -72,6 +74,7 @@ export const useDomainStore = defineStore('domains', () => {
     keywords.value = query.context || keywords.value
     maxSyllables.value = query.maxSyllables
     maxConsonants.value = query.maxConsonants
+    maxLength.value = query.maxLength
     substitutions.value = query.substitutions
     strategies.value = query.strategies
     maxNames.value = query.maxNames
@@ -80,7 +83,7 @@ export const useDomainStore = defineStore('domains', () => {
     const tVariants = dedupeVariants(query.tRoots.flatMap((root) => spellingVariantRecords(root, query.substitutions)))
     const candidates = dedupeCandidates(iVariants.flatMap((left) => tVariants.flatMap((right) =>
       generateCreativeNames(left.name, right.name, query.strategies, query.maxConsonants, left.editCost + right.editCost))))
-      .filter(({ name }) => name.length >= 4 && name.length <= 24)
+      .filter(({ name }) => name.length >= 4 && name.length <= query.maxLength)
       .filter(({ name }) => countSyllables(name) <= query.maxSyllables)
       .filter(({ name }) => longestConsonantRun(name) <= query.maxConsonants)
       .filter(({ name, strategy }) => strategy === 'reverse' || (name.startsWith('i') && name.includes('t')))
@@ -161,8 +164,8 @@ export const useDomainStore = defineStore('domains', () => {
   }
 
   expandBrief()
-  const defaults = { brief: defaultBrief, substitutions: defaultSubstitutions, strategies: defaultStrategies, maxSyllables: 3, maxConsonants: 2, maxNames: 150 }
-  return { brief, effectiveQuery, keywords, maxSyllables, maxConsonants, maxNames, substitutions, strategies, useThesaurus, enriching, results, running, checkedCount, availableCount, defaults, getBriefDefaults, expandBrief, enrichWithThesaurus, generate, checkOne, checkAll }
+  const defaults = { brief: defaultBrief, substitutions: defaultSubstitutions, strategies: defaultStrategies, maxSyllables: 3, maxConsonants: 2, maxLength: 'innotek'.length, maxNames: 150 }
+  return { brief, effectiveQuery, keywords, maxSyllables, maxConsonants, maxLength, maxNames, substitutions, strategies, useThesaurus, enriching, results, running, checkedCount, availableCount, defaults, getBriefDefaults, expandBrief, enrichWithThesaurus, generate, checkOne, checkAll }
 })
 
 /** Parse free-form words and extensions into their semantic groups. */
@@ -530,7 +533,7 @@ function phoneticFamily(name) {
 /** @param {string} source @returns {EffectiveQuery} */
 function parseEffectiveQuery(source) {
   /** @type {EffectiveQuery} */
-  const parsed = { iRoots: [], tRoots: [], tlds: [], context: '', substitutions: [], strategies: [], maxSyllables: 3, maxConsonants: 2, maxNames: 150 }
+  const parsed = { iRoots: [], tRoots: [], tlds: [], context: '', substitutions: [], strategies: [], maxSyllables: 3, maxConsonants: 2, maxLength: 'innotek'.length, maxNames: 150 }
   for (const line of source.split('\n')) {
     const [rawKey, ...rest] = line.split(':')
     const key = rawKey.trim().toUpperCase()
@@ -544,6 +547,7 @@ function parseEffectiveQuery(source) {
     if (key === 'STRATEGIES') parsed.strategies = value.split(/[\s,]+/).filter((strategy) => /^[a-z]+$/.test(strategy))
     if (key === 'MAX_SYLLABLES') parsed.maxSyllables = clampOption(value, 1, 8, 3)
     if (key === 'MAX_CONSONANTS') parsed.maxConsonants = clampOption(value, 1, 6, 2)
+    if (key === 'MAX_LENGTH') parsed.maxLength = clampOption(value, 4, 24, 'innotek'.length)
     if (key === 'MAX_NAMES') parsed.maxNames = clampOption(value, 1, 400, 150)
   }
   if (!parsed.substitutions.length) parsed.substitutions = [...defaultSubstitutions]

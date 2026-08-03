@@ -1,12 +1,10 @@
-import { ChatAnthropic } from '@langchain/anthropic'
-import { HumanMessage, SystemMessage } from '@langchain/core/messages'
-
 let model
 
-/** @returns {ChatAnthropic|null} */
-function getModel() {
+/** Defer LangChain's (heavy) import until a request actually needs it. @returns {Promise<import('@langchain/anthropic').ChatAnthropic|null>} */
+async function getModel() {
   if (!process.env.ANTHROPIC_API_KEY) return null
   if (!model) {
+    const { ChatAnthropic } = await import('@langchain/anthropic')
     model = new ChatAnthropic({
       apiKey: process.env.ANTHROPIC_API_KEY,
       model: 'claude-3-5-haiku-latest',

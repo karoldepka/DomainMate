@@ -10,7 +10,7 @@ import { locale, locales, t } from './i18n'
 const PriceComparison = defineAsyncComponent(() => import('./components/PriceComparison.vue'))
 
 const store = useDomainStore()
-const { brief, effectiveQuery, keywords, maxSyllables, maxConsonants, maxNames, substitutions, strategies, useThesaurus, enriching, results, running, checkedCount, availableCount } = storeToRefs(store)
+const { brief, effectiveQuery, keywords, maxSyllables, maxConsonants, maxLength, maxNames, substitutions, strategies, useThesaurus, enriching, results, running, checkedCount, availableCount } = storeToRefs(store)
 const progressText = computed(() => t('results.progress', { checked: checkedCount.value, total: results.value.length }))
 const paymentDialog = useTemplateRef('paymentDialog')
 const credits = ref(Number(localStorage.getItem('domainmate.credits') || 5))
@@ -48,7 +48,7 @@ onMounted(async () => {
   favorites.value = await loadAndSyncFavorites()
 })
 
-watch([brief, effectiveQuery, maxSyllables, maxConsonants, maxNames, availableOnly, useThesaurus, sortMode], syncQueryParams)
+watch([brief, effectiveQuery, maxSyllables, maxConsonants, maxLength, maxNames, availableOnly, useThesaurus, sortMode], syncQueryParams)
 
 /** Enrich parts, generate candidates, and begin availability checks. */
 async function submit() { await store.enrichWithThesaurus(); store.generate(); store.checkAll() }
@@ -134,7 +134,8 @@ function restoreQueryParams() {
   if (params.has('brief')) brief.value = params.get('brief') || brief.value
   if (params.has('syllables')) maxSyllables.value = Number(params.get('syllables')) || 3
   if (params.has('consonants')) maxConsonants.value = Number(params.get('consonants')) || 2
-  if (params.has('maxNames')) maxNames.value = Number(params.get('maxNames')) || 40
+  if (params.has('length')) maxLength.value = Number(params.get('length')) || 'innotek'.length
+  if (params.has('maxNames')) maxNames.value = Number(params.get('maxNames')) || 150
   if (params.has('available')) availableOnly.value = params.get('available') === '1'
   sortMode.value = params.get('sort') || 'rating'
   store.expandBrief()
@@ -168,6 +169,7 @@ function syncQueryParams() {
   setOverride(params, 'strategies', normalizeList(getQueryLine('STRATEGIES')), store.defaults.strategies.join(','))
   setOverride(params, 'syllables', getQueryLine('MAX_SYLLABLES'), String(store.defaults.maxSyllables))
   setOverride(params, 'consonants', getQueryLine('MAX_CONSONANTS'), String(store.defaults.maxConsonants))
+  setOverride(params, 'length', getQueryLine('MAX_LENGTH'), String(store.defaults.maxLength))
   setOverride(params, 'maxNames', getQueryLine('MAX_NAMES'), String(store.defaults.maxNames))
   if (!useThesaurus.value) params.set('thesaurus', '0')
   if (!availableOnly.value) params.set('available', '0')
@@ -255,6 +257,7 @@ function normalizeList(value) { return value.split(/[\s,]+/).filter(Boolean).joi
             <div class="generation-options">
               <label for="max-syllables">{{ t('form.maxSyllables') }} <input id="max-syllables" v-model.number="maxSyllables" type="number" min="1" max="8" @change="setQueryLine('MAX_SYLLABLES', String(maxSyllables))" /></label>
               <label for="max-consonants">{{ t('form.maxConsonants') }} <input id="max-consonants" v-model.number="maxConsonants" type="number" min="1" max="6" @change="setQueryLine('MAX_CONSONANTS', String(maxConsonants))" /></label>
+              <label for="max-length">{{ t('form.maxLength') }} <input id="max-length" v-model.number="maxLength" type="number" min="4" max="24" @change="setQueryLine('MAX_LENGTH', String(maxLength))" /></label>
               <label for="max-names">{{ t('form.baseNames') }} <input id="max-names" v-model.number="maxNames" type="number" min="1" max="400" @change="setQueryLine('MAX_NAMES', String(maxNames))" /></label>
             </div>
             <button class="primary-button" type="submit" :disabled="running">

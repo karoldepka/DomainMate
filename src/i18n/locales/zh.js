@@ -17,6 +17,7 @@ export default {
     strategiesLegend: '生成策略',
     maxSyllables: '最大音节数',
     maxConsonants: '最大连续辅音数',
+    maxLength: '最大字符数',
     baseNames: '基础名称数量',
     checking: '正在检查名称',
     generate: '生成并检查',

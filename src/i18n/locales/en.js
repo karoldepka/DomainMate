@@ -17,6 +17,7 @@ export default {
     strategiesLegend: 'Generation strategies',
     maxSyllables: 'Max syllables',
     maxConsonants: 'Max consonants in a row',
+    maxLength: 'Max characters',
     baseNames: 'Base names',
     checking: 'Checking names',
     generate: 'Generate & check',

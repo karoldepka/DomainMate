@@ -8,6 +8,7 @@ function createStore() {
   setActivePinia(createPinia())
   const store = useDomainStore()
   store.brief = 'inno inter tech tek topic .dev .ai .com'
+  store.maxLength = 24
   store.expandBrief()
   store.generate()
   return store
@@ -86,6 +87,22 @@ test('maxNames caps the base names before multiplying by the TLD count', () => {
   store.generate()
   assert.ok(store.results.length > 0)
   assert.ok(store.results.length <= 30)
+})
+
+test('maxLength defaults to "innotek".length and excludes longer base names', () => {
+  const store = createStore()
+  assert.equal(store.maxLength, 24)
+
+  setActivePinia(createPinia())
+  const defaultStore = useDomainStore()
+  assert.equal(defaultStore.maxLength, 'innotek'.length)
+  defaultStore.brief = 'inno inter tech tek topic .dev .ai .com'
+  defaultStore.expandBrief()
+  defaultStore.generate()
+  const names = [...new Set(defaultStore.results.map(({ brand }) => brand.toLowerCase()))]
+  assert.ok(names.every((name) => name.length <= 7))
+  assert.ok(names.includes('innotek'))
+  assert.ok(!names.includes('intertech'))
 })
 
 test('every result is assigned one of the requested TLDs', () => {
