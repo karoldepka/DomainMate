@@ -55,15 +55,15 @@ main { flex: 1; width: min(1180px, calc(100% - 48px)); margin: 0 auto; }
 .options-row.compact-options { grid-template-columns: 1fr auto; align-items: center; margin-top: 20px; }
 .query-hint { margin: 0; color: #75817b; font-size: 12px; line-height: 1.55; }
 .query-hint strong { color: #4b5b53; }
-.generation-options { display: flex; align-items: center; gap: 22px; }
-.generation-options label { display: flex; align-items: center; gap: 9px; color: #56645d; font-size: 12px; font-weight: 700; }
+.generation-options { display: flex; align-items: center; flex-wrap: wrap; gap: 14px 22px; }
+.generation-options label { display: flex; align-items: center; gap: 9px; color: #56645d; font-size: 12px; font-weight: 700; white-space: nowrap; }
 .generation-options input { width: 58px; min-height: 40px; padding: 0 7px; border: 1px solid #cbd5d0; border-radius: 5px; color: #17211d; background: white; text-align: center; }
 fieldset { min-width: 0; margin: 0; padding: 0; border: 0; }
 .tld-options { display: flex; gap: 7px; }
 .tld-options label { min-height: 48px; display: flex; align-items: center; padding: 0 15px; border: 1px solid #cdd5d1; border-radius: 6px; cursor: pointer; color: #53615b; font-weight: 600; }
 .tld-options label.active { background: #e8f4ef; border-color: #6cae95; color: #125f45; }
 .tld-options input { position: absolute; width: 1px; height: 1px; clip-path: inset(50%); }
-.primary-button, .secondary-button { min-height: 48px; display: inline-flex; align-items: center; justify-content: center; gap: 9px; padding: 0 20px; border: 0; border-radius: 6px; cursor: pointer; font-weight: 700; }
+.primary-button, .secondary-button { min-height: 48px; display: inline-flex; align-items: center; justify-content: center; gap: 9px; padding: 0 20px; border: 0; border-radius: 6px; cursor: pointer; font-weight: 700; white-space: nowrap; flex: 0 0 auto; }
 .primary-button { color: white; background: #176b52; box-shadow: 0 4px 10px rgba(23,107,82,.2); }
 .primary-button:hover { background: #115c45; }
 .primary-button:disabled { opacity: .6; cursor: wait; }
