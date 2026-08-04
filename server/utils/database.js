@@ -37,10 +37,12 @@ async function initializeSchema(sql) {
       client_id TEXT NOT NULL,
       domain TEXT NOT NULL,
       rating SMALLINT NOT NULL CHECK (rating BETWEEN 0 AND 5),
+      comment TEXT NOT NULL DEFAULT '',
       updated_at BIGINT NOT NULL,
       PRIMARY KEY (client_id, domain)
     )
   `
+  await sql`ALTER TABLE domainmate.favorites ADD COLUMN IF NOT EXISTS comment TEXT NOT NULL DEFAULT ''`
   await sql`CREATE INDEX IF NOT EXISTS favorites_updated_at_idx ON domainmate.favorites (updated_at)`
   await sql`
     CREATE TABLE IF NOT EXISTS domainmate.feedback (

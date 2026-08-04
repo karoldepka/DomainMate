@@ -2,7 +2,7 @@
 import { computed, onMounted, ref, useTemplateRef, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useDomainStore } from '../stores/domain.js'
-import { getClientId, loadAndSyncFavorites, saveRating } from '../services/favorites.js'
+import { getClientId, loadAndSyncFavorites, saveComment, saveRating } from '../services/favorites.js'
 import { locale, locales, t } from '../i18n/index.js'
 import { flags, proUnlocked } from '../featureFlags.js'
 
@@ -21,6 +21,7 @@ const languageItems = computed(() => locales.map((item) => ({ label: item.label,
 const briefPlaceholder = 'inno inter\ntech tek\n.dev .ai .com'
 const workspaceStorageKey = 'domainmate.workspace'
 let logoClickResetTimer
+const commentSaveTimers = new Map()
 /** Highest rated first, then shortest first among equally rated candidates. */
 const displayedResults = computed(() => {
   const items = availableOnly.value ? results.value.filter((item) => item.availability !== 'registered') : [...results.value]
@@ -121,7 +122,13 @@ function handleLogoClick() {
 }
 
 /** @param {{name: string}} item */
-function ratingOf(item) { return favorites.value.get(item.name) || 0 }
+function favoriteOf(item) { return favorites.value.get(item.name) || { rating: 0, comment: '' } }
+
+/** @param {{name: string}} item */
+function ratingOf(item) { return favoriteOf(item).rating }
+
+/** @param {{name: string}} item */
+function commentOf(item) { return favoriteOf(item).comment }
 
 /** @param {{name: string}} item */
 function ratingRank(item) { return -ratingOf(item) }
@@ -130,10 +137,25 @@ function ratingRank(item) { return -ratingOf(item) }
 async function setRating(item, value) {
   const next = ratingOf(item) === value ? 0 : value
   const map = new Map(favorites.value)
-  if (next > 0) map.set(item.name, next)
-  else map.delete(item.name)
+  map.set(item.name, { ...favoriteOf(item), rating: next })
   favorites.value = map
   await saveRating(item.name, next)
+}
+
+/** Update immediately in the UI and debounce persistence while the user types. */
+function setComment(item, value) {
+  const comment = String(value).slice(0, 2000)
+  const map = new Map(favorites.value)
+  map.set(item.name, { ...favoriteOf(item), comment })
+  favorites.value = map
+  window.clearTimeout(commentSaveTimers.get(item.name))
+  commentSaveTimers.set(item.name, window.setTimeout(() => persistComment(item), 500))
+}
+
+async function persistComment(item) {
+  window.clearTimeout(commentSaveTimers.get(item.name))
+  commentSaveTimers.delete(item.name)
+  await saveComment(item.name, commentOf(item))
 }
 
 /** @param {string} key */
@@ -414,6 +436,7 @@ function normalizeLetterRange(min, max) {
               <button v-if="item.status === 'idle' || item.status === 'error'" class="icon-button" type="button" :title="t('actions.checkDomain')" :aria-label="t('actions.checkDomainAria', { name: item.name })" @click="store.checkOne(item)"><UIcon name="i-lucide-search" class="size-4.25" /></button>
               <a class="icon-button" :href="googleUrl(item)" target="_blank" rel="noreferrer" :title="t('actions.searchGoogle')" :aria-label="t('actions.searchGoogleAria', { name: item.name })"><UIcon name="i-lucide-arrow-up-right" class="size-4.5" /></a>
             </div>
+            <textarea class="domain-comment" rows="1" maxlength="2000" :value="commentOf(item)" :placeholder="t('comments.placeholder')" :aria-label="t('comments.label', { name: item.name })" @input="setComment(item, $event.target.value)" @blur="persistComment(item)" />
             <LazyPriceComparison v-if="item.showPrices" :domain="item.name" />
           </article>
           </TransitionGroup>

@@ -69,6 +69,7 @@ export default {
     groupAria: '为 {name} 评分',
     starAria: '给 {name} 评 {n} 星（满分 5 星）',
   },
+  comments: { label: 'Comment for {name}', placeholder: 'Add a comment…' },
   prices: {
     title: '注册商价格', loading: '正在加载实时价格', failed: '价格比较失败。',
     refresh: '刷新价格', refreshAria: '刷新 {name} 的注册商价格',

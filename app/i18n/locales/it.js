@@ -69,6 +69,7 @@ export default {
     groupAria: 'Valuta {name}',
     starAria: 'Valuta {name} con {n} di 5 stelle',
   },
+  comments: { label: 'Comment for {name}', placeholder: 'Add a comment…' },
   prices: {
     title: 'Prezzi dei registrar', loading: 'Caricamento prezzi in tempo reale', failed: 'Confronto prezzi non riuscito.',
     refresh: 'Aggiorna prezzi', refreshAria: 'Aggiorna i prezzi dei registrar per {name}',

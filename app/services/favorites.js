@@ -1,6 +1,6 @@
 import { flags } from '../featureFlags.js'
 
-/** @typedef {{domain: string, rating: number, updatedAt: number}} FavoriteRecord */
+/** @typedef {{domain: string, rating: number, comment: string, updatedAt: number}} FavoriteRecord */
 
 const databaseName = 'domainmate'
 const databaseVersion = 1
@@ -40,7 +40,7 @@ export async function getClientId() {
 export async function loadAndSyncFavorites() {
   await migrateLegacyFavorites()
   const records = await getAllFavorites()
-  if (!flags.favoritesSync) return new Map(records.map((record) => [record.domain, record.rating]))
+  if (!flags.favoritesSync) return recordsToMap(records)
   try {
     const clientId = await getClientId()
     const response = await fetch('/api/favorites/sync', {
@@ -51,16 +51,27 @@ export async function loadAndSyncFavorites() {
     if (!response.ok) throw new Error('Favorite sync failed')
     const data = await response.json()
     await replaceFavorites(data.records || [])
-    return new Map(data.records.map((record) => [record.domain, record.rating]))
+    return recordsToMap(data.records || [])
   } catch {
-    return new Map(records.map((record) => [record.domain, record.rating]))
+    return recordsToMap(records)
   }
 }
 
 /** Persist a user rating locally, then sync to the server only when cloud sync is enabled. */
 export async function saveRating(domain, rating) {
-  /** @type {FavoriteRecord} */
-  const record = { domain, rating, updatedAt: Date.now() }
+  const current = normalizeStoredRecord(await getValue('favorites', domain) || { domain })
+  const record = { ...current, domain, rating, updatedAt: Date.now() }
+  await saveRecord(record)
+}
+
+/** Persist a per-domain comment while retaining its current rating. */
+export async function saveComment(domain, comment) {
+  const current = normalizeStoredRecord(await getValue('favorites', domain) || { domain })
+  const record = { ...current, domain, comment: String(comment).slice(0, 2000), updatedAt: Date.now() }
+  await saveRecord(record)
+}
+
+async function saveRecord(record) {
   await putValue('favorites', record)
   if (!flags.favoritesSync) return
   try {
@@ -96,8 +107,16 @@ async function getAllFavorites() {
 
 /** Upgrade a record stored under the previous boolean `starred` shape. */
 function normalizeStoredRecord(record) {
-  if (typeof record.rating === 'number') return record
-  return { domain: record.domain, rating: record.starred ? 5 : 0, updatedAt: record.updatedAt }
+  return {
+    domain: record.domain,
+    rating: typeof record.rating === 'number' ? record.rating : (record.starred ? 5 : 0),
+    comment: typeof record.comment === 'string' ? record.comment : '',
+    updatedAt: Number(record.updatedAt) || Date.now(),
+  }
+}
+
+function recordsToMap(records) {
+  return new Map(records.map((record) => [record.domain, normalizeStoredRecord(record)]))
 }
 
 /** @param {FavoriteRecord[]} records */

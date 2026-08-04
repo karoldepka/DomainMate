@@ -69,6 +69,7 @@ export default {
     groupAria: 'Valora {name}',
     starAria: 'Valora {name} amb {n} de 5 estrelles',
   },
+  comments: { label: 'Comment for {name}', placeholder: 'Add a comment…' },
   prices: {
     title: 'Preus dels registradors', loading: 'Carregant preus en directe', failed: 'Ha fallat la comparació de preus.',
     refresh: 'Actualitza els preus', refreshAria: 'Actualitza els preus dels registradors per a {name}',

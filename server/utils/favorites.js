@@ -6,14 +6,16 @@ if (!usingHostedDatabase) {
       client_id TEXT NOT NULL,
       domain TEXT NOT NULL,
       rating INTEGER NOT NULL,
+      comment TEXT NOT NULL DEFAULT '',
       updated_at INTEGER NOT NULL,
       PRIMARY KEY (client_id, domain)
     ) STRICT;
   `)
   migrateStarredColumn()
+  migrateCommentColumn()
 }
 
-/** @typedef {{domain: string, rating: number, updatedAt: number}} FavoriteRecord */
+/** @typedef {{domain: string, rating: number, comment: string, updatedAt: number}} FavoriteRecord */
 
 /** Merge browser records into the server and return the authoritative set. */
 export async function syncFavorites(clientId, records) {
@@ -22,17 +24,18 @@ export async function syncFavorites(clientId, records) {
   await fanoutWrite((sql) => sql.begin(async (transaction) => {
     for (const record of records) {
       await transaction`
-        INSERT INTO domainmate.favorites (client_id, domain, rating, updated_at)
-        VALUES (${clientId}, ${record.domain}, ${record.rating}, ${record.updatedAt})
+        INSERT INTO domainmate.favorites (client_id, domain, rating, comment, updated_at)
+        VALUES (${clientId}, ${record.domain}, ${record.rating}, ${record.comment}, ${record.updatedAt})
         ON CONFLICT (client_id, domain) DO UPDATE SET
           rating = EXCLUDED.rating,
+          comment = EXCLUDED.comment,
           updated_at = EXCLUDED.updated_at
         WHERE EXCLUDED.updated_at >= domainmate.favorites.updated_at
       `
     }
   }))
   const rows = await fastestPeerRead((sql) => sql`
-    SELECT domain, rating, updated_at FROM domainmate.favorites
+    SELECT domain, rating, comment, updated_at FROM domainmate.favorites
     WHERE client_id = ${clientId}
     ORDER BY updated_at DESC
   `)
@@ -41,27 +44,33 @@ export async function syncFavorites(clientId, records) {
 
 function syncLocalFavorites(clientId, records) {
   const upsert = database.prepare(`
-    INSERT INTO favorites (client_id, domain, rating, updated_at)
-    VALUES (?, ?, ?, ?)
+    INSERT INTO favorites (client_id, domain, rating, comment, updated_at)
+    VALUES (?, ?, ?, ?, ?)
     ON CONFLICT (client_id, domain) DO UPDATE SET
       rating = excluded.rating,
+      comment = excluded.comment,
       updated_at = excluded.updated_at
     WHERE excluded.updated_at >= favorites.updated_at
   `)
   database.exec('BEGIN IMMEDIATE')
   try {
-    for (const record of records) upsert.run(clientId, record.domain, record.rating, record.updatedAt)
+    for (const record of records) upsert.run(clientId, record.domain, record.rating, record.comment, record.updatedAt)
     database.exec('COMMIT')
   } catch (error) {
     database.exec('ROLLBACK')
     throw error
   }
-  return database.prepare('SELECT domain, rating, updated_at FROM favorites WHERE client_id = ? ORDER BY updated_at DESC')
+  return database.prepare('SELECT domain, rating, comment, updated_at FROM favorites WHERE client_id = ? ORDER BY updated_at DESC')
     .all(clientId).map(toFavoriteRecord)
 }
 
 function toFavoriteRecord(record) {
-  return { domain: String(record.domain), rating: Number(record.rating), updatedAt: Number(record.updated_at) }
+  return { domain: String(record.domain), rating: Number(record.rating), comment: String(record.comment || ''), updatedAt: Number(record.updated_at) }
+}
+
+function migrateCommentColumn() {
+  const columns = database.prepare('PRAGMA table_info(favorites)').all().map(column => column.name)
+  if (!columns.includes('comment')) database.exec("ALTER TABLE favorites ADD COLUMN comment TEXT NOT NULL DEFAULT ''")
 }
 
 function migrateStarredColumn() {

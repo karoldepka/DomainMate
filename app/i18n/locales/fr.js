@@ -69,6 +69,7 @@ export default {
     groupAria: 'Noter {name}',
     starAria: 'Noter {name} {n} sur 5 étoiles',
   },
+  comments: { label: 'Comment for {name}', placeholder: 'Add a comment…' },
   prices: {
     title: 'Prix des bureaux d’enregistrement', loading: 'Chargement des prix en direct', failed: 'Échec de la comparaison des prix.',
     refresh: 'Actualiser les prix', refreshAria: 'Actualiser les prix des bureaux d’enregistrement pour {name}',

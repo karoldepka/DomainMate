@@ -69,6 +69,7 @@ export default {
     groupAria: 'Avaliar {name}',
     starAria: 'Avaliar {name} com {n} de 5 estrelas',
   },
+  comments: { label: 'Comment for {name}', placeholder: 'Add a comment…' },
   prices: {
     title: 'Preços dos registradores', loading: 'Carregando preços atuais', failed: 'Falha na comparação de preços.',
     refresh: 'Atualizar preços', refreshAria: 'Atualizar preços dos registradores para {name}',
