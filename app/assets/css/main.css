@@ -100,7 +100,7 @@ fieldset { min-width: 0; margin: 0; padding: 0; border: 0; }
 .result-filters { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; }
 .available-filter { min-height: 40px; display: inline-flex; align-items: center; gap: 8px; color: #53615b; font-size: 13px; font-weight: 600; cursor: pointer; }.available-filter input { width: 17px; height: 17px; accent-color: #176b52; }
 .results-table { overflow: hidden; border: 1px solid #dce2df; border-radius: 8px; background: white; }
-.table-head, .result-row { display: grid; grid-template-columns: minmax(200px, 1fr) minmax(140px, .7fr) minmax(150px, .8fr) 250px; align-items: center; }
+.table-head, .result-row { display: grid; grid-template-columns: minmax(200px, 1fr) minmax(140px, .7fr) minmax(150px, .8fr) 290px; align-items: center; }
 .table-head { min-height: 42px; padding: 0 18px; background: #f8f9f8; border-bottom: 1px solid #e6eae8; color: #77827d; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .8px; }
 .result-row { min-height: 70px; padding: 0 18px; border-bottom: 1px solid #edf0ee; }
 .result-row:last-child { border-bottom: 0; }

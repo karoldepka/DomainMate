@@ -69,7 +69,7 @@ export default {
     groupAria: 'Oceń {name}',
     starAria: 'Oceń {name} na {n} z 5 gwiazdek',
   },
-  comments: { label: 'Comment for {name}', placeholder: 'Add a comment…' },
+  comments: { label: 'Comment for {name}', placeholder: 'Add a comment…', add: 'Add comment', edit: 'Edit comment', addAria: 'Add a comment for {name}', editAria: 'Edit the comment for {name}' },
   prices: {
     title: 'Ceny u rejestratorów', loading: 'Pobieranie aktualnych cen', failed: 'Nie udało się porównać cen.',
     refresh: 'Odśwież ceny', refreshAria: 'Odśwież ceny rejestratorów dla {name}',

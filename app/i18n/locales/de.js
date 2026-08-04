@@ -69,7 +69,7 @@ export default {
     groupAria: '{name} bewerten',
     starAria: '{name} mit {n} von 5 Sternen bewerten',
   },
-  comments: { label: 'Comment for {name}', placeholder: 'Add a comment…' },
+  comments: { label: 'Comment for {name}', placeholder: 'Add a comment…', add: 'Add comment', edit: 'Edit comment', addAria: 'Add a comment for {name}', editAria: 'Edit the comment for {name}' },
   prices: {
     title: 'Registrar-Preise', loading: 'Aktuelle Preise werden geladen', failed: 'Preisvergleich fehlgeschlagen.',
     refresh: 'Preise aktualisieren', refreshAria: 'Registrar-Preise für {name} aktualisieren',

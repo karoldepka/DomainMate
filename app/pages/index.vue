@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted, ref, useTemplateRef, watch } from 'vue'
+import { computed, nextTick, onMounted, ref, useTemplateRef, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useDomainStore } from '../stores/domain.js'
 import { getClientId, loadAndSyncFavorites, saveComment, saveRating } from '../services/favorites.js'
@@ -16,6 +16,8 @@ const colorMode = useColorMode()
 const credits = ref(5)
 const availableOnly = ref(true)
 const favorites = ref(new Map())
+const expandedComments = ref(new Set())
+const commentTextareas = new Map()
 const showFlagsPanel = ref(false)
 const logoClicks = ref(0)
 const languageItems = computed(() => locales.map((item) => ({ label: item.label, value: item.code })))
@@ -139,6 +141,25 @@ function ratingOf(item) { return favoriteOf(item).rating }
 
 /** @param {{name: string}} item */
 function commentOf(item) { return favoriteOf(item).comment }
+
+/** @param {{id: string|number, name: string}} item */
+function isCommentExpanded(item) { return Boolean(commentOf(item)) || expandedComments.value.has(item.name) }
+
+/** Reveal a domain's comment editor and place focus in it after Vue updates the DOM. */
+async function openComment(item) {
+  if (!expandedComments.value.has(item.name)) {
+    const expanded = new Set(expandedComments.value)
+    expanded.add(item.name)
+    expandedComments.value = expanded
+  }
+  await nextTick()
+  commentTextareas.get(item.name)?.focus()
+}
+
+function setCommentTextarea(element, domain) {
+  if (element) commentTextareas.set(domain, element)
+  else commentTextareas.delete(domain)
+}
 
 /** @param {{name: string}} item */
 function ratingRank(item) { return -ratingOf(item) }
@@ -443,11 +464,12 @@ function normalizeLetterRange(min, max) {
               <div class="rating-stars" role="group" :aria-label="t('rating.groupAria', { name: item.name })">
                 <button v-for="n in 5" :key="n" type="button" class="star-button" :class="{ active: ratingOf(item) >= n }" :aria-label="t('rating.starAria', { n, name: item.name })" :aria-pressed="ratingOf(item) >= n" @click="setRating(item, n)"><UIcon name="i-lucide-star" class="size-3.5" /></button>
               </div>
+              <button class="icon-button comment-trigger" :class="{ active: isCommentExpanded(item) }" type="button" :title="t(commentOf(item) ? 'comments.edit' : 'comments.add')" :aria-label="t(commentOf(item) ? 'comments.editAria' : 'comments.addAria', { name: item.name })" :aria-expanded="isCommentExpanded(item)" :aria-controls="`comment-${item.id}`" @click="openComment(item)"><UIcon name="i-lucide-message-square-plus" class="size-4.5" /></button>
               <button class="icon-button" :class="{ active: item.showPrices }" type="button" :title="t('actions.comparePrices')" :aria-label="t('actions.comparePricesAria', { name: item.name })" :aria-expanded="Boolean(item.showPrices)" @click="item.showPrices = !item.showPrices"><UIcon name="i-lucide-badge-dollar-sign" class="size-4.5" /></button>
               <button v-if="item.status === 'idle' || item.status === 'error'" class="icon-button" type="button" :title="t('actions.checkDomain')" :aria-label="t('actions.checkDomainAria', { name: item.name })" @click="store.checkOne(item)"><UIcon name="i-lucide-search" class="size-4.25" /></button>
               <a class="icon-button" :href="googleUrl(item)" target="_blank" rel="noreferrer" :title="t('actions.searchGoogle')" :aria-label="t('actions.searchGoogleAria', { name: item.name })"><UIcon name="i-lucide-arrow-up-right" class="size-4.5" /></a>
             </div>
-            <textarea class="domain-comment" rows="1" maxlength="2000" :value="commentOf(item)" :placeholder="t('comments.placeholder')" :aria-label="t('comments.label', { name: item.name })" @input="setComment(item, $event.target.value)" @blur="persistComment(item)" />
+            <textarea v-if="isCommentExpanded(item)" :id="`comment-${item.id}`" :ref="element => setCommentTextarea(element, item.name)" class="domain-comment" rows="1" maxlength="2000" :value="commentOf(item)" :placeholder="t('comments.placeholder')" :aria-label="t('comments.label', { name: item.name })" @input="setComment(item, $event.target.value)" @blur="persistComment(item)" />
             <LazyPriceComparison v-if="item.showPrices" :domain="item.name" />
           </article>
           </TransitionGroup>

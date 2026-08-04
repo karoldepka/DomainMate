@@ -69,7 +69,7 @@ export default {
     groupAria: 'Rate {name}',
     starAria: 'Rate {name} {n} of 5 stars',
   },
-  comments: { label: 'Comment for {name}', placeholder: 'Add a comment…' },
+  comments: { label: 'Comment for {name}', placeholder: 'Add a comment…', add: 'Add comment', edit: 'Edit comment', addAria: 'Add a comment for {name}', editAria: 'Edit the comment for {name}' },
   prices: {
     title: 'Registrar prices', loading: 'Loading live prices', failed: 'Price comparison failed.',
     refresh: 'Refresh prices', refreshAria: 'Refresh registrar prices for {name}',
