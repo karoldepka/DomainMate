@@ -109,6 +109,7 @@ export default {
     methods: { card: 'Cartão', secure: 'Pagamento seguro processado pela Stripe' },
   },
   language: { label: 'Idioma' },
+  theme: { system: 'Auto', light: 'Light', dark: 'Dark', switchAria: 'Theme: {theme}. Switch theme', switchTitle: 'Theme: {theme}' },
   feedback: {
     eyebrow: 'O seu feedback',
     title: 'Desbloqueie o nível pro',

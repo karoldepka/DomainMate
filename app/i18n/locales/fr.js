@@ -109,6 +109,7 @@ export default {
     methods: { card: 'Carte', secure: 'Paiement sécurisé par Stripe' },
   },
   language: { label: 'Langue' },
+  theme: { system: 'Auto', light: 'Light', dark: 'Dark', switchAria: 'Theme: {theme}. Switch theme', switchTitle: 'Theme: {theme}' },
   feedback: {
     eyebrow: 'Votre avis',
     title: 'Débloquez la version pro',

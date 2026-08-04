@@ -109,6 +109,7 @@ export default {
     methods: { card: '银行卡', secure: '由 Stripe 提供安全支付' },
   },
   language: { label: '语言' },
+  theme: { system: 'Auto', light: 'Light', dark: 'Dark', switchAria: 'Theme: {theme}. Switch theme', switchTitle: 'Theme: {theme}' },
   feedback: {
     eyebrow: '您的反馈',
     title: '解锁专业版',

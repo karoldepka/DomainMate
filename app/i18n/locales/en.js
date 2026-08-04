@@ -109,6 +109,7 @@ export default {
     methods: { card: 'Card', secure: 'Secure checkout by Stripe' },
   },
   language: { label: 'Language' },
+  theme: { system: 'Auto', light: 'Light', dark: 'Dark', switchAria: 'Theme: {theme}. Switch theme', switchTitle: 'Theme: {theme}' },
   feedback: {
     eyebrow: 'Your feedback',
     title: 'Unlock the pro tier',

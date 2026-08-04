@@ -109,6 +109,7 @@ export default {
     methods: { card: 'Karta', secure: 'Bezpieczna płatność obsługiwana przez Stripe' },
   },
   language: { label: 'Język' },
+  theme: { system: 'Auto', light: 'Light', dark: 'Dark', switchAria: 'Theme: {theme}. Switch theme', switchTitle: 'Theme: {theme}' },
   feedback: {
     eyebrow: 'Twoja opinia',
     title: 'Odblokuj wersję pro',

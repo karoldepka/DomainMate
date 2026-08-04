@@ -12,12 +12,15 @@ const progressText = computed(() => t('results.progress', { checked: checkedCoun
 const paymentDialog = useTemplateRef('paymentDialog')
 const feedbackDialog = useTemplateRef('feedbackDialog')
 const privacyDialog = useTemplateRef('privacyDialog')
+const colorMode = useColorMode()
 const credits = ref(5)
 const availableOnly = ref(true)
 const favorites = ref(new Map())
 const showFlagsPanel = ref(false)
 const logoClicks = ref(0)
 const languageItems = computed(() => locales.map((item) => ({ label: item.label, value: item.code })))
+const themeIcon = computed(() => ({ system: 'i-lucide-monitor', light: 'i-lucide-sun', dark: 'i-lucide-moon' })[colorMode.preference] || 'i-lucide-monitor')
+const themeLabel = computed(() => t(`theme.${colorMode.preference || 'system'}`))
 const briefPlaceholder = 'inno inter\ntech tek\n.dev .ai .com'
 const workspaceStorageKey = 'domainmate.workspace'
 let logoClickResetTimer
@@ -119,6 +122,13 @@ function handleLogoClick() {
     logoClicks.value = 0
     showFlagsPanel.value = true
   }
+}
+
+/** Cycle the persisted preference while retaining system auto-detection as a first-class option. */
+function cycleTheme() {
+  const preferences = ['system', 'light', 'dark']
+  const index = preferences.indexOf(colorMode.preference)
+  colorMode.preference = preferences[(index + 1) % preferences.length]
 }
 
 /** @param {{name: string}} item */
@@ -307,6 +317,7 @@ function normalizeLetterRange(min, max) {
       </a>
       <div class="header-actions">
         <div class="topbar-meta"><span class="status-dot" aria-hidden="true"></span>{{ t('topbar.meta') }}</div>
+        <UButton class="theme-switcher" color="neutral" variant="outline" :icon="themeIcon" :aria-label="t('theme.switchAria', { theme: themeLabel })" :title="t('theme.switchTitle', { theme: themeLabel })" @click="cycleTheme"><span>{{ themeLabel }}</span></UButton>
         <USelect v-model="locale" :items="languageItems" :aria-label="t('language.label')" size="sm" class="w-28" />
         <UButton v-if="flags.payments" class="credit-button" :ui="{ base: 'rounded-md' }" @click="paymentDialog?.open()"><span>{{ credits }}</span> {{ t('topbar.credits') }}</UButton>
         <UBadge v-else-if="proUnlocked" color="primary" variant="subtle" size="lg" class="free-tier-badge">{{ t('topbar.proUnlocked') }}</UBadge>
