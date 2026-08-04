@@ -1,4 +1,5 @@
 import { mkdirSync } from 'node:fs'
+import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { DatabaseSync } from 'node:sqlite'
 import postgres from 'postgres'
@@ -12,8 +13,15 @@ export const usingHostedDatabase = connectionUrls.length > 0
 
 let database = null
 if (!usingHostedDatabase) {
-  const dataDirectory = join(process.cwd(), 'data')
-  mkdirSync(dataDirectory, { recursive: true })
+  let dataDirectory = join(process.cwd(), 'data')
+  try {
+    mkdirSync(dataDirectory, { recursive: true })
+  } catch {
+    // The project directory is read-only on serverless platforms (e.g. Vercel's
+    // /var/task); fall back to the writable temp directory instead.
+    dataDirectory = join(tmpdir(), 'domainmate-data')
+    mkdirSync(dataDirectory, { recursive: true })
+  }
   database = new DatabaseSync(join(dataDirectory, 'domainmate.sqlite'))
 }
 
