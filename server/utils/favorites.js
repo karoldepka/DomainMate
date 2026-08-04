@@ -1,4 +1,4 @@
-import { database, fanoutWrite, peerReads, usingHostedDatabase } from './database.js'
+import { database, fanoutWrite, fastestPeerRead, usingHostedDatabase } from './database.js'
 
 if (!usingHostedDatabase) {
   database.exec(`
@@ -31,22 +31,12 @@ export async function syncFavorites(clientId, records) {
       `
     }
   }))
-  const peerRows = await peerReads((sql) => sql`
+  const rows = await fastestPeerRead((sql) => sql`
     SELECT domain, rating, updated_at FROM domainmate.favorites
     WHERE client_id = ${clientId}
     ORDER BY updated_at DESC
   `)
-  return mergeFavoriteRows(peerRows)
-}
-
-export function mergeFavoriteRows(peerRows) {
-  const newestByDomain = new Map()
-  for (const row of peerRows.flat()) {
-    const record = toFavoriteRecord(row)
-    const current = newestByDomain.get(record.domain)
-    if (!current || record.updatedAt > current.updatedAt) newestByDomain.set(record.domain, record)
-  }
-  return [...newestByDomain.values()].sort((a, b) => b.updatedAt - a.updatedAt)
+  return rows.map(toFavoriteRecord)
 }
 
 function syncLocalFavorites(clientId, records) {

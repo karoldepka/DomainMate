@@ -78,16 +78,19 @@ export async function fanoutWrite(operation) {
   if (failures.length === clients.length) throw new AggregateError(failures.map(({ reason }) => reason), 'Every database write failed')
 }
 
-/** Read from every available peer. A read only fails when every peer is unavailable. */
-export async function peerReads(operation) {
-  const results = await Promise.allSettled(clients.map(async ({ sql, ready }) => {
-    await ready
-    return operation(sql)
+/** Race every peer and return the first successful read without waiting for slower peers. */
+export async function fastestPeerRead(operation) {
+  return firstSuccessful(clients.map(async ({ name, sql, ready }) => {
+    try {
+      await ready
+      return await operation(sql)
+    } catch (error) {
+      console.error(`Database read failed on ${name}:`, error)
+      throw error
+    }
   }))
-  const successful = results.flatMap((result) => result.status === 'fulfilled' ? [result.value] : [])
-  results.forEach((result, index) => {
-    if (result.status === 'rejected') console.error(`Database read failed on ${clients[index].name}:`, result.reason)
-  })
-  if (successful.length === 0) throw new AggregateError(results.map((result) => result.reason), 'Every database read failed')
-  return successful
+}
+
+export function firstSuccessful(promises) {
+  return Promise.any(promises)
 }

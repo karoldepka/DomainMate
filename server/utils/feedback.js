@@ -1,4 +1,4 @@
-import { database, fanoutWrite, peerReads, usingHostedDatabase } from './database.js'
+import { database, fanoutWrite, fastestPeerRead, usingHostedDatabase } from './database.js'
 
 if (!usingHostedDatabase) database.exec(`
   CREATE TABLE IF NOT EXISTS feedback (
@@ -20,6 +20,6 @@ export async function submitFeedback(clientId, message) {
 
 export async function hasSubmittedFeedback(clientId) {
   if (!usingHostedDatabase) return Boolean(database.prepare('SELECT 1 FROM feedback WHERE client_id = ? LIMIT 1').get(clientId))
-  const peerRows = await peerReads((sql) => sql`SELECT 1 FROM domainmate.feedback WHERE client_id = ${clientId} LIMIT 1`)
-  return peerRows.some((rows) => rows.length > 0)
+  const rows = await fastestPeerRead((sql) => sql`SELECT 1 FROM domainmate.feedback WHERE client_id = ${clientId} LIMIT 1`)
+  return rows.length > 0
 }

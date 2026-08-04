@@ -13,7 +13,7 @@ The app runs at `http://localhost:3000`. Without hosted database variables it us
 
 ## Hosted persistence
 
-Production writes are fanned out to equal Supabase and Neon Postgres peers. Reads query both peers; favorite records are de-duplicated by domain using the newest `updated_at` value.
+Production writes are fanned out to equal Supabase and Neon Postgres peers. Reads race both peers and return the first successful response, so a slow or unavailable provider does not delay the client. Favorite writes use `updated_at` conflict checks to prevent an older update from replacing a newer record.
 
 Set both server-only environment variables:
 
