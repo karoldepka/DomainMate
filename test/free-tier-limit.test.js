@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
 import { createPinia, setActivePinia } from 'pinia'
-import { useDomainStore } from '../src/stores/domain.js'
-import { flags } from '../src/featureFlags.js'
+import { useDomainStore } from '../app/stores/domain.js'
+import { flags } from '../app/featureFlags.js'
 
 globalThis.localStorage ??= { getItem: () => null, setItem: () => {}, removeItem: () => {}, clear: () => {} }
 

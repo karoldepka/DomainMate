@@ -132,7 +132,8 @@ test.describe('naming workspace', () => {
   test('language switcher translates the UI', async ({ page }) => {
     await page.goto('/')
     await expect(page.locator('.result-row').first()).toBeVisible()
-    await page.locator('.language-select select').selectOption('pl')
+    await page.getByLabel('Language').click()
+    await page.getByRole('option', { name: 'Polski' }).click()
     await expect(page.locator('h1')).toHaveText('Znajdź atrakcyjną nazwę domeny.')
     await expect(page.locator('.result-row').first().locator('.status')).toHaveText('Niesprawdzone')
   })
@@ -151,7 +152,7 @@ test.describe('naming workspace', () => {
     await expect(page.locator('.result-row').first()).toBeVisible()
     const logo = page.locator('.brand')
     for (let click = 0; click < 5; click += 1) await logo.click()
-    const dialog = page.locator('.flags-dialog')
+    const dialog = page.getByRole('dialog')
     await expect(dialog).toBeVisible()
 
     await dialog.getByLabel('Credits & payments').check()
@@ -167,7 +168,7 @@ test.describe('naming workspace', () => {
     await seedFlags(page, { payments: true })
     await page.goto('/')
     await page.locator('.credit-button').click()
-    const dialog = page.locator('dialog.payment-dialog[open]')
+    const dialog = page.getByRole('dialog')
     await expect(dialog).toBeVisible()
     await expect(dialog.getByText('Payments require STRIPE_SECRET_KEY.')).toBeVisible()
     await expect(dialog.getByText('BLIK')).toBeVisible()

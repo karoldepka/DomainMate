@@ -6,7 +6,7 @@ import {
   getGoDaddyAuthorization,
   isPremiumInventory,
   parseDynadotPrice,
-} from '../server/registrars.js'
+} from '../server/utils/registrars.js'
 
 test('normalizes registrar-specific price representations', () => {
   assert.equal(getGoDaddyAuthorization({ GODADDY_PAT: 'pat-value' }), 'Bearer pat-value')

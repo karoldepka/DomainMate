@@ -1,9 +1,9 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import { database } from '../server/database.js'
-import { sweepExpiredData } from '../server/dataRetention.js'
+import { database } from '../server/utils/database.js'
+import { sweepExpiredData } from '../server/utils/dataRetention.js'
 
-test('sweepExpiredData deletes rows past the 12-month retention window and keeps recent ones', () => {
+test('sweepExpiredData deletes rows past the 12-month retention window and keeps recent ones', async () => {
   const now = Date.now()
   const old = now - 366 * 24 * 60 * 60 * 1000
   const recent = now - 1000
@@ -16,7 +16,7 @@ test('sweepExpiredData deletes rows past the 12-month retention window and keeps
   database.prepare('INSERT INTO client_errors (message, stack, url, user_agent, created_at) VALUES (?, ?, ?, ?, ?)').run('retention-test-recent-error', null, null, null, recent)
 
   try {
-    sweepExpiredData()
+    await sweepExpiredData()
 
     assert.equal(database.prepare('SELECT 1 FROM favorites WHERE client_id = ?').get('retention-test-old'), undefined)
     assert.ok(database.prepare('SELECT 1 FROM favorites WHERE client_id = ?').get('retention-test-recent'))

@@ -1,3 +1,4 @@
+# Build the unified Nuxt application from the repository root.
 FROM node:24-slim AS build
 WORKDIR /app
 RUN corepack enable
@@ -6,14 +7,12 @@ RUN pnpm install --frozen-lockfile
 COPY . .
 RUN pnpm build
 
+# Nitro's node-server preset already vendors its runtime dependencies into
+# .output/server/node_modules, so the runtime stage only needs the output dir.
 FROM node:24-slim
 WORKDIR /app
-RUN corepack enable
 ENV NODE_ENV=production
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
-RUN pnpm install --frozen-lockfile --prod
-COPY server ./server
-COPY --from=build /app/dist ./dist
-
-EXPOSE 8787
-CMD ["node", "server/index.js"]
+ENV PORT=3000
+COPY --from=build /app/.output ./.output
+EXPOSE 3000
+CMD ["node", ".output/server/index.mjs"]

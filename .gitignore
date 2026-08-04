@@ -1,11 +1,34 @@
-node_modules
+# Nuxt dev/build outputs
+.output
+.data
+.nuxt
+.nitro
+.cache
+.vite
 dist
-.env
-.DS_Store
+
+# Local SQLite favorites database
 data/*.sqlite*
-*.stdout.log
-*.stderr.log
+
+# Node dependencies
+node_modules
+node_modules.pre-nuxt
+/nuxt-app/
 test-results
 playwright-report
 blob-report
 playwright/.cache
+
+# Logs
+logs
+*.log
+
+# Misc
+.DS_Store
+.fleet
+.idea
+
+# Local env files
+.env
+.env.*
+!.env.example

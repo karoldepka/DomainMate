@@ -1,0 +1,93 @@
+import { mkdirSync } from 'node:fs'
+import { join } from 'node:path'
+import { DatabaseSync } from 'node:sqlite'
+import postgres from 'postgres'
+
+const connectionUrls = [
+  ['supabase', process.env.SUPABASE_DATABASE_URL],
+  ['neon', process.env.NEON_DATABASE_URL]
+].filter(([, url]) => Boolean(url))
+
+export const usingHostedDatabase = connectionUrls.length > 0
+
+let database = null
+if (!usingHostedDatabase) {
+  const dataDirectory = join(process.cwd(), 'data')
+  mkdirSync(dataDirectory, { recursive: true })
+  database = new DatabaseSync(join(dataDirectory, 'domainmate.sqlite'))
+}
+
+export { database }
+
+const clients = connectionUrls.map(([name, url]) => {
+  const sql = postgres(url, {
+    max: 1,
+    idle_timeout: 20,
+    connect_timeout: 10,
+    prepare: false,
+    ssl: 'require'
+  })
+  return { name, sql, ready: initializeSchema(sql) }
+})
+
+async function initializeSchema(sql) {
+  await sql`CREATE SCHEMA IF NOT EXISTS domainmate`
+  await sql`
+    CREATE TABLE IF NOT EXISTS domainmate.favorites (
+      client_id TEXT NOT NULL,
+      domain TEXT NOT NULL,
+      rating SMALLINT NOT NULL CHECK (rating BETWEEN 0 AND 5),
+      updated_at BIGINT NOT NULL,
+      PRIMARY KEY (client_id, domain)
+    )
+  `
+  await sql`CREATE INDEX IF NOT EXISTS favorites_updated_at_idx ON domainmate.favorites (updated_at)`
+  await sql`
+    CREATE TABLE IF NOT EXISTS domainmate.feedback (
+      id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+      client_id TEXT NOT NULL,
+      message TEXT NOT NULL,
+      created_at BIGINT NOT NULL
+    )
+  `
+  await sql`CREATE INDEX IF NOT EXISTS feedback_client_id_idx ON domainmate.feedback (client_id)`
+  await sql`CREATE INDEX IF NOT EXISTS feedback_created_at_idx ON domainmate.feedback (created_at)`
+  await sql`
+    CREATE TABLE IF NOT EXISTS domainmate.client_errors (
+      id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+      message TEXT NOT NULL,
+      stack TEXT,
+      url TEXT,
+      user_agent TEXT,
+      created_at BIGINT NOT NULL
+    )
+  `
+  await sql`CREATE INDEX IF NOT EXISTS client_errors_created_at_idx ON domainmate.client_errors (created_at)`
+}
+
+/** Run a write against every configured provider, requiring at least one success. */
+export async function fanoutWrite(operation) {
+  const results = await Promise.allSettled(clients.map(async ({ sql, ready }) => {
+    await ready
+    return operation(sql)
+  }))
+  const failures = results.flatMap((result, index) => result.status === 'rejected'
+    ? [{ provider: clients[index].name, reason: result.reason }]
+    : [])
+  for (const failure of failures) console.error(`Database write failed on ${failure.provider}:`, failure.reason)
+  if (failures.length === clients.length) throw new AggregateError(failures.map(({ reason }) => reason), 'Every database write failed')
+}
+
+/** Read from every available peer. A read only fails when every peer is unavailable. */
+export async function peerReads(operation) {
+  const results = await Promise.allSettled(clients.map(async ({ sql, ready }) => {
+    await ready
+    return operation(sql)
+  }))
+  const successful = results.flatMap((result) => result.status === 'fulfilled' ? [result.value] : [])
+  results.forEach((result, index) => {
+    if (result.status === 'rejected') console.error(`Database read failed on ${clients[index].name}:`, result.reason)
+  })
+  if (successful.length === 0) throw new AggregateError(results.map((result) => result.reason), 'Every database read failed')
+  return successful
+}

@@ -1,14 +1,14 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import en from '../src/i18n/locales/en.js'
-import pl from '../src/i18n/locales/pl.js'
-import es from '../src/i18n/locales/es.js'
-import ca from '../src/i18n/locales/ca.js'
-import pt from '../src/i18n/locales/pt.js'
-import fr from '../src/i18n/locales/fr.js'
-import it from '../src/i18n/locales/it.js'
-import de from '../src/i18n/locales/de.js'
-import zh from '../src/i18n/locales/zh.js'
+import en from '../app/i18n/locales/en.js'
+import pl from '../app/i18n/locales/pl.js'
+import es from '../app/i18n/locales/es.js'
+import ca from '../app/i18n/locales/ca.js'
+import pt from '../app/i18n/locales/pt.js'
+import fr from '../app/i18n/locales/fr.js'
+import it from '../app/i18n/locales/it.js'
+import de from '../app/i18n/locales/de.js'
+import zh from '../app/i18n/locales/zh.js'
 
 const dictionaries = { en, pl, es, ca, pt, fr, it, de, zh }
 

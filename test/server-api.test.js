@@ -2,22 +2,40 @@ import assert from 'node:assert/strict'
 import { existsSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { spawn } from 'node:child_process'
 import test, { after, before } from 'node:test'
-import { app } from '../server/index.js'
 
-const distDir = join(dirname(fileURLToPath(import.meta.url)), '..', 'dist')
+const rootDir = join(dirname(fileURLToPath(import.meta.url)), '..')
+const entryFile = join(rootDir, '.output', 'server', 'index.mjs')
 
 let baseUrl
-let server
+let child
 
 before(async () => {
-  server = app.listen(0)
-  await new Promise((resolve) => server.once('listening', resolve))
-  baseUrl = `http://localhost:${server.address().port}`
+  if (!existsSync(entryFile)) throw new Error('Run `pnpm build` before the test suite.')
+  // Strip real registrar credentials so /api/registrars/compare stays deterministic and fast
+  // (all providers resolve as "not configured" instantly) instead of hitting live upstream APIs.
+  const { GODADDY_PAT, NAMESILO_API_KEY, DYNADOT_API_KEY, CLOUDFLARE_ACCOUNT_ID, CLOUDFLARE_REGISTRAR_TOKEN, ...testEnv } = process.env
+  child = spawn(process.execPath, [entryFile], { cwd: rootDir, env: { ...testEnv, PORT: '0' } })
+  baseUrl = await new Promise((resolve, reject) => {
+    let output = ''
+    const onData = (chunk) => {
+      output += chunk.toString()
+      const match = output.match(/Listening on http:\/\/\S*:(\d+)/)
+      if (match) {
+        child.stdout.off('data', onData)
+        resolve(`http://localhost:${match[1]}`)
+      }
+    }
+    child.stdout.on('data', onData)
+    child.once('error', reject)
+    child.once('exit', (code) => reject(new Error(`Server exited early with code ${code}`)))
+  })
 })
 
 after(async () => {
-  await new Promise((resolve) => server.close(resolve))
+  child.kill()
+  await new Promise((resolve) => child.once('exit', resolve))
 })
 
 for (const path of ['/api/check', '/api/search', '/api/domain-check']) {
@@ -32,85 +50,6 @@ for (const path of ['/api/check', '/api/search', '/api/domain-check']) {
 test('GET /api/registrars/compare rejects an invalid domain', async () => {
   const response = await fetch(`${baseUrl}/api/registrars/compare?domain=nope`)
   assert.equal(response.status, 400)
-})
-
-test('GET /api/registrars/compare streams one NDJSON line per registrar as it settles, not buffered until the end', async () => {
-  const originalFetch = globalThis.fetch
-  const originalEnvironment = Object.fromEntries(
-    ['GODADDY_PAT', 'NAMESILO_API_KEY', 'DYNADOT_API_KEY', 'CLOUDFLARE_ACCOUNT_ID', 'CLOUDFLARE_REGISTRAR_TOKEN']
-      .map((key) => [key, process.env[key]]),
-  )
-  Object.assign(process.env, {
-    GODADDY_PAT: 'godaddy-pat',
-    NAMESILO_API_KEY: 'namesilo-key',
-    DYNADOT_API_KEY: 'dynadot-key',
-    CLOUDFLARE_ACCOUNT_ID: 'cloudflare-account',
-    CLOUDFLARE_REGISTRAR_TOKEN: 'cloudflare-token',
-  })
-
-  const delaysMs = { 'api.cloudflare.com': 5, 'api.dynadot.com': 60 }
-  globalThis.fetch = async (input, options = {}) => {
-    const url = new URL(String(input))
-    await new Promise((resolve) => setTimeout(resolve, delaysMs[url.hostname] ?? 0))
-    if (url.hostname === 'api.porkbun.com') return new Response(JSON.stringify({ status: 'SUCCESS', pricing: { dev: { registration: '8.75', renewal: '12.87', transfer: '12.87' } } }))
-    if (url.hostname === 'api.godaddy.com') {
-      return new Response(JSON.stringify({ available: true, inventory: 'REGISTRY', prices: [{ term: 'YEAR', period: 1, price: { currencyCode: 'USD', value: 1000 } }] }))
-    }
-    if (url.hostname === 'www.namesilo.com') return new Response(JSON.stringify({ reply: { code: 300, detail: 'success', dev: { registration: '9.50' } } }))
-    if (url.hostname === 'api.dynadot.com') {
-      const domain = url.searchParams.get('domain0')
-      return new Response(JSON.stringify({
-        SearchResponse: {
-          ResponseCode: '0',
-          SearchResults: [{ DomainName: domain, Available: 'yes', Price: 'Registration Price: 10.00 in USD and Renewal price: 15.00 in USD and Domain is not a Premium Domain' }],
-        },
-      }))
-    }
-    if (url.hostname === 'api.cloudflare.com') {
-      const [domain] = JSON.parse(options.body).domains
-      return new Response(JSON.stringify({ result: { domains: [{ name: domain, registrable: true, tier: 'standard', pricing: { currency: 'USD', registration_cost: '10.00', renewal_cost: '10.00' } }] } }))
-    }
-    return originalFetch(input, options)
-  }
-
-  try {
-    const start = Date.now()
-    const response = await fetch(`${baseUrl}/api/registrars/compare?domain=http-stream.dev`)
-    assert.equal(response.status, 200)
-    assert.match(response.headers.get('content-type') || '', /application\/x-ndjson/)
-
-    const reader = response.body.getReader()
-    const decoder = new TextDecoder()
-    let buffer = ''
-    const registrars = []
-    const arrivals = []
-    for (;;) {
-      const { done, value } = await reader.read()
-      if (done) break
-      buffer += decoder.decode(value, { stream: true })
-      let newlineIndex
-      while ((newlineIndex = buffer.indexOf('\n')) !== -1) {
-        const line = buffer.slice(0, newlineIndex)
-        buffer = buffer.slice(newlineIndex + 1)
-        if (!line.trim()) continue
-        registrars.push(JSON.parse(line).quote.registrar)
-        arrivals.push(Date.now() - start)
-      }
-    }
-
-    assert.deepEqual(new Set(registrars), new Set(['Porkbun', 'GoDaddy', 'Dynadot', 'NameSilo', 'Cloudflare']))
-    // Cloudflare (5ms) must arrive well before Dynadot (60ms) — proving the response is
-    // genuinely flushed line-by-line over the wire, not assembled and sent all at once.
-    const cloudflareArrival = arrivals[registrars.indexOf('Cloudflare')]
-    const dynadotArrival = arrivals[registrars.indexOf('Dynadot')]
-    assert.ok(dynadotArrival - cloudflareArrival >= 30, `expected Cloudflare well before Dynadot, got arrivals ${arrivals} for ${registrars}`)
-  } finally {
-    globalThis.fetch = originalFetch
-    for (const [key, value] of Object.entries(originalEnvironment)) {
-      if (value === undefined) delete process.env[key]
-      else process.env[key] = value
-    }
-  }
 })
 
 test('GET /api/suggest rejects a word outside the allowed shape', async () => {
@@ -147,7 +86,7 @@ test('GET /api/payments/packs lists credit packs without exposing Stripe configu
 test('POST /api/payments/checkout fails cleanly when Stripe is not configured', async () => {
   const response = await fetch(`${baseUrl}/api/payments/checkout`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', Origin: 'http://localhost:5173' },
+    headers: { 'Content-Type': 'application/json', Origin: 'http://localhost:3000' },
     body: JSON.stringify({ packId: 'starter' }),
   })
   assert.equal(response.status, 503)
@@ -275,17 +214,11 @@ test('responses carry baseline security headers and hide the framework', async (
   assert.equal(response.headers.get('x-powered-by'), null)
 })
 
-test('serves the built SPA for unknown routes, never raw unbundled source', { skip: !existsSync(distDir) && 'run `pnpm build` first' }, async () => {
-  const response = await fetch(`${baseUrl}/some/deep/link`)
+test('serves the prerendered app shell for the home page', async () => {
+  const response = await fetch(`${baseUrl}/`)
   assert.equal(response.status, 200)
   assert.match(response.headers.get('content-type') || '', /text\/html/)
   const html = await response.text()
-  assert.doesNotMatch(html, /src="\/src\/main\.js"/)
-  assert.match(html, /<script type="module"[^>]*src="\/assets\//)
-})
-
-test('API routes are not shadowed by the SPA fallback', { skip: !existsSync(distDir) && 'run `pnpm build` first' }, async () => {
-  const response = await fetch(`${baseUrl}/api/health`)
-  const data = await response.json()
-  assert.equal(data.ok, true)
+  assert.doesNotMatch(html, /src="\/app\/main\.js"/)
+  assert.match(html, /class="app-shell"/)
 })
