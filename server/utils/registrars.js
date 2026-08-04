@@ -267,7 +267,7 @@ async function requestJson(url, options = {}) {
   const cooldownRemaining = Math.ceil(((providerCooldowns.get(provider) || 0) - Date.now()) / 1000)
   if (cooldownRemaining > 0) throw createRateLimitError(cooldownRemaining)
   enforceProviderRequestBudget(provider)
-  const response = await fetch(url, { ...options, signal: AbortSignal.timeout(20000) })
+  const response = await fetch(url, { ...options, signal: AbortSignal.timeout(28000) })
   if (response.status === 429) {
     const retryAfter = getRetryAfterSeconds(response.headers) || 60
     providerCooldowns.set(provider, Date.now() + retryAfter * 1000)
