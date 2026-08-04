@@ -39,6 +39,7 @@ export default {
     progress: '已检查 {checked} / {total}',
     available: '{count} 个可用',
     empty: '已检查的结果中没有可用域名。',
+    limited: '仅显示前 {count} 个。解锁专业版查看完整列表。',
   },
   filters: { availableOnly: '仅显示可用', checkAll: '全部检查' },
   table: { candidate: '候选名称', status: '域名状态', google: 'Google 结果' },

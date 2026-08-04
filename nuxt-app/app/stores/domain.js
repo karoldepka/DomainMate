@@ -1,6 +1,6 @@
 import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
-import { flags } from '../featureFlags.js'
+import { flags, proUnlocked } from '../featureFlags.js'
 import { readCachedLookup, writeCachedLookup } from '../services/domainCache.js'
 
 /** @typedef {'idle'|'checking'|'done'|'error'} CheckStatus */
@@ -19,6 +19,7 @@ const defaultSubstitutions = ['ch:k', 'ch:ck', 'ch:kk', 'cs:x', 'c:k', 'c:ck', '
 const defaultStrategies = ['direct', 'blend', 'overlap', 'bridge', 'compact', 'suffix']
 const defaultPartMinLetters = 1
 const defaultPartMaxLetters = 24
+const freeTierResultLimit = 50
 
 export const useDomainStore = defineStore('domains', () => {
   const brief = ref(defaultBrief)
@@ -38,6 +39,7 @@ export const useDomainStore = defineStore('domains', () => {
   const maxNames = ref(150)
   /** @type {import('vue').Ref<DomainCandidate[]>} */
   const results = ref([])
+  const resultsLimited = ref(false)
   const running = ref(false)
   const checkedCount = computed(() => results.value.filter((item) => item.status !== 'idle').length)
   const availableCount = computed(() => results.value.filter((item) => item.availability === 'available').length)
@@ -108,7 +110,7 @@ export const useDomainStore = defineStore('domains', () => {
       .sort((a, b) => candidateScore(b) - candidateScore(a) || a.name.length - b.name.length)
     const names = selectDiverseNames(candidates, query.maxNames)
 
-    results.value = names.flatMap((name) => query.tlds.map((tld) => ({
+    const generated = names.flatMap((name) => query.tlds.map((tld) => ({
       id: `${name}.${tld}`,
       name: `${name}.${tld}`,
       brand: name,
@@ -117,6 +119,8 @@ export const useDomainStore = defineStore('domains', () => {
       availability: null,
       search: null,
     })))
+    resultsLimited.value = !proUnlocked.value && generated.length > freeTierResultLimit
+    results.value = resultsLimited.value ? generated.slice(0, freeTierResultLimit) : generated
   }
 
   /** Expand both name parts with short, semantically related alternatives from Datamuse and an LLM. */
@@ -195,7 +199,7 @@ export const useDomainStore = defineStore('domains', () => {
 
   expandBrief()
   const defaults = { brief: defaultBrief, substitutions: defaultSubstitutions, strategies: defaultStrategies, maxSyllables: 3, maxConsonants: 2, maxLength: 'innotek'.length, maxNames: 150, part1MinLetters: defaultPartMinLetters, part1MaxLetters: defaultPartMaxLetters, part2MinLetters: defaultPartMinLetters, part2MaxLetters: defaultPartMaxLetters }
-  return { brief, effectiveQuery, keywords, maxSyllables, maxConsonants, maxLength, maxNames, part1MinLetters, part1MaxLetters, part2MinLetters, part2MaxLetters, substitutions, strategies, useThesaurus, enriching, results, running, checkedCount, availableCount, defaults, getBriefDefaults, expandBrief, enrichWithThesaurus, generate, checkOne, checkAll }
+  return { brief, effectiveQuery, keywords, maxSyllables, maxConsonants, maxLength, maxNames, part1MinLetters, part1MaxLetters, part2MinLetters, part2MaxLetters, substitutions, strategies, useThesaurus, enriching, results, resultsLimited, freeTierResultLimit, running, checkedCount, availableCount, defaults, getBriefDefaults, expandBrief, enrichWithThesaurus, generate, checkOne, checkAll }
 })
 
 /**

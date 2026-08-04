@@ -1,4 +1,4 @@
-import { reactive, watch } from 'vue'
+import { computed, reactive, watch } from 'vue'
 
 const storageKey = 'domainmate.featureFlags'
 
@@ -35,3 +35,6 @@ export function hydrateFlagsFromStorage() {
     Object.assign(flags, { ...defaultFlags, ...JSON.parse(localStorage.getItem(storageKey) || '{}') })
   } catch { /* Keep defaults when storage is unavailable or malformed. */ }
 }
+
+/** The single source of truth for what counts as "pro" across the app. */
+export const proUnlocked = computed(() => flags.searchResults && flags.aiSuggestions && flags.favoritesSync)

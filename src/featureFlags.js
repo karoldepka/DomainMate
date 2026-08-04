@@ -1,4 +1,4 @@
-import { reactive, watch } from 'vue'
+import { computed, reactive, watch } from 'vue'
 
 const storageKey = 'domainmate.featureFlags'
 
@@ -31,3 +31,6 @@ function loadFlags() {
 export const flags = reactive(loadFlags())
 
 watch(flags, (value) => localStorage.setItem(storageKey, JSON.stringify(value)), { deep: true })
+
+/** The single source of truth for what counts as "pro" across the app. */
+export const proUnlocked = computed(() => flags.searchResults && flags.aiSuggestions && flags.favoritesSync)

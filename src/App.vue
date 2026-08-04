@@ -7,17 +7,16 @@ import PaymentDialog from './components/PaymentDialog.vue'
 import FeedbackDialog from './components/FeedbackDialog.vue'
 import { getClientId, loadAndSyncFavorites, saveRating } from './services/favorites'
 import { locale, locales, t } from './i18n'
-import { flags } from './featureFlags'
+import { flags, proUnlocked } from './featureFlags'
 
 const PriceComparison = defineAsyncComponent(() => import('./components/PriceComparison.vue'))
 const FeatureFlagsPanel = defineAsyncComponent(() => import('./components/FeatureFlagsPanel.vue'))
 
 const store = useDomainStore()
-const { brief, effectiveQuery, keywords, part1MinLetters, part1MaxLetters, part2MinLetters, part2MaxLetters, maxSyllables, maxConsonants, maxLength, maxNames, substitutions, strategies, useThesaurus, enriching, results, running, checkedCount, availableCount } = storeToRefs(store)
+const { brief, effectiveQuery, keywords, part1MinLetters, part1MaxLetters, part2MinLetters, part2MaxLetters, maxSyllables, maxConsonants, maxLength, maxNames, substitutions, strategies, useThesaurus, enriching, results, resultsLimited, running, checkedCount, availableCount } = storeToRefs(store)
 const progressText = computed(() => t('results.progress', { checked: checkedCount.value, total: results.value.length }))
 const paymentDialog = useTemplateRef('paymentDialog')
 const feedbackDialog = useTemplateRef('feedbackDialog')
-const proUnlocked = computed(() => flags.searchResults && flags.aiSuggestions && flags.favoritesSync)
 const credits = ref(Number(localStorage.getItem('domainmate.credits') || 5))
 const availableOnly = ref(true)
 const favorites = ref(new Map())
@@ -383,6 +382,7 @@ function normalizeLetterRange(min, max) {
           <div>
             <h2 id="results-heading">{{ t('results.heading') }}</h2>
             <p v-if="results.length">{{ progressText }}<template v-if="availableCount"> · <strong>{{ t('results.available', { count: availableCount }) }}</strong></template></p>
+            <button v-if="resultsLimited" class="free-tier-note" type="button" @click="feedbackDialog?.open()">{{ t('results.limited', { count: store.freeTierResultLimit }) }}</button>
           </div>
           <div class="result-filters">
             <label class="available-filter"><input v-model="availableOnly" type="checkbox" />{{ t('filters.availableOnly') }}</label>

@@ -39,6 +39,7 @@ export default {
     progress: '{checked} di {total} verificati',
     available: '{count} disponibili',
     empty: 'Nessun dominio disponibile nei risultati verificati.',
+    limited: 'Vengono mostrati i primi {count}. Sblocca pro per l’elenco completo.',
   },
   filters: { availableOnly: 'Solo disponibili', checkAll: 'Verifica tutti' },
   table: { candidate: 'Candidato', status: 'Stato del dominio', google: 'Risultati Google' },

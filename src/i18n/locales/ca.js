@@ -39,6 +39,7 @@ export default {
     progress: '{checked} de {total} comprovats',
     available: '{count} disponibles',
     empty: 'No hi ha dominis disponibles en els resultats comprovats.',
+    limited: 'Es mostren els primers {count}. Desbloqueja el nivell pro per veure la llista completa.',
   },
   filters: { availableOnly: 'Només disponibles', checkAll: 'Comprova-ho tot' },
   table: { candidate: 'Candidat', status: 'Estat del domini', google: 'Resultats de Google' },

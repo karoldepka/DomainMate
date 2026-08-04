@@ -39,6 +39,7 @@ export default {
     progress: 'Sprawdzono {checked} z {total}',
     available: '{count} dostępnych',
     empty: 'Brak dostępnych domen w sprawdzonych wynikach.',
+    limited: 'Wyświetlane pierwsze {count}. Odblokuj pro, aby zobaczyć pełną listę.',
   },
   filters: { availableOnly: 'Tylko dostępne', checkAll: 'Sprawdź wszystkie' },
   table: { candidate: 'Kandydat', status: 'Status domeny', google: 'Wyniki Google' },

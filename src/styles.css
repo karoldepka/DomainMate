@@ -77,6 +77,7 @@ fieldset { min-width: 0; margin: 0; padding: 0; border: 0; }
 .section-heading h2 { margin: 0; font-family: Manrope, sans-serif; font-size: 22px; }
 .section-heading p { margin: 5px 0 0; color: #76827c; font-size: 13px; }
 .section-heading strong { color: #167054; }
+.free-tier-note { margin: 5px 0 0; padding: 0; border: 0; background: none; color: #b3711a; font-size: 13px; font-weight: 600; text-decoration: underline; text-underline-offset: 2px; cursor: pointer; }.free-tier-note:hover { color: #8f5a15; }
 .secondary-button { min-height: 40px; background: white; border: 1px solid #cdd5d1; color: #33423b; }
 .result-filters { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; }
 .available-filter { min-height: 40px; display: inline-flex; align-items: center; gap: 8px; color: #53615b; font-size: 13px; font-weight: 600; cursor: pointer; }.available-filter input { width: 17px; height: 17px; accent-color: #176b52; }
