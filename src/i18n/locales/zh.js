@@ -82,6 +82,13 @@ export default {
   footer: {
     rdap: '可用性通过 RDAP 检查，请与注册商进一步确认。',
     vocabularyBy: '词汇来源于',
+    privacy: '隐私政策',
+  },
+  privacy: {
+    eyebrow: '您的隐私',
+    title: '隐私政策',
+    close: '关闭隐私政策',
+    englishOnly: '本政策目前仅提供英文版本。',
   },
   payment: {
     eyebrow: '研究积分',

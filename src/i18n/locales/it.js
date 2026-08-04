@@ -82,6 +82,13 @@ export default {
   footer: {
     rdap: 'La disponibilità viene verificata tramite RDAP e deve essere confermata con un registrar.',
     vocabularyBy: 'Vocabolario offerto da',
+    privacy: 'Informativa sulla privacy',
+  },
+  privacy: {
+    eyebrow: 'La tua privacy',
+    title: 'Informativa sulla privacy',
+    close: 'Chiudi l’informativa sulla privacy',
+    englishOnly: 'Questa informativa è al momento disponibile solo in inglese.',
   },
   payment: {
     eyebrow: 'Crediti di ricerca',

@@ -82,6 +82,13 @@ export default {
   footer: {
     rdap: 'La disponibilidad se comprueba mediante RDAP y debe confirmarse con un registrador.',
     vocabularyBy: 'Vocabulario cortesía de',
+    privacy: 'Política de privacidad',
+  },
+  privacy: {
+    eyebrow: 'Tu privacidad',
+    title: 'Política de privacidad',
+    close: 'Cerrar la política de privacidad',
+    englishOnly: 'Esta política solo está disponible en inglés por ahora.',
   },
   payment: {
     eyebrow: 'Créditos de investigación',

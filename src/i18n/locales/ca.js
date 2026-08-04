@@ -82,6 +82,13 @@ export default {
   footer: {
     rdap: 'La disponibilitat es comprova mitjançant RDAP i s’ha de confirmar amb un registrador.',
     vocabularyBy: 'Vocabulari cortesia de',
+    privacy: 'Política de privacitat',
+  },
+  privacy: {
+    eyebrow: 'La teva privacitat',
+    title: 'Política de privacitat',
+    close: 'Tanca la política de privacitat',
+    englishOnly: 'Aquesta política només està disponible en anglès actualment.',
   },
   payment: {
     eyebrow: 'Crèdits de recerca',

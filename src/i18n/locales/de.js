@@ -82,6 +82,13 @@ export default {
   footer: {
     rdap: 'Die Verfügbarkeit wird per RDAP geprüft und sollte bei einer Registrierstelle bestätigt werden.',
     vocabularyBy: 'Vokabular von',
+    privacy: 'Datenschutzerklärung',
+  },
+  privacy: {
+    eyebrow: 'Dein Datenschutz',
+    title: 'Datenschutzerklärung',
+    close: 'Datenschutzerklärung schließen',
+    englishOnly: 'Diese Richtlinie ist derzeit nur auf Englisch verfügbar.',
   },
   payment: {
     eyebrow: 'Recherche-Credits',

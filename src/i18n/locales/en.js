@@ -4,7 +4,7 @@ export default {
   intro: {
     eyebrow: 'Naming workspace',
     title: 'Find an attractive domain name.',
-    subtitle: 'Combine meaningful word parts, check tech-focused domains, and measure how crowded the name already is.',
+    subtitle: 'Combine meaningful word parts, check domains, and measure how crowded the name already is.',
   },
   form: {
     briefLabel: 'Name parts, one per line',
@@ -82,6 +82,13 @@ export default {
   footer: {
     rdap: 'Availability is checked through RDAP and should be confirmed with a registrar.',
     vocabularyBy: 'Vocabulary by',
+    privacy: 'Privacy policy',
+  },
+  privacy: {
+    eyebrow: 'Your privacy',
+    title: 'Privacy policy',
+    close: 'Close privacy policy',
+    englishOnly: 'This policy is currently available in English only.',
   },
   payment: {
     eyebrow: 'Research credits',

@@ -10,6 +10,9 @@ import { compareRegistrarPrices } from './registrars.js'
 import { isAiConfigured, suggestSimilarWords } from './ai.js'
 import { hasSubmittedFeedback, submitFeedback } from './feedback.js'
 import { recordClientError } from './clientErrors.js'
+import { scheduleDataRetentionSweep } from './dataRetention.js'
+
+scheduleDataRetentionSweep()
 
 const app = express()
 app.disable('x-powered-by')

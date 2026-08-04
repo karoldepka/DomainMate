@@ -82,6 +82,13 @@ export default {
   footer: {
     rdap: 'Dostępność jest sprawdzana przez RDAP i powinna zostać potwierdzona u rejestratora.',
     vocabularyBy: 'Słownictwo dzięki',
+    privacy: 'Polityka prywatności',
+  },
+  privacy: {
+    eyebrow: 'Twoja prywatność',
+    title: 'Polityka prywatności',
+    close: 'Zamknij politykę prywatności',
+    englishOnly: 'Ta polityka jest obecnie dostępna tylko w języku angielskim.',
   },
   payment: {
     eyebrow: 'Kredyty badawcze',

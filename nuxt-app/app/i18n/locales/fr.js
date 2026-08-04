@@ -82,6 +82,13 @@ export default {
   footer: {
     rdap: 'La disponibilité est vérifiée via RDAP et doit être confirmée auprès d’un bureau d’enregistrement.',
     vocabularyBy: 'Vocabulaire fourni par',
+    privacy: 'Politique de confidentialité',
+  },
+  privacy: {
+    eyebrow: 'Votre confidentialité',
+    title: 'Politique de confidentialité',
+    close: 'Fermer la politique de confidentialité',
+    englishOnly: 'Cette politique n’est actuellement disponible qu’en anglais.',
   },
   payment: {
     eyebrow: 'Crédits de recherche',

@@ -82,6 +82,13 @@ export default {
   footer: {
     rdap: 'Availability is checked through RDAP and should be confirmed with a registrar.',
     vocabularyBy: 'Vocabulary by',
+    privacy: 'Privacy policy',
+  },
+  privacy: {
+    eyebrow: 'Your privacy',
+    title: 'Privacy policy',
+    close: 'Close privacy policy',
+    englishOnly: 'This policy is currently available in English only.',
   },
   payment: {
     eyebrow: 'Research credits',

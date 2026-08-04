@@ -11,6 +11,7 @@ const { brief, effectiveQuery, keywords, part1MinLetters, part1MaxLetters, part2
 const progressText = computed(() => t('results.progress', { checked: checkedCount.value, total: results.value.length }))
 const paymentDialog = useTemplateRef('paymentDialog')
 const feedbackDialog = useTemplateRef('feedbackDialog')
+const privacyDialog = useTemplateRef('privacyDialog')
 const credits = ref(5)
 const availableOnly = ref(true)
 const favorites = ref(new Map())
@@ -421,9 +422,10 @@ function normalizeLetterRange(min, max) {
       </section>
     </main>
 
-    <footer><span>{{ t('footer.rdap') }}</span><span>{{ t('footer.vocabularyBy') }} <a href="https://www.datamuse.com/api/" target="_blank" rel="noreferrer">Datamuse</a> · DomainMate</span></footer>
+    <footer><span>{{ t('footer.rdap') }}</span><span>{{ t('footer.vocabularyBy') }} <a href="https://www.datamuse.com/api/" target="_blank" rel="noreferrer">Datamuse</a> · DomainMate · <button type="button" class="footer-link" @click="privacyDialog?.open()">{{ t('footer.privacy') }}</button></span></footer>
     <PaymentDialog v-if="flags.payments" ref="paymentDialog" :credits="credits" @credited="addCredits" />
     <LazyFeatureFlagsPanel v-model="showFlagsPanel" />
     <FeedbackDialog v-if="!proUnlocked" ref="feedbackDialog" />
+    <PrivacyPolicyDialog ref="privacyDialog" />
   </div>
 </template>
