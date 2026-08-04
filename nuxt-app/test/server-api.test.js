@@ -13,7 +13,10 @@ let child
 
 before(async () => {
   if (!existsSync(entryFile)) throw new Error('Run `pnpm build` before the test suite.')
-  child = spawn(process.execPath, [entryFile], { cwd: rootDir, env: { ...process.env, PORT: '0' } })
+  // Strip real registrar credentials so /api/registrars/compare stays deterministic and fast
+  // (all providers resolve as "not configured" instantly) instead of hitting live upstream APIs.
+  const { GODADDY_PAT, NAMESILO_API_KEY, DYNADOT_API_KEY, CLOUDFLARE_ACCOUNT_ID, CLOUDFLARE_REGISTRAR_TOKEN, ...testEnv } = process.env
+  child = spawn(process.execPath, [entryFile], { cwd: rootDir, env: { ...testEnv, PORT: '0' } })
   baseUrl = await new Promise((resolve, reject) => {
     let output = ''
     const onData = (chunk) => {

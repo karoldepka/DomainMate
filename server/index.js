@@ -58,10 +58,14 @@ app.post('/api/client-errors', (req, res) => {
   res.json({ ok: true })
 })
 
-app.get('/api/registrars/compare', async (req, res) => {
+app.get('/api/registrars/compare', registrarRateLimit, async (req, res) => {
   const domain = String(req.query.domain || '').trim().toLowerCase()
   if (!domainPattern.test(domain)) return res.status(400).json({ error: 'Enter a valid domain name.' })
-  res.json({ domain, quotes: await compareRegistrarPrices(domain) })
+  res.setHeader('Content-Type', 'application/x-ndjson')
+  let closed = false
+  req.on('close', () => { closed = true })
+  await compareRegistrarPrices(domain, (quote) => { if (!closed) res.write(`${JSON.stringify({ quote })}\n`) })
+  if (!closed) res.end()
 })
 
 app.get('/api/payments/packs', (_req, res) => {
@@ -267,24 +271,44 @@ function securityHeaders(_req, res, next) {
 
 const rateLimitWindowMs = 60_000
 const rateLimitMax = 300
+const registrarRateLimitMax = 50
 const rateLimitBuckets = new Map()
+const registrarRateLimitBuckets = new Map()
 
 /** Cap requests per client IP to protect upstream RDAP/DNS/search/AI quotas from abuse. */
 function rateLimit(req, res, next) {
+  const result = consumeRateLimit(rateLimitBuckets, req.ip, rateLimitMax)
+  if (!result.allowed) return res.status(429).set('Retry-After', String(result.retryAfter)).json({ error: 'Too many requests. Please slow down.' })
+  next()
+}
+
+/** Keep registrar comparisons below the strictest configured provider quota. */
+function registrarRateLimit(req, res, next) {
+  const result = consumeRateLimit(registrarRateLimitBuckets, req.ip, registrarRateLimitMax)
+  res.setHeader('X-RateLimit-Limit', String(registrarRateLimitMax))
+  res.setHeader('X-RateLimit-Remaining', String(result.remaining))
+  res.setHeader('X-RateLimit-Reset', String(result.retryAfter))
+  if (!result.allowed) return res.status(429).set('Retry-After', String(result.retryAfter)).json({ error: 'Too many price comparisons. Please retry shortly.' })
+  next()
+}
+
+/** @param {Map<string, {windowStart: number, count: number}>} buckets */
+function consumeRateLimit(buckets, key, maximum) {
   const now = Date.now()
-  const bucket = rateLimitBuckets.get(req.ip)
-  if (!bucket || now - bucket.windowStart > rateLimitWindowMs) {
-    rateLimitBuckets.set(req.ip, { windowStart: now, count: 1 })
-    return next()
+  let bucket = buckets.get(key)
+  if (!bucket || now - bucket.windowStart >= rateLimitWindowMs) {
+    bucket = { windowStart: now, count: 0 }
+    buckets.set(key, bucket)
   }
   bucket.count += 1
-  if (bucket.count > rateLimitMax) return res.status(429).json({ error: 'Too many requests. Please slow down.' })
-  next()
+  const retryAfter = Math.max(1, Math.ceil((bucket.windowStart + rateLimitWindowMs - now) / 1000))
+  return { allowed: bucket.count <= maximum, remaining: Math.max(0, maximum - bucket.count), retryAfter }
 }
 
 setInterval(() => {
   const cutoff = Date.now() - rateLimitWindowMs
   for (const [key, bucket] of rateLimitBuckets) if (bucket.windowStart < cutoff) rateLimitBuckets.delete(key)
+  for (const [key, bucket] of registrarRateLimitBuckets) if (bucket.windowStart < cutoff) registrarRateLimitBuckets.delete(key)
 }, rateLimitWindowMs).unref()
 
 /** Validate untrusted browser synchronization records. */

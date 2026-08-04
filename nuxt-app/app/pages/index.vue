@@ -7,11 +7,11 @@ import { locale, locales, t } from '../i18n/index.js'
 import { flags } from '../featureFlags.js'
 
 const store = useDomainStore()
-const { brief, effectiveQuery, keywords, maxSyllables, maxConsonants, maxLength, maxNames, substitutions, strategies, useThesaurus, enriching, results, running, checkedCount, availableCount } = storeToRefs(store)
+const { brief, effectiveQuery, keywords, part1MinLetters, part1MaxLetters, part2MinLetters, part2MaxLetters, maxSyllables, maxConsonants, maxLength, maxNames, substitutions, strategies, useThesaurus, enriching, results, running, checkedCount, availableCount } = storeToRefs(store)
 const progressText = computed(() => t('results.progress', { checked: checkedCount.value, total: results.value.length }))
 const paymentDialog = useTemplateRef('paymentDialog')
 const feedbackDialog = useTemplateRef('feedbackDialog')
-const proUnlocked = computed(() => flags.searchResults && flags.aiSuggestions && flags.priceComparison && flags.favoritesSync)
+const proUnlocked = computed(() => flags.searchResults && flags.aiSuggestions && flags.favoritesSync)
 const credits = ref(5)
 const availableOnly = ref(true)
 const favorites = ref(new Map())
@@ -63,7 +63,6 @@ async function restoreProUnlock() {
     if (data.unlocked) {
       flags.searchResults = true
       flags.aiSuggestions = true
-      flags.priceComparison = true
       flags.favoritesSync = true
     }
   } catch { /* Stay on free tier if the check fails. */ }
@@ -76,7 +75,7 @@ function restoreSavedWorkspace() {
   if (saved) window.history.replaceState({}, '', `${window.location.pathname}?${saved}`)
 }
 
-watch([brief, effectiveQuery, maxSyllables, maxConsonants, maxLength, maxNames, availableOnly, useThesaurus], syncQueryParams)
+watch([brief, effectiveQuery, part1MinLetters, part1MaxLetters, part2MinLetters, part2MaxLetters, maxSyllables, maxConsonants, maxLength, maxNames, availableOnly, useThesaurus], syncQueryParams)
 
 /** Enrich parts, generate candidates, and begin availability checks. */
 async function submit() { await store.enrichWithThesaurus(); store.generate(); store.checkAll() }
@@ -161,6 +160,13 @@ function syncSubstitutions() { setQueryLine('SUBSTITUTIONS', substitutions.value
 /** Copy selected generation strategies into the effective query. */
 function syncStrategies() { setQueryLine('STRATEGIES', strategies.value.join(', ')) }
 
+/**
+ * Copy a per-part letter limit into the editable effective query.
+ * @param {string} key
+ * @param {number|string} value
+ */
+function syncPartLimit(key, value) { setQueryLine(key, String(value)) }
+
 /** Restore a shareable naming workspace from its URL. */
 function restoreQueryParams() {
   const params = new URLSearchParams(window.location.search)
@@ -170,6 +176,18 @@ function restoreQueryParams() {
   if (params.has('consonants')) maxConsonants.value = Number(params.get('consonants')) || 2
   if (params.has('length')) maxLength.value = Number(params.get('length')) || 'innotek'.length
   if (params.has('maxNames')) maxNames.value = Number(params.get('maxNames')) || 150
+  const part1Limits = normalizeLetterRange(
+    restoreLetterLimit(params, 'p1min', store.defaults.part1MinLetters),
+    restoreLetterLimit(params, 'p1max', store.defaults.part1MaxLetters),
+  )
+  const part2Limits = normalizeLetterRange(
+    restoreLetterLimit(params, 'p2min', store.defaults.part2MinLetters),
+    restoreLetterLimit(params, 'p2max', store.defaults.part2MaxLetters),
+  )
+  part1MinLetters.value = part1Limits.min
+  part1MaxLetters.value = part1Limits.max
+  part2MinLetters.value = part2Limits.min
+  part2MaxLetters.value = part2Limits.max
   if (params.has('available')) availableOnly.value = params.get('available') === '1'
   store.expandBrief()
   if (params.has('part1')) setQueryLine('PART1', params.get('part1') || '')
@@ -193,9 +211,21 @@ function restoreQueryParams() {
 function syncQueryParams() {
   const params = new URLSearchParams()
   const baseline = store.getBriefDefaults()
+  const effectivePart1Limits = normalizeLetterRange(
+    normalizeLetterLimit(getQueryLine('PART1_MIN_LETTERS'), store.defaults.part1MinLetters),
+    normalizeLetterLimit(getQueryLine('PART1_MAX_LETTERS'), store.defaults.part1MaxLetters),
+  )
+  const effectivePart2Limits = normalizeLetterRange(
+    normalizeLetterLimit(getQueryLine('PART2_MIN_LETTERS'), store.defaults.part2MinLetters),
+    normalizeLetterLimit(getQueryLine('PART2_MAX_LETTERS'), store.defaults.part2MaxLetters),
+  )
   setOverride(params, 'brief', brief.value, store.defaults.brief)
   setOverride(params, 'part1', part1.value, baseline.part1)
   setOverride(params, 'part2', part2.value, baseline.part2)
+  setOverride(params, 'p1min', String(effectivePart1Limits.min), String(store.defaults.part1MinLetters))
+  setOverride(params, 'p1max', String(effectivePart1Limits.max), String(store.defaults.part1MaxLetters))
+  setOverride(params, 'p2min', String(effectivePart2Limits.min), String(store.defaults.part2MinLetters))
+  setOverride(params, 'p2max', String(effectivePart2Limits.max), String(store.defaults.part2MaxLetters))
   setOverride(params, 'tlds', getQueryLine('TLD'), baseline.tlds)
   setOverride(params, 'context', getQueryLine('CONTEXT'), baseline.context)
   setOverride(params, 'subs', normalizeList(getQueryLine('SUBSTITUTIONS')), store.defaults.substitutions.join(','))
@@ -218,6 +248,32 @@ function setOverride(params, key, value, baseline) {
 
 /** @param {string} value */
 function normalizeList(value) { return value.split(/[\s,]+/).filter(Boolean).join(',') }
+
+/**
+ * Restore a bounded integer letter limit while keeping malformed URLs harmless.
+ * @param {URLSearchParams} params
+ * @param {string} key
+ * @param {number} fallback
+ * @returns {number}
+ */
+function restoreLetterLimit(params, key, fallback) {
+  if (!params.has(key)) return fallback
+  return normalizeLetterLimit(params.get(key), fallback)
+}
+
+/** @param {string|null} source @param {number} fallback @returns {number} */
+function normalizeLetterLimit(source, fallback) {
+  if (source === null || String(source).trim() === '') return fallback
+  const value = Number(source)
+  return Number.isInteger(value) ? Math.min(24, Math.max(1, value)) : fallback
+}
+
+/** @param {number|string} min @param {number|string} max @returns {{min: number, max: number}} */
+function normalizeLetterRange(min, max) {
+  const safeMin = normalizeLetterLimit(String(min), store.defaults.part1MinLetters)
+  const safeMax = normalizeLetterLimit(String(max), store.defaults.part1MaxLetters)
+  return { min: Math.min(safeMin, safeMax), max: Math.max(safeMin, safeMax) }
+}
 </script>
 
 <template>
@@ -262,8 +318,22 @@ function normalizeList(value) { return value.split(/[\s,]+/).filter(Boolean).joi
 
           <div class="parts-editor">
             <div class="parts-fields">
-              <div class="field"><label for="name-part1">{{ t('form.part1Label') }}</label><textarea id="name-part1" v-model="part1" rows="3" placeholder="inno inn inter"></textarea></div>
-              <div class="field"><label for="name-part2">{{ t('form.part2Label') }}</label><textarea id="name-part2" v-model="part2" rows="3" placeholder="tech tec tek"></textarea></div>
+              <fieldset class="part-field">
+                <legend id="name-part1-legend">{{ t('form.part1Label') }}</legend>
+                <textarea id="name-part1" v-model="part1" name="part1" rows="3" placeholder="inno inn inter" aria-labelledby="name-part1-legend"></textarea>
+                <div class="part-letter-fields">
+                  <label for="part1-min-letters">{{ t('form.minLetters') }}<input id="part1-min-letters" v-model.number="part1MinLetters" name="p1min" type="number" min="1" :max="part1MaxLetters" step="1" required @change="syncPartLimit('PART1_MIN_LETTERS', part1MinLetters)" /></label>
+                  <label for="part1-max-letters">{{ t('form.maxLetters') }}<input id="part1-max-letters" v-model.number="part1MaxLetters" name="p1max" type="number" :min="part1MinLetters" max="24" step="1" required @change="syncPartLimit('PART1_MAX_LETTERS', part1MaxLetters)" /></label>
+                </div>
+              </fieldset>
+              <fieldset class="part-field">
+                <legend id="name-part2-legend">{{ t('form.part2Label') }}</legend>
+                <textarea id="name-part2" v-model="part2" name="part2" rows="3" placeholder="tech tec tek" aria-labelledby="name-part2-legend"></textarea>
+                <div class="part-letter-fields">
+                  <label for="part2-min-letters">{{ t('form.minLetters') }}<input id="part2-min-letters" v-model.number="part2MinLetters" name="p2min" type="number" min="1" :max="part2MaxLetters" step="1" required @change="syncPartLimit('PART2_MIN_LETTERS', part2MinLetters)" /></label>
+                  <label for="part2-max-letters">{{ t('form.maxLetters') }}<input id="part2-max-letters" v-model.number="part2MaxLetters" name="p2max" type="number" :min="part2MinLetters" max="24" step="1" required @change="syncPartLimit('PART2_MAX_LETTERS', part2MaxLetters)" /></label>
+                </div>
+              </fieldset>
             </div>
             <fieldset class="substitution-fieldset">
               <legend>{{ t('form.substitutionsLegend') }}</legend>
@@ -339,11 +409,11 @@ function normalizeList(value) { return value.split(/[\s,]+/).filter(Boolean).joi
               <div class="rating-stars" role="group" :aria-label="t('rating.groupAria', { name: item.name })">
                 <button v-for="n in 5" :key="n" type="button" class="star-button" :class="{ active: ratingOf(item) >= n }" :aria-label="t('rating.starAria', { n, name: item.name })" :aria-pressed="ratingOf(item) >= n" @click="setRating(item, n)"><UIcon name="i-lucide-star" class="size-3.5" /></button>
               </div>
-              <button v-if="flags.priceComparison" class="icon-button" :class="{ active: item.showPrices }" type="button" :title="t('actions.comparePrices')" :aria-label="t('actions.comparePricesAria', { name: item.name })" :aria-expanded="Boolean(item.showPrices)" @click="item.showPrices = !item.showPrices"><UIcon name="i-lucide-badge-dollar-sign" class="size-4.5" /></button>
+              <button class="icon-button" :class="{ active: item.showPrices }" type="button" :title="t('actions.comparePrices')" :aria-label="t('actions.comparePricesAria', { name: item.name })" :aria-expanded="Boolean(item.showPrices)" @click="item.showPrices = !item.showPrices"><UIcon name="i-lucide-badge-dollar-sign" class="size-4.5" /></button>
               <button v-if="item.status === 'idle' || item.status === 'error'" class="icon-button" type="button" :title="t('actions.checkDomain')" :aria-label="t('actions.checkDomainAria', { name: item.name })" @click="store.checkOne(item)"><UIcon name="i-lucide-search" class="size-4.25" /></button>
               <a class="icon-button" :href="googleUrl(item)" target="_blank" rel="noreferrer" :title="t('actions.searchGoogle')" :aria-label="t('actions.searchGoogleAria', { name: item.name })"><UIcon name="i-lucide-arrow-up-right" class="size-4.5" /></a>
             </div>
-            <LazyPriceComparison v-if="flags.priceComparison && item.showPrices" :domain="item.name" />
+            <LazyPriceComparison v-if="item.showPrices" :domain="item.name" />
           </article>
           </TransitionGroup>
           <p v-if="availableOnly && displayedResults.length === 0" class="empty-results">{{ t('results.empty') }}</p>

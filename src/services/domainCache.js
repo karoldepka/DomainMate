@@ -1,9 +1,10 @@
 const databaseName = 'domainmate-cache'
-const databaseVersion = 1
+const databaseVersion = 2
 const cacheTtl = 15 * 60 * 1000
+const priceCacheTtl = 15 * 60 * 1000
 let databasePromise
 
-/** Open the browser database once and provision the lookup cache store. */
+/** Open the browser database once and provision the lookup and price cache stores. */
 function openDatabase() {
   if (databasePromise) return databasePromise
   databasePromise = new Promise((resolve, reject) => {
@@ -11,6 +12,7 @@ function openDatabase() {
     request.onupgradeneeded = () => {
       const database = request.result
       if (!database.objectStoreNames.contains('lookups')) database.createObjectStore('lookups', { keyPath: 'key' })
+      if (!database.objectStoreNames.contains('prices')) database.createObjectStore('prices', { keyPath: 'key' })
     }
     request.onsuccess = () => resolve(request.result)
     request.onerror = () => reject(request.error)
@@ -33,6 +35,25 @@ export async function writeCachedLookup(domain, keywords, data) {
     const database = await openDatabase()
     const transaction = database.transaction('lookups', 'readwrite')
     transaction.objectStore('lookups').put({ key: `${domain}|${keywords}`, savedAt: Date.now(), data })
+    await transactionDone(transaction)
+  } catch { /* Storage can be unavailable in privacy modes. */ }
+}
+
+/** @param {string} domain @returns {Promise<{savedAt: number, quotes: object[]}|null>} */
+export async function readCachedPrices(domain) {
+  try {
+    const database = await openDatabase()
+    const entry = await requestResult(database.transaction('prices').objectStore('prices').get(domain))
+    return entry && Date.now() - entry.savedAt < priceCacheTtl ? entry : null
+  } catch { return null }
+}
+
+/** @param {string} domain @param {object[]} quotes */
+export async function writeCachedPrices(domain, quotes) {
+  try {
+    const database = await openDatabase()
+    const transaction = database.transaction('prices', 'readwrite')
+    transaction.objectStore('prices').put({ key: domain, savedAt: Date.now(), quotes })
     await transactionDone(transaction)
   } catch { /* Storage can be unavailable in privacy modes. */ }
 }

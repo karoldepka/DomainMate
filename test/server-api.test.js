@@ -34,6 +34,85 @@ test('GET /api/registrars/compare rejects an invalid domain', async () => {
   assert.equal(response.status, 400)
 })
 
+test('GET /api/registrars/compare streams one NDJSON line per registrar as it settles, not buffered until the end', async () => {
+  const originalFetch = globalThis.fetch
+  const originalEnvironment = Object.fromEntries(
+    ['GODADDY_PAT', 'NAMESILO_API_KEY', 'DYNADOT_API_KEY', 'CLOUDFLARE_ACCOUNT_ID', 'CLOUDFLARE_REGISTRAR_TOKEN']
+      .map((key) => [key, process.env[key]]),
+  )
+  Object.assign(process.env, {
+    GODADDY_PAT: 'godaddy-pat',
+    NAMESILO_API_KEY: 'namesilo-key',
+    DYNADOT_API_KEY: 'dynadot-key',
+    CLOUDFLARE_ACCOUNT_ID: 'cloudflare-account',
+    CLOUDFLARE_REGISTRAR_TOKEN: 'cloudflare-token',
+  })
+
+  const delaysMs = { 'api.cloudflare.com': 5, 'api.dynadot.com': 60 }
+  globalThis.fetch = async (input, options = {}) => {
+    const url = new URL(String(input))
+    await new Promise((resolve) => setTimeout(resolve, delaysMs[url.hostname] ?? 0))
+    if (url.hostname === 'api.porkbun.com') return new Response(JSON.stringify({ status: 'SUCCESS', pricing: { dev: { registration: '8.75', renewal: '12.87', transfer: '12.87' } } }))
+    if (url.hostname === 'api.godaddy.com') {
+      return new Response(JSON.stringify({ available: true, inventory: 'REGISTRY', prices: [{ term: 'YEAR', period: 1, price: { currencyCode: 'USD', value: 1000 } }] }))
+    }
+    if (url.hostname === 'www.namesilo.com') return new Response(JSON.stringify({ reply: { code: 300, detail: 'success', dev: { registration: '9.50' } } }))
+    if (url.hostname === 'api.dynadot.com') {
+      const domain = url.searchParams.get('domain0')
+      return new Response(JSON.stringify({
+        SearchResponse: {
+          ResponseCode: '0',
+          SearchResults: [{ DomainName: domain, Available: 'yes', Price: 'Registration Price: 10.00 in USD and Renewal price: 15.00 in USD and Domain is not a Premium Domain' }],
+        },
+      }))
+    }
+    if (url.hostname === 'api.cloudflare.com') {
+      const [domain] = JSON.parse(options.body).domains
+      return new Response(JSON.stringify({ result: { domains: [{ name: domain, registrable: true, tier: 'standard', pricing: { currency: 'USD', registration_cost: '10.00', renewal_cost: '10.00' } }] } }))
+    }
+    return originalFetch(input, options)
+  }
+
+  try {
+    const start = Date.now()
+    const response = await fetch(`${baseUrl}/api/registrars/compare?domain=http-stream.dev`)
+    assert.equal(response.status, 200)
+    assert.match(response.headers.get('content-type') || '', /application\/x-ndjson/)
+
+    const reader = response.body.getReader()
+    const decoder = new TextDecoder()
+    let buffer = ''
+    const registrars = []
+    const arrivals = []
+    for (;;) {
+      const { done, value } = await reader.read()
+      if (done) break
+      buffer += decoder.decode(value, { stream: true })
+      let newlineIndex
+      while ((newlineIndex = buffer.indexOf('\n')) !== -1) {
+        const line = buffer.slice(0, newlineIndex)
+        buffer = buffer.slice(newlineIndex + 1)
+        if (!line.trim()) continue
+        registrars.push(JSON.parse(line).quote.registrar)
+        arrivals.push(Date.now() - start)
+      }
+    }
+
+    assert.deepEqual(new Set(registrars), new Set(['Porkbun', 'GoDaddy', 'Dynadot', 'NameSilo', 'Cloudflare']))
+    // Cloudflare (5ms) must arrive well before Dynadot (60ms) — proving the response is
+    // genuinely flushed line-by-line over the wire, not assembled and sent all at once.
+    const cloudflareArrival = arrivals[registrars.indexOf('Cloudflare')]
+    const dynadotArrival = arrivals[registrars.indexOf('Dynadot')]
+    assert.ok(dynadotArrival - cloudflareArrival >= 30, `expected Cloudflare well before Dynadot, got arrivals ${arrivals} for ${registrars}`)
+  } finally {
+    globalThis.fetch = originalFetch
+    for (const [key, value] of Object.entries(originalEnvironment)) {
+      if (value === undefined) delete process.env[key]
+      else process.env[key] = value
+    }
+  }
+})
+
 test('GET /api/suggest rejects a word outside the allowed shape', async () => {
   const response = await fetch(`${baseUrl}/api/suggest?word=${encodeURIComponent('123 not a word!')}`)
   assert.equal(response.status, 400)

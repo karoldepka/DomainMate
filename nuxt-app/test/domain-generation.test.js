@@ -14,6 +14,34 @@ function createStore() {
   return store
 }
 
+/**
+ * Generate one controlled root pair so tests can assert each strategy's
+ * contribution lengths independently of brief expansion and substitutions.
+ * @param {{part1?: string, part2?: string, strategy: string, part1Range: [string|number, string|number], part2Range: [string|number, string|number], maxConsonants?: number}} options
+ */
+function generateWithPartLimits({ part1 = 'alpha', part2 = 'beta', strategy, part1Range, part2Range, maxConsonants = 6 }) {
+  setActivePinia(createPinia())
+  const store = useDomainStore()
+  store.effectiveQuery = [
+    `PART1: ${part1}`,
+    `PART2: ${part2}`,
+    `PART1_MIN_LETTERS: ${part1Range[0]}`,
+    `PART1_MAX_LETTERS: ${part1Range[1]}`,
+    `PART2_MIN_LETTERS: ${part2Range[0]}`,
+    `PART2_MAX_LETTERS: ${part2Range[1]}`,
+    'TLD: .dev',
+    'CONTEXT:',
+    'SUBSTITUTIONS: skip:never',
+    `STRATEGIES: ${strategy}`,
+    'MAX_SYLLABLES: 8',
+    `MAX_CONSONANTS: ${maxConsonants}`,
+    'MAX_LENGTH: 24',
+    'MAX_NAMES: 150',
+  ].join('\n')
+  store.generate()
+  return store
+}
+
 test('ranks clean compounds before edited variants', () => {
   setActivePinia(createPinia())
   const store = useDomainStore()
@@ -139,4 +167,62 @@ test('every result is assigned one of the requested TLDs', () => {
   const store = createStore()
   const tlds = new Set(store.results.map(({ tld }) => tld))
   assert.deepEqual([...tlds].sort(), ['ai', 'com', 'dev'])
+})
+
+test('effective queries without part limits retain the 1-to-24 default behavior', () => {
+  const explicit = createStore().results.map(({ name }) => name)
+
+  setActivePinia(createPinia())
+  const legacy = useDomainStore()
+  legacy.brief = 'inno inter\ntech tek topic\n.dev .ai .com'
+  legacy.maxLength = 24
+  legacy.expandBrief()
+  legacy.effectiveQuery = legacy.effectiveQuery.split('\n').filter((line) => !/^PART[12]_(?:MIN|MAX)_LETTERS:/.test(line)).join('\n')
+  legacy.generate()
+
+  assert.equal(legacy.part1MinLetters, 1)
+  assert.equal(legacy.part1MaxLetters, 24)
+  assert.equal(legacy.part2MinLetters, 1)
+  assert.equal(legacy.part2MaxLetters, 24)
+  assert.deepEqual(legacy.results.map(({ name }) => name), explicit)
+})
+
+test("part limits use each strategy's actual source-part contribution before deduplication", () => {
+  const cases = [
+    { strategy: 'direct', part1Range: [4, 4], part2Range: [4, 4], expected: ['alphbeta'] },
+    { strategy: 'blend', part1Range: [3, 3], part2Range: [2, 2], expected: ['alpbe'] },
+    { strategy: 'overlap', part1Range: [5, 5], part2Range: [4, 4], expected: ['alphabeta'] },
+    { strategy: 'compact', part1Range: [1, 1], part2Range: [4, 4], expected: ['abeta'] },
+    { strategy: 'suffix', part1Range: [4, 4], part2Range: [3, 3], expected: ['alphbetlabs', 'alphbetflow', 'alphbetbase', 'alphbetforge'] },
+    { strategy: 'reverse', part1Range: [5, 5], part2Range: [4, 4], expected: ['betalpha', 'betaalpha'] },
+    { part1: 'axis', part2: 'brand', strategy: 'bridge', part1Range: [4, 4], part2Range: [5, 5], maxConsonants: 2, expected: ['axisibrand'] },
+  ]
+
+  for (const { expected, ...options } of cases) {
+    const store = generateWithPartLimits(options)
+    assert.deepEqual(store.results.map(({ brand }) => brand), expected, `${options.strategy} contribution lengths differ`)
+  }
+})
+
+test('part ranges generate every permitted source-prefix length', () => {
+  const store = generateWithPartLimits({
+    strategy: 'direct',
+    part1Range: [2, 3],
+    part2Range: [2, 3],
+  })
+
+  assert.deepEqual(new Set(store.results.map(({ brand }) => brand)), new Set(['albe', 'albet', 'alpbe', 'alpbet']))
+})
+
+test('part limits clamp malformed values and normalize reversed ranges', () => {
+  const store = generateWithPartLimits({
+    strategy: 'direct',
+    part1Range: [99, 4],
+    part2Range: ['invalid', 0],
+  })
+
+  assert.equal(store.part1MinLetters, 4)
+  assert.equal(store.part1MaxLetters, 24)
+  assert.equal(store.part2MinLetters, 1)
+  assert.equal(store.part2MaxLetters, 1)
 })

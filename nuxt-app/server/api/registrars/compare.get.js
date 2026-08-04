@@ -8,5 +8,10 @@ export default defineEventHandler(async (event) => {
     setResponseStatus(event, 400)
     return { error: 'Enter a valid domain name.' }
   }
-  return { domain, quotes: await compareRegistrarPrices(domain) }
+  setResponseHeader(event, 'Content-Type', 'application/x-ndjson')
+  const response = event.node.res
+  let closed = false
+  event.node.req.on('close', () => { closed = true })
+  await compareRegistrarPrices(domain, (quote) => { if (!closed) response.write(`${JSON.stringify({ quote })}\n`) })
+  if (!closed) response.end()
 })

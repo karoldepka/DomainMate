@@ -33,7 +33,6 @@ async function submit() {
     if (!response.ok) throw new Error(t('feedback.errors.submitFailed'))
     flags.searchResults = true
     flags.aiSuggestions = true
-    flags.priceComparison = true
     flags.favoritesSync = true
     done.value = true
     emit('unlocked')

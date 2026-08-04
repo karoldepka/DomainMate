@@ -7,7 +7,8 @@ import { readCachedLookup, writeCachedLookup } from '../services/domainCache.js'
 /** @typedef {'available'|'registered'|'unknown'|null} Availability */
 /** @typedef {{provider?: string, status: string, query?: string, totalResults?: number, countKind?: 'exact'|'estimated'|'returned'}} SearchResult */
 /** @typedef {{id: string, name: string, brand: string, tld: string, status: CheckStatus, availability: Availability, availabilityNote?: string, search: SearchResult|null, copied?: boolean}} DomainCandidate */
-/** @typedef {{part1Roots: string[], part2Roots: string[], tlds: string[], context: string, substitutions: string[], strategies: string[], maxSyllables: number, maxConsonants: number, maxLength: number, maxNames: number}} EffectiveQuery */
+/** @typedef {{minLetters: number, maxLetters: number}} PartLetterLimits */
+/** @typedef {{part1Roots: string[], part2Roots: string[], part1Limits: PartLetterLimits, part2Limits: PartLetterLimits, tlds: string[], context: string, substitutions: string[], strategies: string[], maxSyllables: number, maxConsonants: number, maxLength: number, maxNames: number}} EffectiveQuery */
 
 /** @param {string} value */
 const clean = (value) => value.toLowerCase().replace(/[^a-z0-9]/g, '')
@@ -16,6 +17,8 @@ const unique = (items) => [...new Set(items.filter(Boolean))]
 const defaultBrief = 'inno Inter\ntech tek\n.dev .ai .com'
 const defaultSubstitutions = ['ch:k', 'ch:ck', 'ch:kk', 'cs:x', 'c:k', 'c:ck', 'c:kk', 'ph:f', 'x:ks', 's:z', 'double:n', 'double:t', 'double:k']
 const defaultStrategies = ['direct', 'blend', 'overlap', 'bridge', 'compact', 'suffix']
+const defaultPartMinLetters = 1
+const defaultPartMaxLetters = 24
 
 export const useDomainStore = defineStore('domains', () => {
   const brief = ref(defaultBrief)
@@ -24,6 +27,10 @@ export const useDomainStore = defineStore('domains', () => {
   const maxSyllables = ref(3)
   const maxConsonants = ref(2)
   const maxLength = ref('innotek'.length)
+  const part1MinLetters = ref(defaultPartMinLetters)
+  const part1MaxLetters = ref(defaultPartMaxLetters)
+  const part2MinLetters = ref(defaultPartMinLetters)
+  const part2MaxLetters = ref(defaultPartMaxLetters)
   const substitutions = ref([...defaultSubstitutions])
   const useThesaurus = ref(true)
   const enriching = ref(false)
@@ -42,6 +49,10 @@ export const useDomainStore = defineStore('domains', () => {
     effectiveQuery.value = [
       `PART1: ${expandRoots(part1Roots).join(' ')}`,
       `PART2: ${expandRoots(part2Roots).join(' ')}`,
+      `PART1_MIN_LETTERS: ${part1MinLetters.value}`,
+      `PART1_MAX_LETTERS: ${part1MaxLetters.value}`,
+      `PART2_MIN_LETTERS: ${part2MinLetters.value}`,
+      `PART2_MAX_LETTERS: ${part2MaxLetters.value}`,
       `TLD: ${(tlds.length ? tlds : ['.com', '.ai', '.tech']).join(', ')}`,
       `CONTEXT: ${words.join(' ')}`,
       `SUBSTITUTIONS: ${substitutions.value.join(', ')}`,
@@ -73,14 +84,24 @@ export const useDomainStore = defineStore('domains', () => {
     maxSyllables.value = query.maxSyllables
     maxConsonants.value = query.maxConsonants
     maxLength.value = query.maxLength
+    part1MinLetters.value = query.part1Limits.minLetters
+    part1MaxLetters.value = query.part1Limits.maxLetters
+    part2MinLetters.value = query.part2Limits.minLetters
+    part2MaxLetters.value = query.part2Limits.maxLetters
     substitutions.value = query.substitutions
     strategies.value = query.strategies
     maxNames.value = query.maxNames
 
-    const part1Variants = dedupeVariants(query.part1Roots.flatMap((root) => spellingVariantRecords(root, query.substitutions)))
-    const part2Variants = dedupeVariants(query.part2Roots.flatMap((root) => spellingVariantRecords(root, query.substitutions)))
+    const part1Variants = expandVariantsToLetterLimits(
+      dedupeVariants(query.part1Roots.flatMap((root) => spellingVariantRecords(root, query.substitutions))),
+      query.part1Limits,
+    )
+    const part2Variants = expandVariantsToLetterLimits(
+      dedupeVariants(query.part2Roots.flatMap((root) => spellingVariantRecords(root, query.substitutions))),
+      query.part2Limits,
+    )
     const candidates = dedupeCandidates(part1Variants.flatMap((left) => part2Variants.flatMap((right) =>
-      generateCreativeNames(left.name, right.name, query.strategies, query.maxConsonants, left.editCost + right.editCost))))
+      generateCreativeNames(left.name, right.name, query.strategies, query.maxConsonants, left.editCost + right.editCost, query.part1Limits, query.part2Limits))))
       .filter(({ name }) => name.length >= 4 && name.length <= query.maxLength)
       .filter(({ name }) => countSyllables(name) <= query.maxSyllables)
       .filter(({ name }) => longestConsonantRun(name) <= query.maxConsonants)
@@ -173,8 +194,8 @@ export const useDomainStore = defineStore('domains', () => {
   }
 
   expandBrief()
-  const defaults = { brief: defaultBrief, substitutions: defaultSubstitutions, strategies: defaultStrategies, maxSyllables: 3, maxConsonants: 2, maxLength: 'innotek'.length, maxNames: 150 }
-  return { brief, effectiveQuery, keywords, maxSyllables, maxConsonants, maxLength, maxNames, substitutions, strategies, useThesaurus, enriching, results, running, checkedCount, availableCount, defaults, getBriefDefaults, expandBrief, enrichWithThesaurus, generate, checkOne, checkAll }
+  const defaults = { brief: defaultBrief, substitutions: defaultSubstitutions, strategies: defaultStrategies, maxSyllables: 3, maxConsonants: 2, maxLength: 'innotek'.length, maxNames: 150, part1MinLetters: defaultPartMinLetters, part1MaxLetters: defaultPartMaxLetters, part2MinLetters: defaultPartMinLetters, part2MaxLetters: defaultPartMaxLetters }
+  return { brief, effectiveQuery, keywords, maxSyllables, maxConsonants, maxLength, maxNames, part1MinLetters, part1MaxLetters, part2MinLetters, part2MaxLetters, substitutions, strategies, useThesaurus, enriching, results, running, checkedCount, availableCount, defaults, getBriefDefaults, expandBrief, enrichWithThesaurus, generate, checkOne, checkAll }
 })
 
 /**
@@ -415,6 +436,25 @@ function dedupeVariants(variants) {
 }
 
 /**
+ * Materialize every permitted prefix when a user narrows a part range. Keeping
+ * the default range untouched preserves the established candidate ordering.
+ * @param {{name: string, editCost: number}[]} variants
+ * @param {PartLetterLimits} limits
+ * @returns {{name: string, editCost: number}[]}
+ */
+function expandVariantsToLetterLimits(variants, limits) {
+  if (limits.minLetters === defaultPartMinLetters && limits.maxLetters === defaultPartMaxLetters) return variants
+  const expanded = []
+  for (const variant of variants) {
+    const upper = Math.min(limits.maxLetters, variant.name.length)
+    for (let length = limits.minLetters; length <= upper; length += 1) {
+      expanded.push({ ...variant, name: variant.name.slice(0, length) })
+    }
+  }
+  return dedupeVariants(expanded)
+}
+
+/**
  * Generate deterministic brand structures while leaving pronunciation filters
  * to the shared post-processing pipeline.
  * @param {string} left
@@ -422,22 +462,30 @@ function dedupeVariants(variants) {
  * @param {string[]} enabled
  * @param {number} maxConsonants
  * @param {number} editCost
+ * @param {PartLetterLimits} part1Limits
+ * @param {PartLetterLimits} part2Limits
  */
-function generateCreativeNames(left, right, enabled, maxConsonants, editCost) {
+function generateCreativeNames(left, right, enabled, maxConsonants, editCost, part1Limits, part2Limits) {
   const names = []
   const use = (strategy) => enabled.includes(strategy)
   const leftCuts = prefixCuts(left)
   const rightCuts = prefixCuts(right)
   const direct = `${left}${right}`
-  const add = (name, strategy, quality = 0) => names.push({ name: clean(name), strategy, quality: quality - editCost * 5 })
+  /** Keep only paths whose actual source-part contributions satisfy both ranges. */
+  const add = (name, strategy, quality = 0, part1Used = left.length, part2Used = right.length) => {
+    if (!withinPartLetterLimits(part1Used, part1Limits) || !withinPartLetterLimits(part2Used, part2Limits)) return
+    names.push({ name: clean(name), strategy, quality: quality - editCost * 5 })
+  }
 
   if (use('direct')) {
     add(direct, 'direct', 12)
-    add(`${left.slice(0, 4)}${right}`, 'direct', 7)
-    add(`${left}${right.slice(0, 4)}`, 'direct', 7)
+    add(`${left.slice(0, 4)}${right}`, 'direct', 7, Math.min(4, left.length), right.length)
+    add(`${left}${right.slice(0, 4)}`, 'direct', 7, left.length, Math.min(4, right.length))
   }
   if (use('blend')) {
-    for (const start of leftCuts) for (const end of rightCuts) add(`${start}${end}`, 'blend', start.length + end.length >= 7 ? 6 : 2)
+    for (const start of leftCuts) for (const end of rightCuts) {
+      add(`${start}${end}`, 'blend', start.length + end.length >= 7 ? 6 : 2, start.length, end.length)
+    }
   }
   if (use('overlap')) {
     const overlap = mergeOverlap(left, right)
@@ -448,14 +496,16 @@ function generateCreativeNames(left, right, enabled, maxConsonants, editCost) {
     if (boundaryConsonantRun(left, right) > maxConsonants) add(`${left}${bridgeVowel(left)}${right}`, 'bridge', 4)
   }
   if (use('compact')) {
-    if (!/^([a-z])\1/.test(right)) add(`${left[0]}${right}`, 'compact', 4)
-    add(`${left.slice(0, 4)}${right.slice(0, 3)}`, 'compact', 6)
-    add(`${left.slice(0, 3)}${right.slice(0, 4)}`, 'compact', 5)
-    add(`${left.slice(0, 2)}${right}`, 'compact', 3)
+    if (!/^([a-z])\1/.test(right)) add(`${left[0]}${right}`, 'compact', 4, 1, right.length)
+    add(`${left.slice(0, 4)}${right.slice(0, 3)}`, 'compact', 6, Math.min(4, left.length), Math.min(3, right.length))
+    add(`${left.slice(0, 3)}${right.slice(0, 4)}`, 'compact', 5, Math.min(3, left.length), Math.min(4, right.length))
+    add(`${left.slice(0, 2)}${right}`, 'compact', 3, Math.min(2, left.length), right.length)
   }
   if (use('suffix')) {
     const stem = collapseBoundary(left.slice(0, 4), right.slice(0, 3))
-    for (const suffix of ['labs', 'flow', 'forge', 'base']) add(`${stem}${suffix}`, 'suffix', 1)
+    for (const suffix of ['labs', 'flow', 'forge', 'base']) {
+      add(`${stem}${suffix}`, 'suffix', 1, Math.min(4, left.length), Math.min(3, right.length))
+    }
   }
   if (use('reverse')) {
     add(`${right}${left}`, 'reverse', 2)
@@ -463,6 +513,15 @@ function generateCreativeNames(left, right, enabled, maxConsonants, editCost) {
     add(collapseBoundary(right, left), 'reverse', 3)
   }
   return names
+}
+
+/**
+ * Check one strategy path's source contribution against a part's limits.
+ * @param {number} used
+ * @param {PartLetterLimits} limits
+ */
+function withinPartLetterLimits(used, limits) {
+  return used >= limits.minLetters && used <= limits.maxLetters
 }
 
 /** Return useful prefix/suffix cuts while avoiding one-character fragments. */
@@ -535,7 +594,13 @@ function phoneticFamily(name) {
 /** @param {string} source @returns {EffectiveQuery} */
 function parseEffectiveQuery(source) {
   /** @type {EffectiveQuery} */
-  const parsed = { part1Roots: [], part2Roots: [], tlds: [], context: '', substitutions: [], strategies: [], maxSyllables: 3, maxConsonants: 2, maxLength: 'innotek'.length, maxNames: 150 }
+  const parsed = {
+    part1Roots: [], part2Roots: [],
+    part1Limits: { minLetters: defaultPartMinLetters, maxLetters: defaultPartMaxLetters },
+    part2Limits: { minLetters: defaultPartMinLetters, maxLetters: defaultPartMaxLetters },
+    tlds: [], context: '', substitutions: [], strategies: [],
+    maxSyllables: 3, maxConsonants: 2, maxLength: 'innotek'.length, maxNames: 150,
+  }
   for (const line of source.split('\n')) {
     const [rawKey, ...rest] = line.split(':')
     const key = rawKey.trim().toUpperCase()
@@ -543,6 +608,10 @@ function parseEffectiveQuery(source) {
     const values = value.split(/[\s,]+/).map(clean).filter(Boolean)
     if (key === 'PART1') parsed.part1Roots = unique(values)
     if (key === 'PART2') parsed.part2Roots = unique(values)
+    if (key === 'PART1_MIN_LETTERS') parsed.part1Limits.minLetters = clampOption(value, defaultPartMinLetters, defaultPartMaxLetters, defaultPartMinLetters)
+    if (key === 'PART1_MAX_LETTERS') parsed.part1Limits.maxLetters = clampOption(value, defaultPartMinLetters, defaultPartMaxLetters, defaultPartMaxLetters)
+    if (key === 'PART2_MIN_LETTERS') parsed.part2Limits.minLetters = clampOption(value, defaultPartMinLetters, defaultPartMaxLetters, defaultPartMinLetters)
+    if (key === 'PART2_MAX_LETTERS') parsed.part2Limits.maxLetters = clampOption(value, defaultPartMinLetters, defaultPartMaxLetters, defaultPartMaxLetters)
     if (key === 'TLD') parsed.tlds = unique(values)
     if (key === 'CONTEXT') parsed.context = value
     if (key === 'SUBSTITUTIONS') parsed.substitutions = value.split(/[\s,]+/).filter((rule) => /^[a-z]+:[a-z]+$/.test(rule))
@@ -552,9 +621,22 @@ function parseEffectiveQuery(source) {
     if (key === 'MAX_LENGTH') parsed.maxLength = clampOption(value, 4, 24, 'innotek'.length)
     if (key === 'MAX_NAMES') parsed.maxNames = clampOption(value, 1, 400, 150)
   }
+  parsed.part1Limits = normalizePartLetterLimits(parsed.part1Limits)
+  parsed.part2Limits = normalizePartLetterLimits(parsed.part2Limits)
   if (!parsed.substitutions.length) parsed.substitutions = [...defaultSubstitutions]
   if (!parsed.strategies.length) parsed.strategies = [...defaultStrategies]
   return parsed
+}
+
+/**
+ * Clamp and order a user-editable minimum/maximum pair.
+ * @param {PartLetterLimits} limits
+ * @returns {PartLetterLimits}
+ */
+function normalizePartLetterLimits(limits) {
+  const first = clampOption(String(limits.minLetters), defaultPartMinLetters, defaultPartMaxLetters, defaultPartMinLetters)
+  const second = clampOption(String(limits.maxLetters), defaultPartMinLetters, defaultPartMaxLetters, defaultPartMaxLetters)
+  return { minLetters: Math.min(first, second), maxLetters: Math.max(first, second) }
 }
 
 /** Count pronounceable units using contiguous vowel groups, including "y". */
