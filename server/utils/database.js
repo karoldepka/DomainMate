@@ -73,6 +73,17 @@ async function initializeSchema(sql) {
     )
   `
   await sql`CREATE INDEX IF NOT EXISTS client_errors_created_at_idx ON domainmate.client_errors (created_at)`
+  await sql`
+    CREATE TABLE IF NOT EXISTS domainmate.events (
+      id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+      client_id TEXT NOT NULL,
+      name TEXT NOT NULL,
+      properties JSONB NOT NULL DEFAULT '{}',
+      created_at BIGINT NOT NULL
+    )
+  `
+  await sql`CREATE INDEX IF NOT EXISTS events_name_idx ON domainmate.events (name)`
+  await sql`CREATE INDEX IF NOT EXISTS events_created_at_idx ON domainmate.events (created_at)`
 }
 
 /** Run a write against every configured provider, requiring at least one success. */

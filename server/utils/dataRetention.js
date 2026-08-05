@@ -9,12 +9,14 @@ export async function sweepExpiredData() {
     database.prepare('DELETE FROM favorites WHERE updated_at < ?').run(cutoff)
     database.prepare('DELETE FROM feedback WHERE created_at < ?').run(cutoff)
     database.prepare('DELETE FROM client_errors WHERE created_at < ?').run(cutoff)
+    database.prepare('DELETE FROM events WHERE created_at < ?').run(cutoff)
     return
   }
   await fanoutWrite(async (sql) => {
     await sql`DELETE FROM domainmate.favorites WHERE updated_at < ${cutoff}`
     await sql`DELETE FROM domainmate.feedback WHERE created_at < ${cutoff}`
     await sql`DELETE FROM domainmate.client_errors WHERE created_at < ${cutoff}`
+    await sql`DELETE FROM domainmate.events WHERE created_at < ${cutoff}`
   })
 }
 
