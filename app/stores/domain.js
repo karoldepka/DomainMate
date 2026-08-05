@@ -2,6 +2,7 @@ import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
 import { flags, proUnlocked } from '../featureFlags.js'
 import { readCachedLookup, writeCachedLookup } from '../services/domainCache.js'
+import { track } from '../services/analytics.js'
 
 /** @typedef {'idle'|'checking'|'done'|'error'} CheckStatus */
 /** @typedef {'available'|'registered'|'unknown'|null} Availability */
@@ -121,6 +122,7 @@ export const useDomainStore = defineStore('domains', () => {
     })))
     resultsLimited.value = !proUnlocked.value && generated.length > freeTierResultLimit
     results.value = resultsLimited.value ? generated.slice(0, freeTierResultLimit) : generated
+    track('search_run', { resultCount: results.value.length, limited: resultsLimited.value })
   }
 
   /** Expand both name parts with short, semantically related alternatives from Datamuse and an LLM. */

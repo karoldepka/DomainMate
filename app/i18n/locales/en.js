@@ -3,8 +3,8 @@ export default {
   topbar: { meta: 'RDAP registry checks', credits: 'credits', freeTier: 'Free tier', unlockPro: 'Unlock pro tier', proUnlocked: 'Pro unlocked' },
   intro: {
     eyebrow: 'Naming workspace',
-    title: 'Find an attractive domain name.',
-    subtitle: 'Combine meaningful word parts, check tech-focused domains, and measure how crowded the name already is.',
+    title: 'Find an available domain for your product/organization.',
+    subtitle: 'Combine your ideas, generate brandable names, and check availability and prices from multiple registrars in one workspace.',
   },
   form: {
     briefLabel: 'Name parts, one per line',

@@ -3,6 +3,7 @@ import { computed, nextTick, onMounted, ref, useTemplateRef, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useDomainStore } from '../stores/domain.js'
 import { getClientId, loadAndSyncFavorites, saveComment, saveRating } from '../services/favorites.js'
+import { track } from '../services/analytics.js'
 import { locale, locales, t } from '../i18n/index.js'
 import { flags, proUnlocked } from '../featureFlags.js'
 
@@ -171,6 +172,18 @@ async function setRating(item, value) {
   map.set(item.name, { ...favoriteOf(item), rating: next })
   favorites.value = map
   await saveRating(item.name, next)
+  if (next > 0) track('domain_favorited', { rating: next })
+}
+
+/** @param {{showPrices?: boolean}} item */
+function togglePrices(item) {
+  item.showPrices = !item.showPrices
+  if (item.showPrices) track('price_comparison_opened')
+}
+
+function openProPrompt() {
+  track('pro_prompt_shown')
+  feedbackDialog?.value?.open()
 }
 
 /** Update immediately in the UI and debounce persistence while the user types. */
@@ -427,7 +440,7 @@ function normalizeLetterRange(min, max) {
           <div>
             <h2 id="results-heading">{{ t('results.heading') }}</h2>
             <p v-if="results.length">{{ progressText }}<template v-if="availableCount"> · <strong>{{ t('results.available', { count: availableCount }) }}</strong></template></p>
-            <button v-if="resultsLimited" class="free-tier-note" type="button" @click="feedbackDialog?.open()">{{ t('results.limited', { count: store.freeTierResultLimit }) }}</button>
+            <button v-if="resultsLimited" class="free-tier-note" type="button" @click="openProPrompt">{{ t('results.limited', { count: store.freeTierResultLimit }) }}</button>
           </div>
           <div class="result-filters">
             <label class="available-filter"><input v-model="availableOnly" type="checkbox" />{{ t('filters.availableOnly') }}</label>
@@ -462,10 +475,12 @@ function normalizeLetterRange(min, max) {
             </div>
             <div class="actions-cell">
               <div class="rating-stars" role="group" :aria-label="t('rating.groupAria', { name: item.name })">
-                <button v-for="n in 5" :key="n" type="button" class="star-button" :class="{ active: ratingOf(item) >= n }" :aria-label="t('rating.starAria', { n, name: item.name })" :aria-pressed="ratingOf(item) >= n" @click="setRating(item, n)"><UIcon name="i-lucide-star" class="size-3.5" /></button>
+                <button v-for="n in 5" :key="n" type="button" class="star-button" :class="{ active: ratingOf(item) >= n }" :aria-label="t('rating.starAria', { n, name: item.name })" :aria-pressed="ratingOf(item) >= n" @click="setRating(item, n)">
+                  <svg class="size-3.5" viewBox="0 0 24 24" :fill="ratingOf(item) >= n ? 'currentColor' : 'none'" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.12 2.12 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.12 2.12 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.12 2.12 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.12 2.12 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.12 2.12 0 0 0 1.597-1.16z" /></svg>
+                </button>
               </div>
               <button class="icon-button comment-trigger" :class="{ active: isCommentExpanded(item) }" type="button" :title="t(commentOf(item) ? 'comments.edit' : 'comments.add')" :aria-label="t(commentOf(item) ? 'comments.editAria' : 'comments.addAria', { name: item.name })" :aria-expanded="isCommentExpanded(item)" :aria-controls="`comment-${item.id}`" @click="openComment(item)"><UIcon name="i-lucide-message-square-plus" class="size-4.5" /></button>
-              <button class="icon-button" :class="{ active: item.showPrices }" type="button" :title="t('actions.comparePrices')" :aria-label="t('actions.comparePricesAria', { name: item.name })" :aria-expanded="Boolean(item.showPrices)" @click="item.showPrices = !item.showPrices"><UIcon name="i-lucide-badge-dollar-sign" class="size-4.5" /></button>
+              <button class="icon-button" :class="{ active: item.showPrices }" type="button" :title="t('actions.comparePrices')" :aria-label="t('actions.comparePricesAria', { name: item.name })" :aria-expanded="Boolean(item.showPrices)" @click="togglePrices(item)"><UIcon name="i-lucide-badge-dollar-sign" class="size-4.5" /></button>
               <button v-if="item.status === 'idle' || item.status === 'error'" class="icon-button" type="button" :title="t('actions.checkDomain')" :aria-label="t('actions.checkDomainAria', { name: item.name })" @click="store.checkOne(item)"><UIcon name="i-lucide-search" class="size-4.25" /></button>
               <a class="icon-button" :href="googleUrl(item)" target="_blank" rel="noreferrer" :title="t('actions.searchGoogle')" :aria-label="t('actions.searchGoogleAria', { name: item.name })"><UIcon name="i-lucide-arrow-up-right" class="size-4.5" /></a>
             </div>
@@ -474,6 +489,7 @@ function normalizeLetterRange(min, max) {
           </article>
           </TransitionGroup>
           <p v-if="availableOnly && displayedResults.length === 0" class="empty-results">{{ t('results.empty') }}</p>
+          <button v-if="resultsLimited" class="free-tier-note free-tier-note-bottom" type="button" @click="openProPrompt">{{ t('results.limited', { count: store.freeTierResultLimit }) }}</button>
         </div>
       </section>
     </main>

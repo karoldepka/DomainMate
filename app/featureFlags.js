@@ -9,6 +9,8 @@ const defaultFlags = {
   payments: false,
   favoritesSync: false,
   crashReporting: false,
+  analytics: false,
+  unlimitedPro: false,
 }
 
 export const flagList = [
@@ -17,6 +19,8 @@ export const flagList = [
   { key: 'payments', label: 'Credits & payments', description: 'Enables the Stripe checkout flow for buying research credits.' },
   { key: 'favoritesSync', label: 'Sync ratings to server', description: 'Syncs star ratings to the backend so they follow you across browsers.' },
   { key: 'crashReporting', label: 'Send crash reports', description: 'Sends unexpected error details to the backend to help fix bugs.' },
+  { key: 'analytics', label: 'Product analytics', description: 'Sends anonymous usage events (searches run, favorites, price checks) to help improve the product.' },
+  { key: 'unlimitedPro', label: 'Unlimited pro', description: 'Unlocks the full pro tier on this device, removing the free-tier result cap, without needing the other flags on.' },
 ]
 
 // Always starts at the all-off defaults, matching the prerendered/SSR shell exactly,
@@ -37,4 +41,4 @@ export function hydrateFlagsFromStorage() {
 }
 
 /** The single source of truth for what counts as "pro" across the app. */
-export const proUnlocked = computed(() => flags.searchResults && flags.aiSuggestions && flags.favoritesSync)
+export const proUnlocked = computed(() => flags.unlimitedPro || (flags.searchResults && flags.aiSuggestions && flags.favoritesSync))
