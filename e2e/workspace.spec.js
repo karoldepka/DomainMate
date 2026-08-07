@@ -256,15 +256,15 @@ test.describe('naming workspace', () => {
     expect(syncResponse.ok()).toBeTruthy()
   })
 
-  test('the unlimitedPro flag removes the free-tier cap and unlocks the pro badge', async ({ page }) => {
+  test('the unlimitedPro flag removes the free-tier cap and unlocks the unlimited badge', async ({ page }) => {
     await page.goto('/')
     await expect(page.locator('.result-row').first()).toBeVisible()
-    await expect(page.locator('.free-tier-badge')).toHaveText('Unlock pro tier')
+    await expect(page.locator('.free-tier-badge')).toHaveText('Unlock Basic')
 
     await seedFlags(page, { unlimitedPro: true })
     await page.reload()
     await expect(page.locator('.result-row').first()).toBeVisible()
-    await expect(page.locator('.free-tier-badge')).toHaveText('Pro unlocked')
+    await expect(page.locator('.free-tier-badge')).toHaveText('Unlimited unlocked')
     await expect(page.locator('.free-tier-note')).toHaveCount(0)
   })
 

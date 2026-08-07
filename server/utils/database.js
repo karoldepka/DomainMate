@@ -63,6 +63,16 @@ async function initializeSchema(sql) {
   await sql`CREATE INDEX IF NOT EXISTS feedback_client_id_idx ON domainmate.feedback (client_id)`
   await sql`CREATE INDEX IF NOT EXISTS feedback_created_at_idx ON domainmate.feedback (created_at)`
   await sql`
+    CREATE TABLE IF NOT EXISTS domainmate.purchases (
+      id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+      client_id TEXT NOT NULL,
+      session_id TEXT NOT NULL UNIQUE,
+      tier_id TEXT NOT NULL,
+      created_at BIGINT NOT NULL
+    )
+  `
+  await sql`CREATE INDEX IF NOT EXISTS purchases_client_id_idx ON domainmate.purchases (client_id)`
+  await sql`
     CREATE TABLE IF NOT EXISTS domainmate.client_errors (
       id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
       message TEXT NOT NULL,

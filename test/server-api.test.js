@@ -74,20 +74,20 @@ test('GET /api/health reports search and AI configuration status', async () => {
   assert.equal(typeof data.ai, 'boolean')
 })
 
-test('GET /api/payments/packs lists credit packs without exposing Stripe configuration', async () => {
+test('GET /api/payments/packs lists pro tiers without exposing Stripe configuration', async () => {
   const response = await fetch(`${baseUrl}/api/payments/packs`)
   assert.equal(response.status, 200)
   const data = await response.json()
-  assert.equal(data.currency, 'PLN')
-  assert.ok(data.packs.length >= 1)
-  assert.ok(data.packs.every((pack) => pack.id && pack.credits > 0 && pack.amount > 0))
+  assert.equal(data.currency, 'USD')
+  assert.ok(data.tiers.length >= 1)
+  assert.ok(data.tiers.every((tier) => tier.id && tier.amount > 0))
 })
 
 test('POST /api/payments/checkout fails cleanly when Stripe is not configured', async () => {
   const response = await fetch(`${baseUrl}/api/payments/checkout`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Origin: 'http://localhost:3000' },
-    body: JSON.stringify({ packId: 'starter' }),
+    body: JSON.stringify({ tierId: 'pro', clientId: 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee' }),
   })
   assert.equal(response.status, 503)
   const data = await response.json()
@@ -98,7 +98,7 @@ test('POST /api/payments/checkout rejects requests without a recognized origin',
   const response = await fetch(`${baseUrl}/api/payments/checkout`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ packId: 'starter' }),
+    body: JSON.stringify({ tierId: 'pro', clientId: 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee' }),
   })
   assert.equal(response.status, 400)
   const data = await response.json()
@@ -158,7 +158,7 @@ test('POST /api/feedback rejects an empty message', async () => {
   assert.equal(response.status, 400)
 })
 
-test('POST /api/feedback unlocks pro status for that client, and GET /api/feedback/status reports it', async () => {
+test('POST /api/feedback unlocks basic status for that client, and GET /api/feedback/status reports it', async () => {
   const clientId = '44444444-4444-4444-4444-444444444444'
   const submitResponse = await fetch(`${baseUrl}/api/feedback`, {
     method: 'POST',
@@ -175,6 +175,18 @@ test('POST /api/feedback unlocks pro status for that client, and GET /api/feedba
   const otherStatusResponse = await fetch(`${baseUrl}/api/feedback/status?clientId=55555555-5555-5555-5555-555555555555`)
   const otherStatusData = await otherStatusResponse.json()
   assert.equal(otherStatusData.unlocked, false)
+})
+
+test('GET /api/payments/status reports null tier for a client with no purchases', async () => {
+  const response = await fetch(`${baseUrl}/api/payments/status?clientId=66666666-6666-6666-6666-666666666666`)
+  assert.equal(response.status, 200)
+  const data = await response.json()
+  assert.equal(data.tier, null)
+})
+
+test('GET /api/payments/status rejects a malformed client id', async () => {
+  const response = await fetch(`${baseUrl}/api/payments/status?clientId=not-a-uuid`)
+  assert.equal(response.status, 400)
 })
 
 test('POST /api/client-errors accepts a report and rejects a missing message', async () => {

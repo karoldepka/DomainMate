@@ -5,7 +5,7 @@ import { useDomainStore } from '../stores/domain.js'
 import { getClientId, loadAndSyncFavorites, saveComment, saveRating } from '../services/favorites.js'
 import { track } from '../services/analytics.js'
 import { locale, locales, t } from '../i18n/index.js'
-import { flags, proUnlocked } from '../featureFlags.js'
+import { basicUnlocked, domainLimit, flags, paidTier } from '../featureFlags.js'
 
 const store = useDomainStore()
 const { brief, effectiveQuery, keywords, part1MinLetters, part1MaxLetters, part2MinLetters, part2MaxLetters, maxSyllables, maxConsonants, maxLength, maxNames, substitutions, strategies, useThesaurus, enriching, results, resultsLimited, running, checkedCount, availableCount } = storeToRefs(store)
@@ -14,7 +14,6 @@ const paymentDialog = useTemplateRef('paymentDialog')
 const feedbackDialog = useTemplateRef('feedbackDialog')
 const privacyDialog = useTemplateRef('privacyDialog')
 const colorMode = useColorMode()
-const credits = ref(5)
 const availableOnly = ref(true)
 const favorites = ref(new Map())
 const expandedComments = ref(new Set())
@@ -55,7 +54,6 @@ const strategyOptions = [
 ]
 
 onMounted(async () => {
-  credits.value = Number(localStorage.getItem('domainmate.credits') || 5)
   restoreSavedWorkspace()
   restoreQueryParams()
   store.generate()
@@ -64,19 +62,34 @@ onMounted(async () => {
   restoreProUnlock()
 })
 
-/** Restore pro-tier flags for a returning visitor who already sent feedback from this device. */
+/** Restore tier flags for a returning visitor who already sent feedback or paid from this device. */
 async function restoreProUnlock() {
+  const clientId = await getClientId().catch(() => null)
+  if (!clientId) return
   try {
-    const clientId = await getClientId()
     const response = await fetch(`/api/feedback/status?clientId=${encodeURIComponent(clientId)}`)
-    if (!response.ok) return
-    const data = await response.json()
-    if (data.unlocked) {
-      flags.searchResults = true
-      flags.aiSuggestions = true
-      flags.favoritesSync = true
+    if (response.ok) {
+      const data = await response.json()
+      if (data.unlocked) {
+        flags.searchResults = true
+        flags.aiSuggestions = true
+        flags.favoritesSync = true
+      }
     }
   } catch { /* Stay on free tier if the check fails. */ }
+  try {
+    const response = await fetch(`/api/payments/status?clientId=${encodeURIComponent(clientId)}`)
+    if (response.ok) {
+      const data = await response.json()
+      if (data.tier === 'pro' || data.tier === 'unlimited') {
+        flags.searchResults = true
+        flags.aiSuggestions = true
+        flags.favoritesSync = true
+        flags.proTier = true
+      }
+      if (data.tier === 'unlimited') flags.unlimitedPro = true
+    }
+  } catch { /* Stay on the free/basic tier if the check fails. */ }
 }
 
 /** When there's no shareable link, re-apply the last-used workspace before restoring from the URL. */
@@ -119,12 +132,6 @@ async function copyDomain(item) {
   await navigator.clipboard.writeText(item.name)
   item.copied = true
   window.setTimeout(() => { item.copied = false }, 1200)
-}
-
-/** Add credits after server-side Checkout verification. */
-function addCredits(amount) {
-  credits.value += Number(amount)
-  localStorage.setItem('domainmate.credits', String(credits.value))
 }
 
 /** Five clicks on the logo within two seconds reveals the hidden feature-flags panel. */
@@ -194,7 +201,8 @@ function togglePrices(item) {
 
 function openProPrompt() {
   track('pro_prompt_shown')
-  feedbackDialog?.value?.open()
+  if (basicUnlocked.value && flags.payments) paymentDialog?.value?.open()
+  else feedbackDialog?.value?.open()
 }
 
 /** Update immediately in the UI and debounce persistence while the user types. */
@@ -375,9 +383,13 @@ function normalizeLetterRange(min, max) {
         <div class="topbar-meta"><span class="status-dot" aria-hidden="true"></span>{{ t('topbar.meta') }}</div>
         <UButton class="theme-switcher" color="neutral" variant="outline" :icon="themeIcon" :aria-label="t('theme.switchAria', { theme: themeLabel })" :title="t('theme.switchTitle', { theme: themeLabel })" @click="cycleTheme"><span>{{ themeLabel }}</span></UButton>
         <USelect v-model="locale" :items="languageItems" :aria-label="t('language.label')" size="sm" class="w-28" />
-        <UButton v-if="flags.payments" class="credit-button" :ui="{ base: 'rounded-md' }" @click="paymentDialog?.open()"><span>{{ credits }}</span> {{ t('topbar.credits') }}</UButton>
-        <UBadge v-else-if="proUnlocked" color="primary" variant="subtle" size="lg" class="free-tier-badge">{{ t('topbar.proUnlocked') }}</UBadge>
-        <UButton v-else class="free-tier-badge" color="neutral" variant="outline" @click="feedbackDialog?.open()">{{ t('topbar.unlockPro') }}</UButton>
+        <UBadge v-if="flags.unlimitedPro" color="primary" variant="subtle" size="lg" class="free-tier-badge">{{ t('topbar.unlimitedUnlocked') }}</UBadge>
+        <UBadge v-else-if="flags.proTier" color="primary" variant="subtle" size="lg" class="free-tier-badge">{{ t('topbar.proUnlocked') }}</UBadge>
+        <template v-else>
+          <UBadge v-if="basicUnlocked" color="neutral" variant="subtle" size="lg" class="free-tier-badge">{{ t('topbar.basicUnlocked') }}</UBadge>
+          <UButton v-else class="free-tier-badge" color="neutral" variant="outline" @click="feedbackDialog?.open()">{{ t('topbar.unlockBasic') }}</UButton>
+        </template>
+        <UButton v-if="flags.payments && !flags.unlimitedPro" class="credit-button" :ui="{ base: 'rounded-md' }" @click="paymentDialog?.open()">{{ t('topbar.upgrade') }}</UButton>
       </div>
     </header>
 
@@ -469,7 +481,7 @@ function normalizeLetterRange(min, max) {
           <div>
             <h2 id="results-heading">{{ t('results.heading') }}</h2>
             <p v-if="results.length">{{ progressText }}<template v-if="availableCount"> · <strong>{{ t('results.available', { count: availableCount }) }}</strong></template></p>
-            <button v-if="!proUnlocked && results.length" class="free-tier-note" type="button" @click="openProPrompt">{{ t('results.limited', { count: store.freeTierResultLimit }) }}</button>
+            <button v-if="!flags.unlimitedPro && results.length" class="free-tier-note" type="button" @click="openProPrompt">{{ t('results.limited', { count: domainLimit }) }}</button>
           </div>
           <div class="result-filters">
             <label class="available-filter"><input v-model="availableOnly" type="checkbox" />{{ t('filters.availableOnly') }}</label>
@@ -518,15 +530,15 @@ function normalizeLetterRange(min, max) {
           </article>
           </TransitionGroup>
           <p v-if="availableOnly && displayedResults.length === 0" class="empty-results">{{ t('results.empty') }}</p>
-          <button v-if="!proUnlocked && results.length" class="free-tier-note free-tier-note-bottom" type="button" @click="openProPrompt">{{ t('results.limited', { count: store.freeTierResultLimit }) }}</button>
+          <button v-if="!flags.unlimitedPro && results.length" class="free-tier-note free-tier-note-bottom" type="button" @click="openProPrompt">{{ t('results.limited', { count: domainLimit }) }}</button>
         </div>
       </section>
     </main>
 
     <footer><span>{{ t('footer.rdap') }}</span><span>{{ t('footer.vocabularyBy') }} <a href="https://www.datamuse.com/api/" target="_blank" rel="noreferrer">Datamuse</a> · DomainMate · <button type="button" class="footer-link" @click="privacyDialog?.open()">{{ t('footer.privacy') }}</button><template v-if="buildInfo?.sha"> · <a class="footer-link build-sha" :href="`https://github.com/karoldepka/DomainMate/commit/${buildInfo.sha}`" target="_blank" rel="noreferrer" :title="buildInfo.timestamp">{{ buildInfo.sha }}</a></template></span></footer>
-    <PaymentDialog v-if="flags.payments" ref="paymentDialog" :credits="credits" @credited="addCredits" />
+    <PaymentDialog v-if="flags.payments" ref="paymentDialog" />
     <LazyFeatureFlagsPanel v-model="showFlagsPanel" />
-    <FeedbackDialog v-if="!proUnlocked" ref="feedbackDialog" />
+    <FeedbackDialog v-if="!basicUnlocked" ref="feedbackDialog" />
     <PrivacyPolicyDialog ref="privacyDialog" />
   </div>
 </template>

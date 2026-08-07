@@ -1,6 +1,6 @@
 import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
-import { flags, proUnlocked } from '../featureFlags.js'
+import { domainLimit, flags } from '../featureFlags.js'
 import { readCachedLookup, writeCachedLookup } from '../services/domainCache.js'
 import { track } from '../services/analytics.js'
 
@@ -20,7 +20,6 @@ const defaultSubstitutions = ['ch:k', 'ch:ck', 'ch:kk', 'cs:x', 'c:k', 'c:ck', '
 const defaultStrategies = ['direct', 'blend', 'overlap', 'bridge', 'compact', 'suffix']
 const defaultPartMinLetters = 1
 const defaultPartMaxLetters = 24
-const freeTierResultLimit = 50
 
 export const useDomainStore = defineStore('domains', () => {
   const brief = ref(defaultBrief)
@@ -42,7 +41,7 @@ export const useDomainStore = defineStore('domains', () => {
   const results = ref([])
   const resultsLimited = ref(false)
   const running = ref(false)
-  let stopRequested = false
+  let currentCheckRun = 0
   /** Synonym roots from the last thesaurus enrichment, kept separate from PART1/PART2 so they widen generation without rewriting the user's text. */
   const thesaurusAdditions = ref({ part1: [], part2: [] })
   const checkedCount = computed(() => results.value.filter((item) => item.status !== 'idle').length)
@@ -127,8 +126,8 @@ export const useDomainStore = defineStore('domains', () => {
       availability: null,
       search: null,
     })))
-    resultsLimited.value = !proUnlocked.value && generated.length > freeTierResultLimit
-    results.value = resultsLimited.value ? generated.slice(0, freeTierResultLimit) : generated
+    resultsLimited.value = generated.length > domainLimit.value
+    results.value = resultsLimited.value ? generated.slice(0, domainLimit.value) : generated
     track('search_run', { resultCount: results.value.length, limited: resultsLimited.value })
   }
 
@@ -186,27 +185,28 @@ export const useDomainStore = defineStore('domains', () => {
 
   /** Check unchecked domains in small batches to avoid hammering RDAP services. */
   async function checkAll() {
+    const runId = ++currentCheckRun
     running.value = true
-    stopRequested = false
     const queue = results.value
       .filter((item) => item.status === 'idle' || item.status === 'error')
       .sort((a, b) => a.name.length - b.name.length || a.name.localeCompare(b.name))
     for (let index = 0; index < queue.length; index += 4) {
-      if (stopRequested) break
+      if (runId !== currentCheckRun) return
       await Promise.all(queue.slice(index, index + 4).map(checkOne))
       if (index + 4 < queue.length) await delay(180)
     }
-    running.value = false
+    if (runId === currentCheckRun) running.value = false
   }
 
-  /** Let the in-flight batch finish, then stop scheduling further checks. */
+  /** Stops the UI instantly; any batch already in flight still lands its results, but no further batches are scheduled. */
   function stopChecking() {
-    stopRequested = true
+    currentCheckRun += 1
+    running.value = false
   }
 
   expandBrief()
   const defaults = { brief: defaultBrief, substitutions: defaultSubstitutions, strategies: defaultStrategies, maxSyllables: 3, maxConsonants: 2, maxLength: 'innotek'.length, maxNames: 150, part1MinLetters: defaultPartMinLetters, part1MaxLetters: defaultPartMaxLetters, part2MinLetters: defaultPartMinLetters, part2MaxLetters: defaultPartMaxLetters }
-  return { brief, effectiveQuery, keywords, maxSyllables, maxConsonants, maxLength, maxNames, part1MinLetters, part1MaxLetters, part2MinLetters, part2MaxLetters, substitutions, strategies, useThesaurus, enriching, results, resultsLimited, freeTierResultLimit, running, checkedCount, availableCount, defaults, getBriefDefaults, expandBrief, enrichWithThesaurus, generate, checkOne, checkAll, stopChecking }
+  return { brief, effectiveQuery, keywords, maxSyllables, maxConsonants, maxLength, maxNames, part1MinLetters, part1MaxLetters, part2MinLetters, part2MaxLetters, substitutions, strategies, useThesaurus, enriching, results, resultsLimited, running, checkedCount, availableCount, defaults, getBriefDefaults, expandBrief, enrichWithThesaurus, generate, checkOne, checkAll, stopChecking }
 })
 
 /**

@@ -4,13 +4,11 @@ import { createPinia, setActivePinia } from 'pinia'
 import { useDomainStore } from '../app/stores/domain.js'
 import { flags } from '../app/featureFlags.js'
 
-// This file tests the generation algorithm itself, not tier gating — unlock pro so the
-// free-tier result cap (tested separately) doesn't truncate these assertions. featureFlags.js
+// This file tests the generation algorithm itself, not tier gating — unlock the unlimited
+// tier so no domain-count cap (tested separately) truncates these assertions. featureFlags.js
 // persists flag writes to localStorage, which doesn't exist in this Node test environment.
 globalThis.localStorage ??= { getItem: () => null, setItem: () => {}, removeItem: () => {}, clear: () => {} }
-flags.searchResults = true
-flags.aiSuggestions = true
-flags.favoritesSync = true
+flags.unlimitedPro = true
 
 /** Create a fresh store configured for a representative two-part search. */
 function createStore() {

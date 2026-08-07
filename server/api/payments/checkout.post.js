@@ -12,7 +12,7 @@ export default defineEventHandler(async (event) => {
 
   try {
     const origin = getAllowedOrigin(event)
-    return await createCheckout(String(body?.packId || ''), origin)
+    return await createCheckout(String(body?.tierId || ''), origin, String(body?.clientId || ''))
   } catch (error) {
     const status = error instanceof PaymentError ? error.status : 500
     setResponseStatus(event, status)
