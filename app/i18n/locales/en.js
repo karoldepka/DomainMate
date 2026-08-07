@@ -39,7 +39,7 @@ export default {
     progress: '{checked} of {total} checked',
     available: '{count} available',
     empty: 'No available domains in the checked results.',
-    limited: 'Showing the first {count}. Unlock pro for the full list.',
+    limited: 'Showing the first {count}. Unlock Pro to see the full list and show your appreciation.',
   },
   filters: { availableOnly: 'Available only', checkAll: 'Check all' },
   table: { candidate: 'Candidate', status: 'Domain status', google: 'Google results' },

@@ -133,6 +133,7 @@ fieldset { min-width: 0; margin: 0; padding: 0; border: 0; }
 footer { width: min(1180px, calc(100% - 48px)); margin: 0 auto; padding: 22px 0; display: flex; justify-content: space-between; border-top: 1px solid #dfe4e1; color: #7b8781; font-size: 12px; }
 footer a { color: #52665d; }
 .footer-link { margin: 0; padding: 0; border: 0; background: none; color: #52665d; font-size: inherit; font-family: inherit; text-decoration: underline; text-underline-offset: 2px; cursor: pointer; }.footer-link:hover { color: #176b52; }
+.build-sha { font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: 11px; }
 .payment-dialog-body { color: #17211d; }
 .dialog-header { display: flex; justify-content: space-between; align-items: start; }
 .dialog-header h2 { margin: 2px 0 0; font: 700 22px Manrope, sans-serif; }.dialog-eyebrow { margin: 0; color: #167054; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .8px; }

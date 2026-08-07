@@ -42,6 +42,9 @@ export const useDomainStore = defineStore('domains', () => {
   const results = ref([])
   const resultsLimited = ref(false)
   const running = ref(false)
+  let stopRequested = false
+  /** Synonym roots from the last thesaurus enrichment, kept separate from PART1/PART2 so they widen generation without rewriting the user's text. */
+  const thesaurusAdditions = ref({ part1: [], part2: [] })
   const checkedCount = computed(() => results.value.filter((item) => item.status !== 'idle').length)
   const availableCount = computed(() => results.value.filter((item) => item.availability === 'available').length)
 
@@ -95,12 +98,16 @@ export const useDomainStore = defineStore('domains', () => {
     strategies.value = query.strategies
     maxNames.value = query.maxNames
 
+    // Thesaurus additions widen generation without being written back into the
+    // user's own PART1/PART2 text, so "Generate & check" never rewrites their input.
+    const part1Roots = unique([...query.part1Roots, ...thesaurusAdditions.value.part1])
+    const part2Roots = unique([...query.part2Roots, ...thesaurusAdditions.value.part2])
     const part1Variants = expandVariantsToLetterLimits(
-      dedupeVariants(query.part1Roots.flatMap((root) => spellingVariantRecords(root, query.substitutions))),
+      dedupeVariants(part1Roots.flatMap((root) => spellingVariantRecords(root, query.substitutions))),
       query.part1Limits,
     )
     const part2Variants = expandVariantsToLetterLimits(
-      dedupeVariants(query.part2Roots.flatMap((root) => spellingVariantRecords(root, query.substitutions))),
+      dedupeVariants(part2Roots.flatMap((root) => spellingVariantRecords(root, query.substitutions))),
       query.part2Limits,
     )
     const candidates = dedupeCandidates(part1Variants.flatMap((left) => part2Variants.flatMap((right) =>
@@ -127,7 +134,10 @@ export const useDomainStore = defineStore('domains', () => {
 
   /** Expand both name parts with short, semantically related alternatives from Datamuse and an LLM. */
   async function enrichWithThesaurus() {
-    if (!useThesaurus.value) return
+    if (!useThesaurus.value) {
+      thesaurusAdditions.value = { part1: [], part2: [] }
+      return
+    }
     enriching.value = true
     try {
       const { part1Roots, part2Roots } = parseBrief(brief.value)
@@ -135,8 +145,7 @@ export const useDomainStore = defineStore('domains', () => {
         enrichWords(part1Roots.slice(0, 3)),
         enrichWords(part2Roots.slice(0, 3)),
       ])
-      appendQueryParts('PART1', part1Additions)
-      appendQueryParts('PART2', part2Additions)
+      thesaurusAdditions.value = { part1: part1Additions, part2: part2Additions }
     } finally { enriching.value = false }
   }
 
@@ -150,17 +159,6 @@ export const useDomainStore = defineStore('domains', () => {
       return unique([...datamuse, ...ai])
     }))
     return unique(additions.flat())
-  }
-
-  /** @param {'PART1'|'PART2'} key @param {string[]} additions */
-  function appendQueryParts(key, additions) {
-    if (!additions.length) return
-    const lines = effectiveQuery.value.split('\n')
-    const index = lines.findIndex((line) => line.startsWith(`${key}:`))
-    if (index < 0) return
-    const existing = lines[index].slice(key.length + 1).split(/[\s,]+/).map(clean)
-    lines[index] = `${key}: ${unique([...existing, ...additions]).join(' ')}`
-    effectiveQuery.value = lines.join('\n')
   }
 
   /** @param {DomainCandidate} item */
@@ -189,19 +187,26 @@ export const useDomainStore = defineStore('domains', () => {
   /** Check unchecked domains in small batches to avoid hammering RDAP services. */
   async function checkAll() {
     running.value = true
+    stopRequested = false
     const queue = results.value
       .filter((item) => item.status === 'idle' || item.status === 'error')
       .sort((a, b) => a.name.length - b.name.length || a.name.localeCompare(b.name))
     for (let index = 0; index < queue.length; index += 4) {
+      if (stopRequested) break
       await Promise.all(queue.slice(index, index + 4).map(checkOne))
       if (index + 4 < queue.length) await delay(180)
     }
     running.value = false
   }
 
+  /** Let the in-flight batch finish, then stop scheduling further checks. */
+  function stopChecking() {
+    stopRequested = true
+  }
+
   expandBrief()
   const defaults = { brief: defaultBrief, substitutions: defaultSubstitutions, strategies: defaultStrategies, maxSyllables: 3, maxConsonants: 2, maxLength: 'innotek'.length, maxNames: 150, part1MinLetters: defaultPartMinLetters, part1MaxLetters: defaultPartMaxLetters, part2MinLetters: defaultPartMinLetters, part2MaxLetters: defaultPartMaxLetters }
-  return { brief, effectiveQuery, keywords, maxSyllables, maxConsonants, maxLength, maxNames, part1MinLetters, part1MaxLetters, part2MinLetters, part2MaxLetters, substitutions, strategies, useThesaurus, enriching, results, resultsLimited, freeTierResultLimit, running, checkedCount, availableCount, defaults, getBriefDefaults, expandBrief, enrichWithThesaurus, generate, checkOne, checkAll }
+  return { brief, effectiveQuery, keywords, maxSyllables, maxConsonants, maxLength, maxNames, part1MinLetters, part1MaxLetters, part2MinLetters, part2MaxLetters, substitutions, strategies, useThesaurus, enriching, results, resultsLimited, freeTierResultLimit, running, checkedCount, availableCount, defaults, getBriefDefaults, expandBrief, enrichWithThesaurus, generate, checkOne, checkAll, stopChecking }
 })
 
 /**

@@ -26,6 +26,7 @@ const themeIcon = computed(() => ({ system: 'i-lucide-monitor', light: 'i-lucide
 const themeLabel = computed(() => t(`theme.${colorMode.preference || 'system'}`))
 const briefPlaceholder = 'inno inter\ntech tek\n.dev .ai .com'
 const workspaceStorageKey = 'domainmate.workspace'
+const buildInfo = useRuntimeConfig().public.build
 let logoClickResetTimer
 const commentSaveTimers = new Map()
 /** Highest rated first, then shortest first among equally rated candidates. */
@@ -86,6 +87,13 @@ watch([brief, effectiveQuery, part1MinLetters, part1MaxLetters, part2MinLetters,
 
 /** Enrich parts, generate candidates, and begin availability checks. */
 async function submit() { await store.enrichWithThesaurus(); store.generate(); store.checkAll() }
+
+/** While checks are running, clicking the primary button stops them instead of resubmitting the form. */
+function handlePrimaryButtonClick(event) {
+  if (!running.value) return
+  event.preventDefault()
+  store.stopChecking()
+}
 
 /** @param {{name: string, search?: {query?: string}|null}} item */
 function googleUrl(item) {
@@ -428,7 +436,7 @@ function normalizeLetterRange(min, max) {
               <label for="max-length">{{ t('form.maxLength') }} <input id="max-length" v-model.number="maxLength" type="number" min="4" max="24" @change="setQueryLine('MAX_LENGTH', String(maxLength))" /></label>
               <label for="max-names">{{ t('form.baseNames') }} <input id="max-names" v-model.number="maxNames" type="number" min="1" max="400" @change="setQueryLine('MAX_NAMES', String(maxNames))" /></label>
             </div>
-            <UButton class="primary-button" type="submit" color="primary" size="xl" :loading="running" :icon="running ? undefined : 'i-lucide-sparkles'">
+            <UButton class="primary-button" type="submit" color="primary" size="xl" :icon="running ? 'i-lucide-square' : 'i-lucide-sparkles'" @click="handlePrimaryButtonClick">
               {{ running ? t('form.checking') : t('form.generate') }}
             </UButton>
           </div>
@@ -440,7 +448,7 @@ function normalizeLetterRange(min, max) {
           <div>
             <h2 id="results-heading">{{ t('results.heading') }}</h2>
             <p v-if="results.length">{{ progressText }}<template v-if="availableCount"> · <strong>{{ t('results.available', { count: availableCount }) }}</strong></template></p>
-            <button v-if="resultsLimited" class="free-tier-note" type="button" @click="openProPrompt">{{ t('results.limited', { count: store.freeTierResultLimit }) }}</button>
+            <button v-if="!proUnlocked && results.length" class="free-tier-note" type="button" @click="openProPrompt">{{ t('results.limited', { count: store.freeTierResultLimit }) }}</button>
           </div>
           <div class="result-filters">
             <label class="available-filter"><input v-model="availableOnly" type="checkbox" />{{ t('filters.availableOnly') }}</label>
@@ -489,12 +497,12 @@ function normalizeLetterRange(min, max) {
           </article>
           </TransitionGroup>
           <p v-if="availableOnly && displayedResults.length === 0" class="empty-results">{{ t('results.empty') }}</p>
-          <button v-if="resultsLimited" class="free-tier-note free-tier-note-bottom" type="button" @click="openProPrompt">{{ t('results.limited', { count: store.freeTierResultLimit }) }}</button>
+          <button v-if="!proUnlocked && results.length" class="free-tier-note free-tier-note-bottom" type="button" @click="openProPrompt">{{ t('results.limited', { count: store.freeTierResultLimit }) }}</button>
         </div>
       </section>
     </main>
 
-    <footer><span>{{ t('footer.rdap') }}</span><span>{{ t('footer.vocabularyBy') }} <a href="https://www.datamuse.com/api/" target="_blank" rel="noreferrer">Datamuse</a> · DomainMate · <button type="button" class="footer-link" @click="privacyDialog?.open()">{{ t('footer.privacy') }}</button></span></footer>
+    <footer><span>{{ t('footer.rdap') }}</span><span>{{ t('footer.vocabularyBy') }} <a href="https://www.datamuse.com/api/" target="_blank" rel="noreferrer">Datamuse</a> · DomainMate · <button type="button" class="footer-link" @click="privacyDialog?.open()">{{ t('footer.privacy') }}</button><template v-if="buildInfo?.sha"> · <a class="footer-link build-sha" :href="`https://github.com/karoldepka/DomainMate/commit/${buildInfo.sha}`" target="_blank" rel="noreferrer" :title="buildInfo.timestamp">{{ buildInfo.sha }}</a></template></span></footer>
     <PaymentDialog v-if="flags.payments" ref="paymentDialog" :credits="credits" @credited="addCredits" />
     <LazyFeatureFlagsPanel v-model="showFlagsPanel" />
     <FeedbackDialog v-if="!proUnlocked" ref="feedbackDialog" />

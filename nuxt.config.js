@@ -1,4 +1,19 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
+import { execSync } from 'node:child_process'
+
+/** Vercel checks out full git history at build time, so this works both locally and in production. */
+function readBuildInfo() {
+  try {
+    return {
+      sha: execSync('git rev-parse --short HEAD').toString().trim(),
+      timestamp: execSync('git log -1 --format=%cI').toString().trim()
+    }
+  } catch {
+    return { sha: process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 7) || 'unknown', timestamp: '' }
+  }
+}
+const buildInfo = readBuildInfo()
+
 export default defineNuxtConfig({
   modules: [
     '@nuxt/eslint',
@@ -20,7 +35,8 @@ export default defineNuxtConfig({
       posthog: {
         projectToken: process.env.NUXT_PUBLIC_POSTHOG_PROJECT_TOKEN,
         host: process.env.NUXT_PUBLIC_POSTHOG_HOST
-      }
+      },
+      build: buildInfo
     }
   },
 
