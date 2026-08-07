@@ -42,8 +42,10 @@ const substitutionOptions = [
   ['ph:f', 'ph → f'], ['x:ks', 'x → ks'], ['s:z', 's → z'],
   ['i:y', 'i → y'], ['y:i', 'y → i'], ['oo:u', 'oo → u'], ['qu:k', 'qu → k'],
   ['double:n', 'double n'], ['double:t', 'double t'], ['double:k', 'double k'], ['double:l', 'double l'], ['double:r', 'double r'],
+  ['double:last', 'double last letter (digg)'],
   ['drop:e', 'drop e'], ['drop:o', 'drop o'],
   ['skip:first', 'skip 1st letter'], ['skip:last', 'skip last letter'],
+  ['reverse:chars', 'Reverse name characters'],
 ]
 const strategyOptions = [
   ['direct', 'strategy.direct'], ['blend', 'strategy.blend'], ['overlap', 'strategy.overlap'],
@@ -241,6 +243,17 @@ function syncStrategies() { setQueryLine('STRATEGIES', strategies.value.join(', 
  */
 function syncPartLimit(key, value) { setQueryLine(key, String(value)) }
 
+/** Swap Part 1 and Part 2 - their text and letter limits - for when the generated brand reads better the other way round. */
+function swapParts() {
+  [part1.value, part2.value] = [part2.value, part1.value];
+  [part1MinLetters.value, part2MinLetters.value] = [part2MinLetters.value, part1MinLetters.value];
+  [part1MaxLetters.value, part2MaxLetters.value] = [part2MaxLetters.value, part1MaxLetters.value]
+  syncPartLimit('PART1_MIN_LETTERS', part1MinLetters.value)
+  syncPartLimit('PART1_MAX_LETTERS', part1MaxLetters.value)
+  syncPartLimit('PART2_MIN_LETTERS', part2MinLetters.value)
+  syncPartLimit('PART2_MAX_LETTERS', part2MaxLetters.value)
+}
+
 /** Restore a shareable naming workspace from its URL. */
 function restoreQueryParams() {
   const params = new URLSearchParams(window.location.search)
@@ -393,6 +406,9 @@ function normalizeLetterRange(min, max) {
 
           <div class="parts-editor">
             <div class="parts-fields">
+              <div class="parts-fields-header">
+                <UButton class="expand-button" variant="soft" color="primary" trailing-icon="i-lucide-arrow-left-right" :aria-label="t('form.swapPartsAria')" @click="swapParts">{{ t('form.swapParts') }}</UButton>
+              </div>
               <fieldset class="part-field">
                 <legend id="name-part1-legend">{{ t('form.part1Label') }}</legend>
                 <textarea id="name-part1" v-model="part1" name="part1" rows="3" placeholder="inno inn inter" aria-labelledby="name-part1-legend"></textarea>

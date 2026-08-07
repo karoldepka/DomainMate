@@ -13,6 +13,8 @@ export default {
     queryEditable: '可编辑',
     part1Label: '名称部分 1',
     part2Label: '名称部分 2',
+    swapParts: '颠倒名称部分的顺序',
+    swapPartsAria: '颠倒名称部分的顺序',
     minLetters: '最少字母数',
     maxLetters: '最多字母数',
     substitutionsLegend: '替换规则与词汇',

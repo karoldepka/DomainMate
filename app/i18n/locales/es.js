@@ -13,6 +13,8 @@ export default {
     queryEditable: 'editable',
     part1Label: 'Parte del nombre 1',
     part2Label: 'Parte del nombre 2',
+    swapParts: 'Invertir el orden de las partes del nombre',
+    swapPartsAria: 'Invertir el orden de las partes del nombre',
     minLetters: 'Mínimo de letras',
     maxLetters: 'Máximo de letras',
     substitutionsLegend: 'Sustituciones y vocabulario',

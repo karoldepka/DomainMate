@@ -13,6 +13,8 @@ export default {
     queryEditable: 'bearbeitbar',
     part1Label: 'Namensteil 1',
     part2Label: 'Namensteil 2',
+    swapParts: 'Reihenfolge der Namensteile umkehren',
+    swapPartsAria: 'Reihenfolge der Namensteile umkehren',
     minLetters: 'Minimale Buchstabenanzahl',
     maxLetters: 'Maximale Buchstabenanzahl',
     substitutionsLegend: 'Ersetzungen und Vokabular',

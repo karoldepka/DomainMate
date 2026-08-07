@@ -413,6 +413,10 @@ function spellingVariants(root, enabledRules) {
   for (const rule of enabledRules) {
     const [source, replacement] = rule.split(':')
     if (source === 'double') {
+      if (replacement === 'last') {
+        if (root.length > 1) variants.push(`${root}${root[root.length - 1]}`)
+        continue
+      }
       if (root.includes(replacement)) variants.push(root.replace(replacement, `${replacement}${replacement}`))
       continue
     }
@@ -423,6 +427,10 @@ function spellingVariants(root, enabledRules) {
     if (source === 'skip') {
       if (replacement === 'first' && root.length > 3) variants.push(root.slice(1))
       if (replacement === 'last' && root.length > 3) variants.push(root.slice(0, -1))
+      continue
+    }
+    if (source === 'reverse' && replacement === 'chars') {
+      variants.push([...root].reverse().join(''))
       continue
     }
     const pattern = source === 'ch' ? /ch$/g : source === 'c' ? /c(?!h)/g : new RegExp(source, 'g')
