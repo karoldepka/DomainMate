@@ -110,6 +110,12 @@ export default {
       verifyFailed: 'No s’ha pogut verificar el pagament.',
     },
     methods: { card: 'Targeta', secure: 'Pagament segur gestionat per Stripe' },
+    success: {
+      eyebrow: 'Pagament realitzat',
+      title: 'Tot a punt!',
+      message: 'S’ha desbloquejat {tier}. Gaudeix de les teves propostes de domini addicionals.',
+      continue: 'Continua explorant',
+    },
   },
   tierName: { free: 'Free', basic: 'Basic', pro: 'Pro', unlimited: 'Unlimited' },
   language: { label: 'Idioma' },

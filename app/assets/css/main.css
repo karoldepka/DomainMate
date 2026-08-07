@@ -144,6 +144,11 @@ footer a { color: #52665d; }
 .pack-option { min-height: 128px; display: flex; flex-direction: column; align-items: start; justify-content: space-between; padding: 14px; border: 1px solid #ccd6d1; border-radius: 7px; background: white; color: #526059; cursor: pointer; text-align: left; }.pack-option:hover:not(:disabled) { border-color: #438b70; background: #f4faf7; }.pack-option:disabled { opacity: .55; cursor: not-allowed; }.pack-option strong { color: #17211d; font: 700 22px Manrope, sans-serif; }.pack-option small { font-size: 12px; }.pack-label { color: #167054; font-size: 12px; font-weight: 700; }
 .payment-methods { min-height: 56px; display: flex; align-items: center; gap: 16px; margin-top: 14px; padding: 10px 14px; border-radius: 6px; background: #fafbfa; color: #526059; font-size: 12px; }.payment-methods span { display: inline-flex; align-items: center; gap: 6px; font-weight: 700; }.payment-methods small { margin-left: auto; color: #86918c; }
 .payment-error { margin: 14px 0 0; padding: 10px 12px; border-radius: 5px; background: #fff1dd; color: #7d520e; font-size: 12px; }.payment-toast { position: fixed; z-index: 20; top: 78px; right: 24px; display: flex; align-items: center; gap: 8px; margin: 0; padding: 11px 14px; border: 1px solid #9bcab7; border-radius: 6px; background: #eef9f4; color: #125f45; box-shadow: 0 8px 24px rgba(20,60,44,.12); font-size: 13px; font-weight: 700; }
+.payment-success-body { color: #17211d; }
+.success-body { display: flex; flex-direction: column; align-items: center; gap: 14px; padding: 8px 4px 4px; text-align: center; }
+.success-icon { width: 44px; height: 44px; color: #167054; }
+.success-message { margin: 0; color: #3c4a43; font-size: 14px; line-height: 1.5; }
+.success-body .u-button { width: 100%; margin-top: 6px; }
 .flags-dialog-body { color: #17211d; }
 .flags-dialog-body .dialog-eyebrow { display: flex; align-items: center; gap: 5px; }
 .flags-hint { margin: 0 0 14px; color: #69756f; font-size: 12px; line-height: 1.5; }
@@ -205,7 +210,9 @@ footer a { color: #52665d; }
 .dark .domain-cell a span { color: #9aa79f; }
 .dark .status.neutral { background: #2b3630; color: #b5c0ba; }.dark .status.available { background: #173c2e; color: #7ed2ad; }.dark .status.registered { background: #402a26; color: #e2a293; }.dark .status.warning { background: #40351d; color: #e8c471; }
 .dark .price-comparison { border-color: #3a4840; background: #141d18; }.dark .price-title, .dark .quote-row, .dark .provider-note { border-color: #303d36; }.dark .quote-row { color: #d8e2dc; }.dark .quote-row-unpriced { background: #18211c; color: #9aa69f; }
-.dark .payment-dialog-body, .dark .flags-dialog-body, .dark .privacy-body, .dark .privacy-body h3, .dark .pack-option strong, .dark .flags-list label { color: #e2ebe6; }
+.dark .payment-dialog-body, .dark .payment-success-body, .dark .flags-dialog-body, .dark .privacy-body, .dark .privacy-body h3, .dark .pack-option strong, .dark .flags-list label { color: #e2ebe6; }
+.dark .success-message { color: #b5c1ba; }
+.dark .success-icon { color: #7ed2ad; }
 .dark .balance-line, .dark .payment-methods, .dark .pack-option { border-color: #3b4941; background: #1a241f; color: #b5c1ba; }
 .dark .pack-option:hover:not(:disabled) { border-color: #5a9a80; background: #203029; }
 .dark .feedback-success, .dark .payment-toast { background: #173c2e; color: #8dd7b7; }.dark .payment-error { background: #40321b; color: #e9c47c; }

@@ -110,6 +110,12 @@ export default {
       verifyFailed: '无法验证支付。',
     },
     methods: { card: '银行卡', secure: '由 Stripe 提供安全支付' },
+    success: {
+      eyebrow: '支付成功',
+      title: '一切就绪！',
+      message: '{tier} 已解锁。尽情探索更多域名候选吧。',
+      continue: '继续探索',
+    },
   },
   tierName: { free: 'Free', basic: 'Basic', pro: 'Pro', unlimited: 'Unlimited' },
   language: { label: '语言' },

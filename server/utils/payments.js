@@ -11,7 +11,7 @@ export const proTiers = [
 ]
 
 /** @returns {Stripe|null} */
-function getStripe() {
+export function getStripe() {
   return process.env.STRIPE_SECRET_KEY ? new Stripe(process.env.STRIPE_SECRET_KEY) : null
 }
 
@@ -48,9 +48,19 @@ export async function verifyCheckout(sessionId) {
   if (!stripe) throw new PaymentError('Payments are not configured.', 503)
   if (!/^cs_(test|live)_[A-Za-z0-9_]+$/.test(sessionId)) throw new PaymentError('Invalid checkout session.', 400)
   const session = await stripe.checkout.sessions.retrieve(sessionId)
+  return recordSessionIfPaid(session)
+}
+
+/**
+ * Shared by the success-page verify call and the webhook, since either one may see the
+ * paid session first (the browser can fail to return after a slow or async payment method).
+ * recordPurchase is idempotent on session_id, so recording it twice is harmless.
+ * @param {import('stripe').Stripe.Checkout.Session} session
+ */
+export async function recordSessionIfPaid(session) {
   const tierId = session.metadata?.tierId || null
   const clientId = session.metadata?.clientId || null
   const paid = session.payment_status === 'paid'
-  if (paid && tierId && clientId) await recordPurchase(clientId, sessionId, tierId)
+  if (paid && tierId && clientId) await recordPurchase(clientId, session.id, tierId)
   return { paid, tierId }
 }

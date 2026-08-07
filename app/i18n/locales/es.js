@@ -110,6 +110,12 @@ export default {
       verifyFailed: 'No se pudo verificar el pago.',
     },
     methods: { card: 'Tarjeta', secure: 'Pago seguro gestionado por Stripe' },
+    success: {
+      eyebrow: 'Pago realizado',
+      title: '¡Todo listo!',
+      message: '{tier} está desbloqueado. Disfruta de tus propuestas de dominio adicionales.',
+      continue: 'Seguir explorando',
+    },
   },
   tierName: { free: 'Free', basic: 'Basic', pro: 'Pro', unlimited: 'Unlimited' },
   language: { label: 'Idioma' },

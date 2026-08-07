@@ -12,6 +12,8 @@ const configured = ref(false)
 const loading = ref('')
 const error = ref('')
 const paymentNotice = ref('')
+const successOpen = ref(false)
+const successTier = ref('')
 
 /** Open the modal and fetch current server-owned pricing. */
 async function open() {
@@ -71,7 +73,8 @@ async function verifyPaymentReturn() {
       unlockTier(data.tierId)
       emit('unlocked')
       track('payment_completed', { tier: data.tierId })
-      paymentNotice.value = t('payment.notice.unlocked', { tier: t(`tierName.${data.tierId}`) })
+      successTier.value = data.tierId
+      successOpen.value = true
     } else paymentNotice.value = t('payment.notice.notCompleted')
   } catch { paymentNotice.value = t('payment.notice.verifyFailed') }
   clearPaymentQuery()
@@ -112,6 +115,21 @@ defineExpose({ open })
       <p v-if="error" class="payment-error" aria-live="polite">{{ error }}</p>
       <p v-else-if="!configured" class="payment-error">{{ t('payment.notConfigured') }}</p>
       <div class="payment-methods"><span><UIcon name="i-lucide-credit-card" class="size-4.5" />{{ t('payment.methods.card') }}</span><small>{{ t('payment.methods.secure') }}</small></div>
+    </template>
+  </UModal>
+  <UModal v-model:open="successOpen" :ui="{ content: 'payment-success-body' }">
+    <template #header>
+      <div class="dialog-header w-full">
+        <div><p class="dialog-eyebrow">{{ t('payment.success.eyebrow') }}</p><h2>{{ t('payment.success.title') }}</h2></div>
+        <UButton :aria-label="t('payment.close')" icon="i-lucide-x" color="neutral" variant="ghost" @click="successOpen = false" />
+      </div>
+    </template>
+    <template #body>
+      <div class="success-body">
+        <UIcon name="i-lucide-party-popper" class="success-icon" />
+        <p class="success-message">{{ t('payment.success.message', { tier: t(`tierName.${successTier}`) }) }}</p>
+        <UButton color="primary" block @click="successOpen = false">{{ t('payment.success.continue') }}</UButton>
+      </div>
     </template>
   </UModal>
 </template>

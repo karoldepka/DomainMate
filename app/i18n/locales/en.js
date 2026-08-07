@@ -110,6 +110,12 @@ export default {
       verifyFailed: 'Could not verify the payment.',
     },
     methods: { card: 'Card', secure: 'Secure checkout by Stripe' },
+    success: {
+      eyebrow: 'Payment successful',
+      title: 'You’re all set!',
+      message: '{tier} is unlocked. Enjoy your extra domain candidates.',
+      continue: 'Continue exploring',
+    },
   },
   tierName: { free: 'Free', basic: 'Basic', pro: 'Pro', unlimited: 'Unlimited' },
   language: { label: 'Language' },

@@ -110,6 +110,12 @@ export default {
       verifyFailed: 'Zahlung konnte nicht überprüft werden.',
     },
     methods: { card: 'Karte', secure: 'Sichere Zahlung über Stripe' },
+    success: {
+      eyebrow: 'Zahlung erfolgreich',
+      title: 'Alles bereit!',
+      message: '{tier} ist freigeschaltet. Viel Spaß mit deinen zusätzlichen Domain-Vorschlägen.',
+      continue: 'Weiter erkunden',
+    },
   },
   tierName: { free: 'Free', basic: 'Basic', pro: 'Pro', unlimited: 'Unlimited' },
   language: { label: 'Sprache' },

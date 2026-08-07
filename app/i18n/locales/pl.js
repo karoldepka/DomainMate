@@ -110,6 +110,12 @@ export default {
       verifyFailed: 'Nie udało się zweryfikować płatności.',
     },
     methods: { card: 'Karta', secure: 'Bezpieczna płatność obsługiwana przez Stripe' },
+    success: {
+      eyebrow: 'Płatność zakończona sukcesem',
+      title: 'Wszystko gotowe!',
+      message: '{tier} został odblokowany. Ciesz się dodatkowymi propozycjami domen.',
+      continue: 'Kontynuuj przeglądanie',
+    },
   },
   tierName: { free: 'Free', basic: 'Basic', pro: 'Pro', unlimited: 'Unlimited' },
   language: { label: 'Język' },
