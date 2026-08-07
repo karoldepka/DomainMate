@@ -1,6 +1,7 @@
 <script setup>
 import { onMounted, ref } from 'vue'
 import { t } from '../i18n/index.js'
+import { track } from '../services/analytics.js'
 
 defineProps({ credits: { type: Number, required: true } })
 const emit = defineEmits(['credited'])
@@ -38,6 +39,7 @@ async function checkout(pack) {
     })
     const data = await response.json()
     if (!response.ok) throw new Error(data.error || t('payment.errors.checkoutFailed'))
+    track('checkout_started', { credit_pack: pack.id })
     window.location.assign(data.url)
   } catch (reason) {
     error.value = reason instanceof Error ? reason.message : t('payment.errors.checkoutFailed')
@@ -59,6 +61,7 @@ async function verifyPaymentReturn() {
     if (response.ok && data.paid && data.credits > 0) {
       localStorage.setItem('domainmate.claimedSessions', JSON.stringify([...claimed, sessionId]))
       emit('credited', data.credits)
+      track('payment_completed', { credits: data.credits })
       paymentNotice.value = t('payment.notice.credited', { credits: data.credits })
     } else paymentNotice.value = t('payment.notice.notCompleted')
   } catch { paymentNotice.value = t('payment.notice.verifyFailed') }

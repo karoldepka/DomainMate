@@ -3,6 +3,7 @@ import { ref } from 'vue'
 import { t } from '../i18n/index.js'
 import { getClientId } from '../services/favorites.js'
 import { flags } from '../featureFlags.js'
+import { track } from '../services/analytics.js'
 
 const emit = defineEmits(['unlocked'])
 const isOpen = ref(false)
@@ -33,6 +34,7 @@ async function submit() {
     flags.searchResults = true
     flags.aiSuggestions = true
     flags.favoritesSync = true
+    track('feedback_submitted')
     done.value = true
     emit('unlocked')
   } catch (reason) {

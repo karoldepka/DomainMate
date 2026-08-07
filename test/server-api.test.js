@@ -193,6 +193,31 @@ test('POST /api/client-errors accepts a report and rejects a missing message', a
   assert.equal(badResponse.status, 400)
 })
 
+test('POST /api/analytics/track accepts a valid event and rejects a missing name', async () => {
+  const okResponse = await fetch(`${baseUrl}/api/analytics/track`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ clientId: 'analytics-http-test', name: 'search_run', properties: { resultCount: 3 } }),
+  })
+  assert.equal(okResponse.status, 200)
+  const okData = await okResponse.json()
+  assert.equal(okData.ok, true)
+
+  const badResponse = await fetch(`${baseUrl}/api/analytics/track`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ clientId: 'analytics-http-test' }),
+  })
+  assert.equal(badResponse.status, 400)
+})
+
+test('GET /api/admin/analytics rejects a request without the correct admin token', async () => {
+  const response = await fetch(`${baseUrl}/api/admin/analytics`, { headers: { 'x-admin-token': 'definitely-not-the-real-token' } })
+  assert.ok(!response.ok)
+  const data = await response.json()
+  assert.equal(data.totals, undefined)
+})
+
 test('malformed JSON bodies get a clean JSON error, not an HTML stack trace', async () => {
   const response = await fetch(`${baseUrl}/api/favorites/sync`, {
     method: 'POST',

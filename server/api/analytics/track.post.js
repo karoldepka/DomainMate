@@ -15,6 +15,6 @@ export default defineEventHandler(async (event) => {
     setResponseStatus(event, 400)
     return { error: 'clientId and name are required.' }
   }
-  await recordEvent(clientId, name, body?.properties)
+  await recordEvent(clientId, name, body?.properties, getHeaders(event))
   return { ok: true }
 })

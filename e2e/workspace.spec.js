@@ -12,6 +12,14 @@ function ndjsonQuotes(quotes) {
   return quotes.map((quote) => `${JSON.stringify({ quote })}\n`).join('')
 }
 
+/** Fulfill /api/admin/analytics with a fixed summary so dashboard tests don't depend on the real ADMIN_TOKEN or stored events. */
+function mockAnalyticsSummary(page, summary) {
+  return page.route('**/api/admin/analytics', (route) => route.fulfill({
+    contentType: 'application/json',
+    body: JSON.stringify(summary),
+  }))
+}
+
 test.describe('naming workspace', () => {
   test('generates domain candidates on load with Available only checked by default', async ({ page }) => {
     await page.goto('/')
@@ -245,5 +253,111 @@ test.describe('naming workspace', () => {
       row.locator('.star-button').nth(1).click(),
     ])
     expect(syncResponse.ok()).toBeTruthy()
+  })
+
+  test('the unlimitedPro flag removes the free-tier cap and unlocks the pro badge', async ({ page }) => {
+    await page.goto('/')
+    await expect(page.locator('.result-row').first()).toBeVisible()
+    await expect(page.locator('.free-tier-badge')).toHaveText('Unlock pro tier')
+
+    await seedFlags(page, { unlimitedPro: true })
+    await page.reload()
+    await expect(page.locator('.result-row').first()).toBeVisible()
+    await expect(page.locator('.free-tier-badge')).toHaveText('Pro unlocked')
+    await expect(page.locator('.free-tier-note')).toHaveCount(0)
+  })
+
+  test('search events are sent to the server when analytics is enabled', async ({ page }) => {
+    await seedFlags(page, { analytics: true })
+    const [trackRequest] = await Promise.all([
+      page.waitForRequest((request) => request.url().includes('/api/analytics/track') && request.method() === 'POST'),
+      page.goto('/'),
+    ])
+    const body = trackRequest.postDataJSON()
+    expect(body.name).toBe('search_run')
+    expect(typeof body.clientId).toBe('string')
+  })
+
+  test('analytics events are not sent while the flag is off', async ({ page }) => {
+    let trackRequestSeen = false
+    page.on('request', (request) => { if (request.url().includes('/api/analytics/track')) trackRequestSeen = true })
+    await page.goto('/')
+    await expect(page.locator('.result-row').first()).toBeVisible()
+    expect(trackRequestSeen).toBe(false)
+  })
+
+  test('the admin analytics dashboard rejects an incorrect token', async ({ page }) => {
+    await page.goto('/admin/analytics')
+    await page.waitForLoadState('networkidle')
+    await expect(page.getByLabel('Admin token')).toBeVisible()
+    await page.getByLabel('Admin token').fill('definitely-not-the-real-token')
+    await page.getByRole('button', { name: 'View dashboard' }).click()
+    await expect(page.getByText(/Invalid token/)).toBeVisible()
+  })
+
+  test('the admin analytics dashboard renders stats, the daily chart, and recent events on a valid token', async ({ page }) => {
+    const today = new Date().toISOString().slice(0, 10)
+    await mockAnalyticsSummary(page, {
+      totals: [
+        { name: 'search_run', count: 42 },
+        { name: 'domain_favorited', count: 5 },
+      ],
+      daily: [{ date: today, count: 42 }],
+      uniqueClients: 3,
+      recent: [{ client_id: 'abcdef1234567890', name: 'search_run', properties: { resultCount: 7 }, created_at: Date.now() }],
+    })
+    await page.goto('/admin/analytics')
+    await page.waitForLoadState('networkidle')
+    await page.getByLabel('Admin token').fill('any-token')
+    await page.getByRole('button', { name: 'View dashboard' }).click()
+
+    const statValues = page.locator('.stat-tile .stat-value')
+    await expect(statValues.nth(0)).toHaveText('47')
+    await expect(statValues.nth(1)).toHaveText('42')
+    await expect(statValues.nth(2)).toHaveText('3')
+
+    await expect(page.locator('.bar-chart .bar')).toHaveCount(1)
+
+    const totalsSection = page.locator('.chart-section').filter({ hasText: 'By event type' })
+    await expect(totalsSection.locator('tr').filter({ hasText: 'Searches run' })).toContainText('42')
+    await expect(totalsSection.locator('tr').filter({ hasText: 'Domains favorited' })).toContainText('5')
+
+    const recentSection = page.locator('.chart-section').filter({ hasText: 'Recent events' })
+    const recentRows = recentSection.locator('tbody tr')
+    await expect(recentRows).toHaveCount(1)
+    await expect(recentRows.first()).toContainText('Searches run')
+    await expect(recentRows.first()).toContainText('abcdef12')
+    await expect(recentRows.first()).toContainText('{"resultCount":7}')
+  })
+
+  test('the admin analytics dashboard shows empty states when no events exist yet', async ({ page }) => {
+    await mockAnalyticsSummary(page, { totals: [], daily: [], uniqueClients: 0, recent: [] })
+    await page.goto('/admin/analytics')
+    await page.waitForLoadState('networkidle')
+    await page.getByLabel('Admin token').fill('any-token')
+    await page.getByRole('button', { name: 'View dashboard' }).click()
+
+    await expect(page.getByText('No events in the last 30 days.')).toBeVisible()
+    await expect(page.getByText('No events recorded yet.')).toHaveCount(2)
+  })
+
+  test('the admin analytics dashboard remembers the token across a reload and via a ?token= query param', async ({ page }) => {
+    await mockAnalyticsSummary(page, { totals: [], daily: [], uniqueClients: 0, recent: [] })
+    await page.goto('/admin/analytics')
+    await page.waitForLoadState('networkidle')
+    await page.getByLabel('Admin token').fill('remembered-token')
+    await page.getByRole('button', { name: 'View dashboard' }).click()
+    await expect(page.locator('.stat-tiles')).toBeVisible()
+
+    await page.reload()
+    await page.waitForLoadState('networkidle')
+    await expect(page.locator('.stat-tiles')).toBeVisible()
+    await expect(page.getByLabel('Admin token')).toHaveCount(0)
+
+    await page.evaluate(() => localStorage.removeItem('domainmate.adminToken'))
+    await page.goto('/admin/analytics?token=from-query-string')
+    await page.waitForLoadState('networkidle')
+    await expect(page.locator('.stat-tiles')).toBeVisible()
+    await expect(page.getByLabel('Admin token')).toHaveCount(0)
   })
 })

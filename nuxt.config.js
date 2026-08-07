@@ -3,7 +3,8 @@ export default defineNuxtConfig({
   modules: [
     '@nuxt/eslint',
     '@nuxt/ui',
-    '@pinia/nuxt'
+    '@pinia/nuxt',
+    '@vercel/analytics/nuxt'
   ],
 
   devtools: {
@@ -13,6 +14,15 @@ export default defineNuxtConfig({
   css: ['~/assets/css/main.css'],
 
   compatibilityDate: '2026-06-30',
+
+  runtimeConfig: {
+    public: {
+      posthog: {
+        projectToken: process.env.NUXT_PUBLIC_POSTHOG_PROJECT_TOKEN,
+        host: process.env.NUXT_PUBLIC_POSTHOG_HOST
+      }
+    }
+  },
 
   nitro: {
     vercel: {
