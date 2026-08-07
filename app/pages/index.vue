@@ -36,6 +36,7 @@ const displayedResults = computed(() => {
 })
 const part1 = computed({ get: () => getQueryLine('PART1'), set: (value) => setQueryLine('PART1', value) })
 const part2 = computed({ get: () => getQueryLine('PART2'), set: (value) => setQueryLine('PART2', value) })
+const tlds = computed({ get: () => getQueryLine('TLD'), set: (value) => setQueryLine('TLD', value) })
 const substitutionOptions = [
   ['ch:k', 'ch → k'], ['ch:ck', 'ch → ck'], ['ch:kk', 'ch → kk'],
   ['cs:x', 'cs → x'], ['c:k', 'c → k'], ['c:ck', 'c → ck'], ['c:kk', 'c → kk'],
@@ -398,7 +399,7 @@ function normalizeLetterRange(min, max) {
                 <UButton class="expand-button" variant="soft" color="primary" trailing-icon="i-lucide-arrow-down" @click="store.expandBrief">{{ t('form.expand') }}</UButton>
               </div>
             </div>
-            <div class="field query-field">
+            <div v-if="flags.advancedQuery" class="field query-field">
               <label for="effective-query">{{ t('form.queryLabel') }} <span>{{ t('form.queryEditable') }}</span></label>
               <textarea id="effective-query" v-model="effectiveQuery" name="query" rows="9" spellcheck="false"></textarea>
             </div>
@@ -424,6 +425,10 @@ function normalizeLetterRange(min, max) {
                   <label for="part2-min-letters">{{ t('form.minLetters') }}<input id="part2-min-letters" v-model.number="part2MinLetters" name="p2min" type="number" min="1" :max="part2MaxLetters" step="1" required @change="syncPartLimit('PART2_MIN_LETTERS', part2MinLetters)" /></label>
                   <label for="part2-max-letters">{{ t('form.maxLetters') }}<input id="part2-max-letters" v-model.number="part2MaxLetters" name="p2max" type="number" :min="part2MinLetters" max="24" step="1" required @change="syncPartLimit('PART2_MAX_LETTERS', part2MaxLetters)" /></label>
                 </div>
+              </fieldset>
+              <fieldset class="part-field tld-field">
+                <legend id="tld-legend">{{ t('form.tldLabel') }}</legend>
+                <textarea id="tld-field" v-model="tlds" name="tlds" rows="2" placeholder=".dev .ai .com" aria-labelledby="tld-legend"></textarea>
               </fieldset>
             </div>
             <fieldset class="substitution-fieldset">

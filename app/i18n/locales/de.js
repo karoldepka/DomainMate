@@ -15,6 +15,7 @@ export default {
     part2Label: 'Namensteil 2',
     swapParts: 'Reihenfolge der Namensteile umkehren',
     swapPartsAria: 'Reihenfolge der Namensteile umkehren',
+    tldLabel: 'Domain-Endungen (TLDs)',
     minLetters: 'Minimale Buchstabenanzahl',
     maxLetters: 'Maximale Buchstabenanzahl',
     substitutionsLegend: 'Ersetzungen und Vokabular',

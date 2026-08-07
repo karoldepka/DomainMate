@@ -31,6 +31,7 @@ test.describe('naming workspace', () => {
   })
 
   test('part letter limits are accessible and persist as compact source parameters', async ({ page }) => {
+    await seedFlags(page, { advancedQuery: true })
     await page.goto('/')
     await expect(page.locator('.result-row').first()).toBeVisible()
     const part1 = page.getByRole('group', { name: 'Name part 1' })

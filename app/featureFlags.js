@@ -11,6 +11,7 @@ const defaultFlags = {
   crashReporting: false,
   analytics: false,
   unlimitedPro: false,
+  advancedQuery: false,
 }
 
 export const flagList = [
@@ -21,6 +22,7 @@ export const flagList = [
   { key: 'crashReporting', label: 'Send crash reports', description: 'Sends unexpected error details to the backend to help fix bugs.' },
   { key: 'analytics', label: 'Product analytics', description: 'Sends anonymous usage events (searches run, favorites, price checks) to help improve the product.' },
   { key: 'unlimitedPro', label: 'Unlimited pro', description: 'Unlocks the full pro tier on this device, removing the free-tier result cap, without needing the other flags on.' },
+  { key: 'advancedQuery', label: 'Advanced query editor', description: 'Shows the raw editable query text behind the generated form fields.' },
 ]
 
 // Always starts at the all-off defaults, matching the prerendered/SSR shell exactly,

@@ -60,6 +60,7 @@ main { flex: 1; width: min(1180px, calc(100% - 48px)); margin: 0 auto; }
 .parts-editor { display: grid; grid-template-columns: minmax(0, 1fr) minmax(360px, 1.25fr); gap: 24px; margin-top: 22px; padding-top: 20px; border-top: 1px solid #edf0ee; }
 .parts-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; gap: 10px; }
 .parts-fields-header { grid-column: 1 / -1; display: flex; justify-content: flex-end; }
+.tld-field { grid-column: 1 / -1; }
 .part-field { min-width: 0; }
 .parts-fields textarea { width: 100%; min-height: 76px; padding: 10px 12px; border: 1px solid #cdd5d1; border-radius: 6px; outline: 0; resize: vertical; font: 400 14px/1.5 'DM Sans', sans-serif; }.parts-fields textarea:focus { border-color: #2b896b; box-shadow: 0 0 0 3px #e1f2ec; }
 .part-letter-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-top: 8px; }

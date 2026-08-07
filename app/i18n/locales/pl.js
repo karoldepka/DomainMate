@@ -15,6 +15,7 @@ export default {
     part2Label: 'Część nazwy 2',
     swapParts: 'Odwrócona kolejność części nazwy',
     swapPartsAria: 'Odwróć kolejność części nazwy',
+    tldLabel: 'Rozszerzenia domeny (TLD)',
     minLetters: 'Minimalna liczba liter',
     maxLetters: 'Maksymalna liczba liter',
     substitutionsLegend: 'Podstawienia i słownictwo',

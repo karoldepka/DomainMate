@@ -15,6 +15,7 @@ export default {
     part2Label: 'Parte do nome 2',
     swapParts: 'Inverter a ordem das partes do nome',
     swapPartsAria: 'Inverter a ordem das partes do nome',
+    tldLabel: 'Extensões de domínio (TLD)',
     minLetters: 'Mínimo de letras',
     maxLetters: 'Máximo de letras',
     substitutionsLegend: 'Substituições e vocabulário',
