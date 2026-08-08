@@ -35,7 +35,7 @@ export default {
     bridge: 'Vokalbrücke',
     compact: 'Kompakte Verbindung',
     suffix: 'Marken-Suffix',
-    reverse: 'Umgekehrte Reihenfolge',
+    reverse: 'Namensteile permutieren',
   },
   results: {
     heading: 'Domain-Kandidaten',
@@ -43,6 +43,8 @@ export default {
     available: '{count} verfügbar',
     empty: 'Keine verfügbaren Domains in den geprüften Ergebnissen.',
     limited: 'Die ersten {count} werden angezeigt. Schalte Pro frei, um die vollständige Liste zu sehen.',
+    limitedPro: 'Die ersten {count} werden angezeigt (gemäß Pro-Tarif). Schalte Unlimited frei, um die vollständige Liste zu sehen und deine Unterstützung zu zeigen.',
+    unlimited: 'Du nutzt den Unlimited-Tarif mit unbegrenzt vielen Domains. Viel Freude damit und danke für deine Unterstützung!',
   },
   filters: { availableOnly: 'Nur verfügbare', checkAll: 'Alle prüfen' },
   table: { candidate: 'Kandidat', status: 'Domain-Status', google: 'Google-Ergebnisse' },
@@ -101,6 +103,8 @@ export default {
     currentTierLabel: 'Aktuelle Stufe',
     domainsCount: '{count} Domain-Vorschläge',
     unlimitedDomains: 'Unbegrenzte Domain-Vorschläge',
+    oneTime: 'einmalig', loading: 'Upgrade-Optionen werden geladen…', verifying: 'Zahlung wird bestätigt…', retry: 'Erneut versuchen',
+    benefits: { results: 'Vollständige Ergebnisse und KI-Vorschläge', sync: 'Bewertungen und Kommentare synchronisiert' },
     notConfigured: 'Für Zahlungen ist STRIPE_SECRET_KEY erforderlich.',
     errors: { loadFailed: 'Zahlungsoptionen konnten nicht geladen werden.', checkoutFailed: 'Zahlung fehlgeschlagen.' },
     notice: {
@@ -109,7 +113,7 @@ export default {
       notCompleted: 'Die Zahlung wurde nicht abgeschlossen.',
       verifyFailed: 'Zahlung konnte nicht überprüft werden.',
     },
-    methods: { card: 'Karte', secure: 'Sichere Zahlung über Stripe' },
+    methods: { card: 'Karte', dynamic: 'Flexible Zahlungsmethoden', secure: 'Sichere Zahlung über Stripe' },
     success: {
       eyebrow: 'Zahlung erfolgreich',
       title: 'Alles bereit!',

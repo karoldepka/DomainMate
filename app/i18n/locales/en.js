@@ -13,6 +13,7 @@ export default {
     queryEditable: 'editable',
     part1Label: 'Name part 1',
     part2Label: 'Name part 2',
+    part3Label: 'Name part 3',
     swapParts: 'Reverse order of name parts',
     swapPartsAria: 'Reverse the order of name parts',
     tldLabel: 'Domain extensions (TLDs)',
@@ -35,7 +36,7 @@ export default {
     bridge: 'Vowel bridge',
     compact: 'Compact blend',
     suffix: 'Brand suffix',
-    reverse: 'Reverse order',
+    reverse: 'Permutate name parts',
   },
   results: {
     heading: 'Domain candidates',
@@ -43,6 +44,8 @@ export default {
     available: '{count} available',
     empty: 'No available domains in the checked results.',
     limited: 'Showing the first {count}. Unlock Pro to see the full list and show your appreciation.',
+    limitedPro: 'Showing the first {count} (as per Pro tier). Unlock Unlimited to see the full list and show your appreciation.',
+    unlimited: 'You are on the Unlimited tier with unlimited domains. Enjoy, and thank you for your support!',
   },
   filters: { availableOnly: 'Available only', checkAll: 'Check all' },
   table: { candidate: 'Candidate', status: 'Domain status', google: 'Google results' },
@@ -101,6 +104,8 @@ export default {
     currentTierLabel: 'Current tier',
     domainsCount: '{count} domain candidates',
     unlimitedDomains: 'Unlimited domain candidates',
+    oneTime: 'one-time', loading: 'Loading upgrade options…', verifying: 'Confirming your payment…', retry: 'Try again',
+    benefits: { results: 'Full results and AI suggestions', sync: 'Ratings and comments synced' },
     notConfigured: 'Payments require STRIPE_SECRET_KEY.',
     errors: { loadFailed: 'Could not load payment options.', checkoutFailed: 'Checkout failed.' },
     notice: {
@@ -109,7 +114,7 @@ export default {
       notCompleted: 'Payment has not completed.',
       verifyFailed: 'Could not verify the payment.',
     },
-    methods: { card: 'Card', secure: 'Secure checkout by Stripe' },
+    methods: { card: 'Card', dynamic: 'Flexible payment methods', secure: 'Secure checkout by Stripe' },
     success: {
       eyebrow: 'Payment successful',
       title: 'You’re all set!',

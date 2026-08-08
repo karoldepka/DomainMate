@@ -35,7 +35,7 @@ export default {
     bridge: 'Ponte vocálica',
     compact: 'Combinação compacta',
     suffix: 'Sufixo de marca',
-    reverse: 'Ordem inversa',
+    reverse: 'Permutar partes do nome',
   },
   results: {
     heading: 'Domínios candidatos',
@@ -43,6 +43,8 @@ export default {
     available: '{count} disponíveis',
     empty: 'Não há domínios disponíveis nos resultados verificados.',
     limited: 'Mostrando os primeiros {count}. Desbloqueie o pro para a lista completa.',
+    limitedPro: 'Mostrando os primeiros {count} (conforme o nível Pro). Desbloqueie o Unlimited para ver a lista completa e mostrar o seu apoio.',
+    unlimited: 'Está no nível Unlimited com domínios ilimitados. Aproveite e obrigado pelo seu apoio!',
   },
   filters: { availableOnly: 'Apenas disponíveis', checkAll: 'Verificar tudo' },
   table: { candidate: 'Candidato', status: 'Estado do domínio', google: 'Resultados do Google' },
@@ -101,6 +103,8 @@ export default {
     currentTierLabel: 'Nível atual',
     domainsCount: '{count} propostas de domínio',
     unlimitedDomains: 'Propostas de domínio ilimitadas',
+    oneTime: 'pagamento único', loading: 'A carregar opções de melhoria…', verifying: 'A confirmar o pagamento…', retry: 'Tentar novamente',
+    benefits: { results: 'Resultados completos e sugestões de IA', sync: 'Avaliações e comentários sincronizados' },
     notConfigured: 'Os pagamentos requerem a variável STRIPE_SECRET_KEY.',
     errors: { loadFailed: 'Não foi possível carregar as opções de pagamento.', checkoutFailed: 'O pagamento falhou.' },
     notice: {
@@ -109,7 +113,7 @@ export default {
       notCompleted: 'O pagamento não foi concluído.',
       verifyFailed: 'Não foi possível verificar o pagamento.',
     },
-    methods: { card: 'Cartão', secure: 'Pagamento seguro processado pela Stripe' },
+    methods: { card: 'Cartão', dynamic: 'Métodos de pagamento flexíveis', secure: 'Pagamento seguro processado pela Stripe' },
     success: {
       eyebrow: 'Pagamento concluído',
       title: 'Tudo pronto!',

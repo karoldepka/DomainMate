@@ -35,7 +35,7 @@ export default {
     bridge: 'Pont vocàlic',
     compact: 'Combinació compacta',
     suffix: 'Sufix de marca',
-    reverse: 'Ordre invertit',
+    reverse: 'Permutar parts del nom',
   },
   results: {
     heading: 'Dominis candidats',
@@ -43,6 +43,8 @@ export default {
     available: '{count} disponibles',
     empty: 'No hi ha dominis disponibles en els resultats comprovats.',
     limited: 'Es mostren els primers {count}. Desbloqueja el nivell pro per veure la llista completa.',
+    limitedPro: 'Es mostren els primers {count} (segons el nivell Pro). Desbloqueja Unlimited per veure la llista completa i mostrar el teu suport.',
+    unlimited: 'Tens el nivell Unlimited amb dominis il·limitats. Gaudeix-ne i gràcies pel teu suport!',
   },
   filters: { availableOnly: 'Només disponibles', checkAll: 'Comprova-ho tot' },
   table: { candidate: 'Candidat', status: 'Estat del domini', google: 'Resultats de Google' },
@@ -101,6 +103,8 @@ export default {
     currentTierLabel: 'Nivell actual',
     domainsCount: '{count} propostes de domini',
     unlimitedDomains: 'Propostes de domini il·limitades',
+    oneTime: 'pagament únic', loading: 'Carregant opcions de millora…', verifying: 'Confirmant el pagament…', retry: 'Torna-ho a provar',
+    benefits: { results: 'Resultats complets i suggeriments d’IA', sync: 'Valoracions i comentaris sincronitzats' },
     notConfigured: 'Els pagaments requereixen la variable STRIPE_SECRET_KEY.',
     errors: { loadFailed: 'No s’han pogut carregar les opcions de pagament.', checkoutFailed: 'El pagament ha fallat.' },
     notice: {
@@ -109,7 +113,7 @@ export default {
       notCompleted: 'El pagament no s’ha completat.',
       verifyFailed: 'No s’ha pogut verificar el pagament.',
     },
-    methods: { card: 'Targeta', secure: 'Pagament segur gestionat per Stripe' },
+    methods: { card: 'Targeta', dynamic: 'Mètodes de pagament flexibles', secure: 'Pagament segur gestionat per Stripe' },
     success: {
       eyebrow: 'Pagament realitzat',
       title: 'Tot a punt!',

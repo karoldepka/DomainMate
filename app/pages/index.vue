@@ -8,8 +8,9 @@ import { locale, locales, t } from '../i18n/index.js'
 import { basicUnlocked, domainLimit, flags, paidTier } from '../featureFlags.js'
 
 const store = useDomainStore()
-const { brief, effectiveQuery, keywords, part1MinLetters, part1MaxLetters, part2MinLetters, part2MaxLetters, maxSyllables, maxConsonants, maxLength, maxNames, substitutions, strategies, useThesaurus, enriching, results, resultsLimited, running, checkedCount, availableCount } = storeToRefs(store)
+const { brief, effectiveQuery, keywords, part1MinLetters, part1MaxLetters, part2MinLetters, part2MaxLetters, part3MinLetters, part3MaxLetters, maxSyllables, maxConsonants, maxLength, maxNames, substitutions, strategies, useThesaurus, enriching, results, resultsLimited, running, checkedCount, availableCount } = storeToRefs(store)
 const progressText = computed(() => t('results.progress', { checked: checkedCount.value, total: results.value.length }))
+const limitedMessageKey = computed(() => paidTier.value === 'pro' ? 'results.limitedPro' : 'results.limited')
 const paymentDialog = useTemplateRef('paymentDialog')
 const feedbackDialog = useTemplateRef('feedbackDialog')
 const privacyDialog = useTemplateRef('privacyDialog')
@@ -35,6 +36,7 @@ const displayedResults = computed(() => {
 })
 const part1 = computed({ get: () => getQueryLine('PART1'), set: (value) => setQueryLine('PART1', value) })
 const part2 = computed({ get: () => getQueryLine('PART2'), set: (value) => setQueryLine('PART2', value) })
+const part3 = computed({ get: () => getQueryLine('PART3'), set: (value) => setQueryLine('PART3', value) })
 const tlds = computed({ get: () => getQueryLine('TLD'), set: (value) => setQueryLine('TLD', value) })
 const substitutionOptions = [
   ['ch:k', 'ch → k'], ['ch:ck', 'ch → ck'], ['ch:kk', 'ch → kk'],
@@ -99,7 +101,7 @@ function restoreSavedWorkspace() {
   if (saved) window.history.replaceState({}, '', `${window.location.pathname}?${saved}`)
 }
 
-watch([brief, effectiveQuery, part1MinLetters, part1MaxLetters, part2MinLetters, part2MaxLetters, maxSyllables, maxConsonants, maxLength, maxNames, availableOnly, useThesaurus], syncQueryParams)
+watch([brief, effectiveQuery, part1MinLetters, part1MaxLetters, part2MinLetters, part2MaxLetters, part3MinLetters, part3MaxLetters, maxSyllables, maxConsonants, maxLength, maxNames, availableOnly, useThesaurus], syncQueryParams)
 
 /** Enrich parts, generate candidates, and begin availability checks. */
 async function submit() { await store.enrichWithThesaurus(); store.generate(); store.checkAll() }
@@ -280,14 +282,21 @@ function restoreQueryParams() {
     restoreLetterLimit(params, 'p2min', store.defaults.part2MinLetters),
     restoreLetterLimit(params, 'p2max', store.defaults.part2MaxLetters),
   )
+  const part3Limits = normalizeLetterRange(
+    restoreLetterLimit(params, 'p3min', store.defaults.part3MinLetters),
+    restoreLetterLimit(params, 'p3max', store.defaults.part3MaxLetters),
+  )
   part1MinLetters.value = part1Limits.min
   part1MaxLetters.value = part1Limits.max
   part2MinLetters.value = part2Limits.min
   part2MaxLetters.value = part2Limits.max
+  part3MinLetters.value = part3Limits.min
+  part3MaxLetters.value = part3Limits.max
   if (params.has('available')) availableOnly.value = params.get('available') === '1'
   store.expandBrief()
   if (params.has('part1')) setQueryLine('PART1', params.get('part1') || '')
   if (params.has('part2')) setQueryLine('PART2', params.get('part2') || '')
+  if (params.has('part3')) setQueryLine('PART3', params.get('part3') || '')
   if (params.has('tlds')) setQueryLine('TLD', params.get('tlds') || '')
   if (params.has('context')) setQueryLine('CONTEXT', params.get('context') || '')
   if (params.has('subs')) {
@@ -315,13 +324,20 @@ function syncQueryParams() {
     normalizeLetterLimit(getQueryLine('PART2_MIN_LETTERS'), store.defaults.part2MinLetters),
     normalizeLetterLimit(getQueryLine('PART2_MAX_LETTERS'), store.defaults.part2MaxLetters),
   )
+  const effectivePart3Limits = normalizeLetterRange(
+    normalizeLetterLimit(getQueryLine('PART3_MIN_LETTERS'), store.defaults.part3MinLetters),
+    normalizeLetterLimit(getQueryLine('PART3_MAX_LETTERS'), store.defaults.part3MaxLetters),
+  )
   setOverride(params, 'brief', brief.value, store.defaults.brief)
   setOverride(params, 'part1', part1.value, baseline.part1)
   setOverride(params, 'part2', part2.value, baseline.part2)
+  setOverride(params, 'part3', part3.value, baseline.part3)
   setOverride(params, 'p1min', String(effectivePart1Limits.min), String(store.defaults.part1MinLetters))
   setOverride(params, 'p1max', String(effectivePart1Limits.max), String(store.defaults.part1MaxLetters))
   setOverride(params, 'p2min', String(effectivePart2Limits.min), String(store.defaults.part2MinLetters))
   setOverride(params, 'p2max', String(effectivePart2Limits.max), String(store.defaults.part2MaxLetters))
+  setOverride(params, 'p3min', String(effectivePart3Limits.min), String(store.defaults.part3MinLetters))
+  setOverride(params, 'p3max', String(effectivePart3Limits.max), String(store.defaults.part3MaxLetters))
   setOverride(params, 'tlds', getQueryLine('TLD'), baseline.tlds)
   setOverride(params, 'context', getQueryLine('CONTEXT'), baseline.context)
   setOverride(params, 'subs', normalizeList(getQueryLine('SUBSTITUTIONS')), store.defaults.substitutions.join(','))
@@ -438,6 +454,14 @@ function normalizeLetterRange(min, max) {
                   <label for="part2-max-letters">{{ t('form.maxLetters') }}<input id="part2-max-letters" v-model.number="part2MaxLetters" name="p2max" type="number" :min="part2MinLetters" max="24" step="1" required @change="syncPartLimit('PART2_MAX_LETTERS', part2MaxLetters)" /></label>
                 </div>
               </fieldset>
+              <fieldset class="part-field">
+                <legend id="name-part3-legend">{{ t('form.part3Label') }}</legend>
+                <textarea id="name-part3" v-model="part3" name="part3" rows="3" placeholder="hub io app" aria-labelledby="name-part3-legend"></textarea>
+                <div class="part-letter-fields">
+                  <label for="part3-min-letters">{{ t('form.minLetters') }}<input id="part3-min-letters" v-model.number="part3MinLetters" name="p3min" type="number" min="1" :max="part3MaxLetters" step="1" @change="syncPartLimit('PART3_MIN_LETTERS', part3MinLetters)" /></label>
+                  <label for="part3-max-letters">{{ t('form.maxLetters') }}<input id="part3-max-letters" v-model.number="part3MaxLetters" name="p3max" type="number" :min="part3MinLetters" max="24" step="1" @change="syncPartLimit('PART3_MAX_LETTERS', part3MaxLetters)" /></label>
+                </div>
+              </fieldset>
               <fieldset class="part-field tld-field">
                 <legend id="tld-legend">{{ t('form.tldLabel') }}</legend>
                 <textarea id="tld-field" v-model="tlds" name="tlds" rows="2" placeholder=".dev .ai .com" aria-labelledby="tld-legend"></textarea>
@@ -450,7 +474,7 @@ function normalizeLetterRange(min, max) {
                   <input v-model="substitutions" type="checkbox" :value="value" @change="syncSubstitutions" />{{ label }}
                 </label>
               </div>
-              <label class="thesaurus-toggle"><input v-model="useThesaurus" type="checkbox" /><span>{{ t('form.useThesaurus') }}</span><UIcon v-if="enriching" name="i-lucide-loader-circle" class="spin size-3.75" /></label>
+              <label v-if="flags.aiSuggestions" class="thesaurus-toggle"><input v-model="useThesaurus" type="checkbox" /><span>{{ t('form.useThesaurus') }}</span><UIcon v-if="enriching" name="i-lucide-loader-circle" class="spin size-3.75" /></label>
             </fieldset>
             <fieldset class="strategy-fieldset">
               <legend>{{ t('form.strategiesLegend') }}</legend>
@@ -481,7 +505,8 @@ function normalizeLetterRange(min, max) {
           <div>
             <h2 id="results-heading">{{ t('results.heading') }}</h2>
             <p v-if="results.length">{{ progressText }}<template v-if="availableCount"> · <strong>{{ t('results.available', { count: availableCount }) }}</strong></template></p>
-            <button v-if="!flags.unlimitedPro && results.length" class="free-tier-note" type="button" @click="openProPrompt">{{ t('results.limited', { count: domainLimit }) }}</button>
+            <button v-if="!flags.unlimitedPro && results.length" class="free-tier-note" type="button" @click="openProPrompt">{{ t(limitedMessageKey, { count: domainLimit }) }}</button>
+            <p v-else-if="results.length" class="unlimited-tier-note">{{ t('results.unlimited') }}</p>
           </div>
           <div class="result-filters">
             <label class="available-filter"><input v-model="availableOnly" type="checkbox" />{{ t('filters.availableOnly') }}</label>
@@ -530,13 +555,14 @@ function normalizeLetterRange(min, max) {
           </article>
           </TransitionGroup>
           <p v-if="availableOnly && displayedResults.length === 0" class="empty-results">{{ t('results.empty') }}</p>
-          <button v-if="!flags.unlimitedPro && results.length" class="free-tier-note free-tier-note-bottom" type="button" @click="openProPrompt">{{ t('results.limited', { count: domainLimit }) }}</button>
+          <button v-if="!flags.unlimitedPro && results.length" class="free-tier-note free-tier-note-bottom" type="button" @click="openProPrompt">{{ t(limitedMessageKey, { count: domainLimit }) }}</button>
+          <p v-else-if="results.length" class="unlimited-tier-note unlimited-tier-note-bottom">{{ t('results.unlimited') }}</p>
         </div>
       </section>
     </main>
 
     <footer><span>{{ t('footer.rdap') }}</span><span>{{ t('footer.vocabularyBy') }} <a href="https://www.datamuse.com/api/" target="_blank" rel="noreferrer">Datamuse</a> · DomainMate · <button type="button" class="footer-link" @click="privacyDialog?.open()">{{ t('footer.privacy') }}</button><template v-if="buildInfo?.sha"> · <a class="footer-link build-sha" :href="`https://github.com/karoldepka/DomainMate/commit/${buildInfo.sha}`" target="_blank" rel="noreferrer" :title="buildInfo.timestamp">{{ buildInfo.sha }}</a></template></span></footer>
-    <PaymentDialog v-if="flags.payments" ref="paymentDialog" />
+    <PaymentDialog ref="paymentDialog" />
     <LazyFeatureFlagsPanel v-model="showFlagsPanel" />
     <FeedbackDialog v-if="!basicUnlocked" ref="feedbackDialog" />
     <PrivacyPolicyDialog ref="privacyDialog" />

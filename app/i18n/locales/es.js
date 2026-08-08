@@ -35,7 +35,7 @@ export default {
     bridge: 'Puente vocálico',
     compact: 'Combinación compacta',
     suffix: 'Sufijo de marca',
-    reverse: 'Orden invertido',
+    reverse: 'Permutar partes del nombre',
   },
   results: {
     heading: 'Dominios candidatos',
@@ -43,6 +43,8 @@ export default {
     available: '{count} disponibles',
     empty: 'No hay dominios disponibles en los resultados comprobados.',
     limited: 'Mostrando los primeros {count}. Desbloquea pro para ver la lista completa.',
+    limitedPro: 'Mostrando los primeros {count} (según el nivel Pro). Desbloquea Unlimited para ver la lista completa y mostrar tu apoyo.',
+    unlimited: 'Estás en el nivel Unlimited con dominios ilimitados. ¡Disfrútalo y gracias por tu apoyo!',
   },
   filters: { availableOnly: 'Solo disponibles', checkAll: 'Comprobar todo' },
   table: { candidate: 'Candidato', status: 'Estado del dominio', google: 'Resultados de Google' },
@@ -101,6 +103,8 @@ export default {
     currentTierLabel: 'Nivel actual',
     domainsCount: '{count} propuestas de dominio',
     unlimitedDomains: 'Propuestas de dominio ilimitadas',
+    oneTime: 'pago único', loading: 'Cargando opciones de mejora…', verifying: 'Confirmando tu pago…', retry: 'Intentar de nuevo',
+    benefits: { results: 'Resultados completos y sugerencias de IA', sync: 'Valoraciones y comentarios sincronizados' },
     notConfigured: 'Los pagos requieren la variable STRIPE_SECRET_KEY.',
     errors: { loadFailed: 'No se pudieron cargar las opciones de pago.', checkoutFailed: 'El pago ha fallado.' },
     notice: {
@@ -109,7 +113,7 @@ export default {
       notCompleted: 'El pago no se ha completado.',
       verifyFailed: 'No se pudo verificar el pago.',
     },
-    methods: { card: 'Tarjeta', secure: 'Pago seguro gestionado por Stripe' },
+    methods: { card: 'Tarjeta', dynamic: 'Métodos de pago flexibles', secure: 'Pago seguro gestionado por Stripe' },
     success: {
       eyebrow: 'Pago realizado',
       title: '¡Todo listo!',

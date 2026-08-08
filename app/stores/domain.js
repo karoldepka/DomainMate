@@ -9,7 +9,7 @@ import { track } from '../services/analytics.js'
 /** @typedef {{provider?: string, status: string, query?: string, totalResults?: number, countKind?: 'exact'|'estimated'|'returned'}} SearchResult */
 /** @typedef {{id: string, name: string, brand: string, tld: string, status: CheckStatus, availability: Availability, availabilityNote?: string, search: SearchResult|null, copied?: boolean}} DomainCandidate */
 /** @typedef {{minLetters: number, maxLetters: number}} PartLetterLimits */
-/** @typedef {{part1Roots: string[], part2Roots: string[], part1Limits: PartLetterLimits, part2Limits: PartLetterLimits, tlds: string[], context: string, substitutions: string[], strategies: string[], maxSyllables: number, maxConsonants: number, maxLength: number, maxNames: number}} EffectiveQuery */
+/** @typedef {{part1Roots: string[], part2Roots: string[], part3Roots: string[], part1Limits: PartLetterLimits, part2Limits: PartLetterLimits, part3Limits: PartLetterLimits, tlds: string[], context: string, substitutions: string[], strategies: string[], maxSyllables: number, maxConsonants: number, maxLength: number, maxNames: number}} EffectiveQuery */
 
 /** @param {string} value */
 const clean = (value) => value.toLowerCase().replace(/[^a-z0-9]/g, '')
@@ -32,6 +32,8 @@ export const useDomainStore = defineStore('domains', () => {
   const part1MaxLetters = ref(defaultPartMaxLetters)
   const part2MinLetters = ref(defaultPartMinLetters)
   const part2MaxLetters = ref(defaultPartMaxLetters)
+  const part3MinLetters = ref(defaultPartMinLetters)
+  const part3MaxLetters = ref(defaultPartMaxLetters)
   const substitutions = ref([...defaultSubstitutions])
   const useThesaurus = ref(true)
   const enriching = ref(false)
@@ -49,15 +51,17 @@ export const useDomainStore = defineStore('domains', () => {
 
   /** Expand a terse naming brief into an explicit query that remains user-editable. */
   function expandBrief() {
-    const { part1Roots, part2Roots, tlds, words } = parseBrief(brief.value)
+    const { part1Roots, part2Roots, part3Roots, tlds, words } = parseBrief(brief.value)
 
     effectiveQuery.value = [
       `PART1: ${expandRoots(part1Roots).join(' ')}`,
       `PART2: ${expandRoots(part2Roots).join(' ')}`,
+      ...(part3Roots.length ? [`PART3: ${expandRoots(part3Roots).join(' ')}`] : []),
       `PART1_MIN_LETTERS: ${part1MinLetters.value}`,
       `PART1_MAX_LETTERS: ${part1MaxLetters.value}`,
       `PART2_MIN_LETTERS: ${part2MinLetters.value}`,
       `PART2_MAX_LETTERS: ${part2MaxLetters.value}`,
+      ...(part3Roots.length ? [`PART3_MIN_LETTERS: ${part3MinLetters.value}`, `PART3_MAX_LETTERS: ${part3MaxLetters.value}`] : []),
       `TLD: ${(tlds.length ? tlds : ['.com', '.ai', '.tech']).join(', ')}`,
       `CONTEXT: ${words.join(' ')}`,
       `SUBSTITUTIONS: ${substitutions.value.join(', ')}`,
@@ -75,6 +79,7 @@ export const useDomainStore = defineStore('domains', () => {
     return {
       part1: expandRoots(parsed.part1Roots).join(' '),
       part2: expandRoots(parsed.part2Roots).join(' '),
+      part3: expandRoots(parsed.part3Roots).join(' '),
       tlds: (parsed.tlds.length ? parsed.tlds : ['.com', '.ai', '.tech']).join(', '),
       context: parsed.words.join(' '),
     }
@@ -93,14 +98,17 @@ export const useDomainStore = defineStore('domains', () => {
     part1MaxLetters.value = query.part1Limits.maxLetters
     part2MinLetters.value = query.part2Limits.minLetters
     part2MaxLetters.value = query.part2Limits.maxLetters
+    part3MinLetters.value = query.part3Limits.minLetters
+    part3MaxLetters.value = query.part3Limits.maxLetters
     substitutions.value = query.substitutions
     strategies.value = query.strategies
     maxNames.value = query.maxNames
 
     // Thesaurus additions widen generation without being written back into the
-    // user's own PART1/PART2 text, so "Generate & check" never rewrites their input.
+    // user's own PART text, so "Generate & check" never rewrites their input.
     const part1Roots = unique([...query.part1Roots, ...thesaurusAdditions.value.part1])
     const part2Roots = unique([...query.part2Roots, ...thesaurusAdditions.value.part2])
+    const part3Roots = unique([...query.part3Roots, ...(thesaurusAdditions.value.part3 || [])])
     const part1Variants = expandVariantsToLetterLimits(
       dedupeVariants(part1Roots.flatMap((root) => spellingVariantRecords(root, query.substitutions))),
       query.part1Limits,
@@ -109,8 +117,18 @@ export const useDomainStore = defineStore('domains', () => {
       dedupeVariants(part2Roots.flatMap((root) => spellingVariantRecords(root, query.substitutions))),
       query.part2Limits,
     )
-    const candidates = dedupeCandidates(part1Variants.flatMap((left) => part2Variants.flatMap((right) =>
-      generateCreativeNames(left.name, right.name, query.strategies, query.maxConsonants, left.editCost + right.editCost, query.part1Limits, query.part2Limits))))
+    const part3Variants = part3Roots.length ? expandVariantsToLetterLimits(
+      dedupeVariants(part3Roots.flatMap((root) => spellingVariantRecords(root, query.substitutions))),
+      query.part3Limits,
+    ) : []
+    const makePairs = (lefts, rights, lLimits, rLimits) =>
+      lefts.flatMap((left) => rights.flatMap((right) =>
+        generateCreativeNames(left.name, right.name, query.strategies, query.maxConsonants, left.editCost + right.editCost, lLimits, rLimits)))
+    const candidates = dedupeCandidates([
+      ...makePairs(part1Variants, part2Variants, query.part1Limits, query.part2Limits),
+      ...(part3Variants.length ? makePairs(part1Variants, part3Variants, query.part1Limits, query.part3Limits) : []),
+      ...(part3Variants.length ? makePairs(part2Variants, part3Variants, query.part2Limits, query.part3Limits) : []),
+    ])
       .filter(({ name }) => name.length >= 4 && name.length <= query.maxLength)
       .filter(({ name }) => countSyllables(name) <= query.maxSyllables)
       .filter(({ name }) => longestConsonantRun(name) <= query.maxConsonants)
@@ -133,18 +151,19 @@ export const useDomainStore = defineStore('domains', () => {
 
   /** Expand both name parts with short, semantically related alternatives from Datamuse and an LLM. */
   async function enrichWithThesaurus() {
-    if (!useThesaurus.value) {
-      thesaurusAdditions.value = { part1: [], part2: [] }
+    if (!flags.aiSuggestions || !useThesaurus.value) {
+      thesaurusAdditions.value = { part1: [], part2: [], part3: [] }
       return
     }
     enriching.value = true
     try {
-      const { part1Roots, part2Roots } = parseBrief(brief.value)
-      const [part1Additions, part2Additions] = await Promise.all([
+      const { part1Roots, part2Roots, part3Roots } = parseBrief(brief.value)
+      const [part1Additions, part2Additions, part3Additions] = await Promise.all([
         enrichWords(part1Roots.slice(0, 3)),
         enrichWords(part2Roots.slice(0, 3)),
+        enrichWords(part3Roots.slice(0, 3)),
       ])
-      thesaurusAdditions.value = { part1: part1Additions, part2: part2Additions }
+      thesaurusAdditions.value = { part1: part1Additions, part2: part2Additions, part3: part3Additions }
     } finally { enriching.value = false }
   }
 
@@ -153,7 +172,7 @@ export const useDomainStore = defineStore('domains', () => {
     const additions = await Promise.all(words.map(async (word) => {
       const [datamuse, ai] = await Promise.all([
         fetchSynonyms(word, maxSyllables.value),
-        flags.aiSuggestions ? fetchAiSynonyms(word, maxSyllables.value) : Promise.resolve([]),
+        fetchAiSynonyms(word, maxSyllables.value),
       ])
       return unique([...datamuse, ...ai])
     }))
@@ -205,8 +224,8 @@ export const useDomainStore = defineStore('domains', () => {
   }
 
   expandBrief()
-  const defaults = { brief: defaultBrief, substitutions: defaultSubstitutions, strategies: defaultStrategies, maxSyllables: 3, maxConsonants: 2, maxLength: 'innotek'.length, maxNames: 150, part1MinLetters: defaultPartMinLetters, part1MaxLetters: defaultPartMaxLetters, part2MinLetters: defaultPartMinLetters, part2MaxLetters: defaultPartMaxLetters }
-  return { brief, effectiveQuery, keywords, maxSyllables, maxConsonants, maxLength, maxNames, part1MinLetters, part1MaxLetters, part2MinLetters, part2MaxLetters, substitutions, strategies, useThesaurus, enriching, results, resultsLimited, running, checkedCount, availableCount, defaults, getBriefDefaults, expandBrief, enrichWithThesaurus, generate, checkOne, checkAll, stopChecking }
+  const defaults = { brief: defaultBrief, substitutions: defaultSubstitutions, strategies: defaultStrategies, maxSyllables: 3, maxConsonants: 2, maxLength: 'innotek'.length, maxNames: 150, part1MinLetters: defaultPartMinLetters, part1MaxLetters: defaultPartMaxLetters, part2MinLetters: defaultPartMinLetters, part2MaxLetters: defaultPartMaxLetters, part3MinLetters: defaultPartMinLetters, part3MaxLetters: defaultPartMaxLetters }
+  return { brief, effectiveQuery, keywords, maxSyllables, maxConsonants, maxLength, maxNames, part1MinLetters, part1MaxLetters, part2MinLetters, part2MaxLetters, part3MinLetters, part3MaxLetters, substitutions, strategies, useThesaurus, enriching, results, resultsLimited, running, checkedCount, availableCount, defaults, getBriefDefaults, expandBrief, enrichWithThesaurus, generate, checkOne, checkAll, stopChecking }
 })
 
 /**
@@ -221,13 +240,14 @@ function parseBrief(source) {
 
   let part1Roots = wordsOfLine(lines[0])
   let part2Roots = wordsOfLine(lines[1])
-  const extraWords = lines.slice(2).flatMap(wordsOfLine)
-  const words = unique([...part1Roots, ...part2Roots, ...extraWords])
+  const part3Roots = wordsOfLine(lines[2])
+  const extraWords = lines.slice(3).flatMap(wordsOfLine)
+  const words = unique([...part1Roots, ...part2Roots, ...part3Roots, ...extraWords])
 
   if (!part2Roots.length) part2Roots = part1Roots
   if (!part1Roots.length) part1Roots = ['inno']
   if (!part2Roots.length) part2Roots = ['tech']
-  return { part1Roots, part2Roots, tlds, words }
+  return { part1Roots, part2Roots, part3Roots, tlds, words }
 }
 
 /** @param {string|undefined} line */
@@ -614,9 +634,10 @@ function phoneticFamily(name) {
 function parseEffectiveQuery(source) {
   /** @type {EffectiveQuery} */
   const parsed = {
-    part1Roots: [], part2Roots: [],
+    part1Roots: [], part2Roots: [], part3Roots: [],
     part1Limits: { minLetters: defaultPartMinLetters, maxLetters: defaultPartMaxLetters },
     part2Limits: { minLetters: defaultPartMinLetters, maxLetters: defaultPartMaxLetters },
+    part3Limits: { minLetters: defaultPartMinLetters, maxLetters: defaultPartMaxLetters },
     tlds: [], context: '', substitutions: [], strategies: [],
     maxSyllables: 3, maxConsonants: 2, maxLength: 'innotek'.length, maxNames: 150,
   }
@@ -627,10 +648,13 @@ function parseEffectiveQuery(source) {
     const values = value.split(/[\s,]+/).map(clean).filter(Boolean)
     if (key === 'PART1') parsed.part1Roots = unique(values)
     if (key === 'PART2') parsed.part2Roots = unique(values)
+    if (key === 'PART3') parsed.part3Roots = unique(values)
     if (key === 'PART1_MIN_LETTERS') parsed.part1Limits.minLetters = clampOption(value, defaultPartMinLetters, defaultPartMaxLetters, defaultPartMinLetters)
     if (key === 'PART1_MAX_LETTERS') parsed.part1Limits.maxLetters = clampOption(value, defaultPartMinLetters, defaultPartMaxLetters, defaultPartMaxLetters)
     if (key === 'PART2_MIN_LETTERS') parsed.part2Limits.minLetters = clampOption(value, defaultPartMinLetters, defaultPartMaxLetters, defaultPartMinLetters)
     if (key === 'PART2_MAX_LETTERS') parsed.part2Limits.maxLetters = clampOption(value, defaultPartMinLetters, defaultPartMaxLetters, defaultPartMaxLetters)
+    if (key === 'PART3_MIN_LETTERS') parsed.part3Limits.minLetters = clampOption(value, defaultPartMinLetters, defaultPartMaxLetters, defaultPartMinLetters)
+    if (key === 'PART3_MAX_LETTERS') parsed.part3Limits.maxLetters = clampOption(value, defaultPartMinLetters, defaultPartMaxLetters, defaultPartMaxLetters)
     if (key === 'TLD') parsed.tlds = unique(values)
     if (key === 'CONTEXT') parsed.context = value
     if (key === 'SUBSTITUTIONS') parsed.substitutions = value.split(/[\s,]+/).filter((rule) => /^[a-z]+:[a-z]+$/.test(rule))
@@ -642,6 +666,7 @@ function parseEffectiveQuery(source) {
   }
   parsed.part1Limits = normalizePartLetterLimits(parsed.part1Limits)
   parsed.part2Limits = normalizePartLetterLimits(parsed.part2Limits)
+  parsed.part3Limits = normalizePartLetterLimits(parsed.part3Limits)
   if (!parsed.substitutions.length) parsed.substitutions = [...defaultSubstitutions]
   if (!parsed.strategies.length) parsed.strategies = [...defaultStrategies]
   return parsed

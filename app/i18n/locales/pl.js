@@ -35,7 +35,7 @@ export default {
     bridge: 'Most samogłoskowy',
     compact: 'Kompaktowe połączenie',
     suffix: 'Sufiks marki',
-    reverse: 'Odwrócona kolejność',
+    reverse: 'Permutuj części nazwy',
   },
   results: {
     heading: 'Kandydaci na domenę',
@@ -43,6 +43,8 @@ export default {
     available: '{count} dostępnych',
     empty: 'Brak dostępnych domen w sprawdzonych wynikach.',
     limited: 'Wyświetlane pierwsze {count}. Odblokuj pro, aby zobaczyć pełną listę.',
+    limitedPro: 'Wyświetlane pierwsze {count} (zgodnie z planem Pro). Odblokuj Unlimited, aby zobaczyć pełną listę i okazać wsparcie.',
+    unlimited: 'Korzystasz z planu Unlimited z nieograniczoną liczbą domen. Miłego korzystania i dziękujemy za wsparcie!',
   },
   filters: { availableOnly: 'Tylko dostępne', checkAll: 'Sprawdź wszystkie' },
   table: { candidate: 'Kandydat', status: 'Status domeny', google: 'Wyniki Google' },
@@ -101,6 +103,8 @@ export default {
     currentTierLabel: 'Aktualny plan',
     domainsCount: '{count} propozycji domen',
     unlimitedDomains: 'Nieograniczona liczba propozycji domen',
+    oneTime: 'jednorazowo', loading: 'Wczytywanie opcji ulepszenia…', verifying: 'Potwierdzanie płatności…', retry: 'Spróbuj ponownie',
+    benefits: { results: 'Pełne wyniki i sugestie AI', sync: 'Synchronizacja ocen i komentarzy' },
     notConfigured: 'Płatności wymagają zmiennej STRIPE_SECRET_KEY.',
     errors: { loadFailed: 'Nie udało się wczytać opcji płatności.', checkoutFailed: 'Płatność nie powiodła się.' },
     notice: {
@@ -109,7 +113,7 @@ export default {
       notCompleted: 'Płatność nie została zakończona.',
       verifyFailed: 'Nie udało się zweryfikować płatności.',
     },
-    methods: { card: 'Karta', secure: 'Bezpieczna płatność obsługiwana przez Stripe' },
+    methods: { card: 'Karta', dynamic: 'Elastyczne metody płatności', secure: 'Bezpieczna płatność obsługiwana przez Stripe' },
     success: {
       eyebrow: 'Płatność zakończona sukcesem',
       title: 'Wszystko gotowe!',

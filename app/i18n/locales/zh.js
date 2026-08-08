@@ -35,7 +35,7 @@ export default {
     bridge: '元音桥接',
     compact: '紧凑组合',
     suffix: '品牌后缀',
-    reverse: '反向顺序',
+    reverse: '排列名称部分',
   },
   results: {
     heading: '候选域名',
@@ -43,6 +43,8 @@ export default {
     available: '{count} 个可用',
     empty: '已检查的结果中没有可用域名。',
     limited: '仅显示前 {count} 个。解锁专业版查看完整列表。',
+    limitedPro: '显示前 {count} 个（根据专业版限制）。解锁无限版以查看完整列表并表达您的支持。',
+    unlimited: '您正在使用无限版，可查看无限数量的域名。祝您使用愉快，感谢您的支持！',
   },
   filters: { availableOnly: '仅显示可用', checkAll: '全部检查' },
   table: { candidate: '候选名称', status: '域名状态', google: 'Google 结果' },
@@ -101,6 +103,8 @@ export default {
     currentTierLabel: '当前套餐',
     domainsCount: '{count} 个域名候选',
     unlimitedDomains: '无限域名候选',
+    oneTime: '一次性付费', loading: '正在加载升级选项…', verifying: '正在确认付款…', retry: '重试',
+    benefits: { results: '完整结果和 AI 建议', sync: '同步评分和评论' },
     notConfigured: '支付功能需要配置 STRIPE_SECRET_KEY。',
     errors: { loadFailed: '无法加载支付选项。', checkoutFailed: '支付失败。' },
     notice: {
@@ -109,7 +113,7 @@ export default {
       notCompleted: '支付尚未完成。',
       verifyFailed: '无法验证支付。',
     },
-    methods: { card: '银行卡', secure: '由 Stripe 提供安全支付' },
+    methods: { card: '银行卡', dynamic: '灵活的付款方式', secure: '由 Stripe 提供安全支付' },
     success: {
       eyebrow: '支付成功',
       title: '一切就绪！',

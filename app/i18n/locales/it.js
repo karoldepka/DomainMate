@@ -35,7 +35,7 @@ export default {
     bridge: 'Ponte vocalico',
     compact: 'Combinazione compatta',
     suffix: 'Suffisso di marca',
-    reverse: 'Ordine invertito',
+    reverse: 'Permutare le parti del nome',
   },
   results: {
     heading: 'Domini candidati',
@@ -43,6 +43,8 @@ export default {
     available: '{count} disponibili',
     empty: 'Nessun dominio disponibile nei risultati verificati.',
     limited: 'Vengono mostrati i primi {count}. Sblocca pro per l’elenco completo.',
+    limitedPro: 'Vengono mostrati i primi {count} (come previsto dal livello Pro). Sblocca Unlimited per vedere l’elenco completo e mostrare il tuo supporto.',
+    unlimited: 'Hai il livello Unlimited con domini illimitati. Buon divertimento e grazie per il tuo supporto!',
   },
   filters: { availableOnly: 'Solo disponibili', checkAll: 'Verifica tutti' },
   table: { candidate: 'Candidato', status: 'Stato del dominio', google: 'Risultati Google' },
@@ -101,6 +103,8 @@ export default {
     currentTierLabel: 'Livello attuale',
     domainsCount: '{count} proposte di dominio',
     unlimitedDomains: 'Proposte di dominio illimitate',
+    oneTime: 'una tantum', loading: 'Caricamento opzioni di upgrade…', verifying: 'Conferma del pagamento…', retry: 'Riprova',
+    benefits: { results: 'Risultati completi e suggerimenti IA', sync: 'Valutazioni e commenti sincronizzati' },
     notConfigured: 'I pagamenti richiedono la variabile STRIPE_SECRET_KEY.',
     errors: { loadFailed: 'Impossibile caricare le opzioni di pagamento.', checkoutFailed: 'Pagamento non riuscito.' },
     notice: {
@@ -109,7 +113,7 @@ export default {
       notCompleted: 'Il pagamento non è stato completato.',
       verifyFailed: 'Impossibile verificare il pagamento.',
     },
-    methods: { card: 'Carta', secure: 'Pagamento sicuro gestito da Stripe' },
+    methods: { card: 'Carta', dynamic: 'Metodi di pagamento flessibili', secure: 'Pagamento sicuro gestito da Stripe' },
     success: {
       eyebrow: 'Pagamento riuscito',
       title: 'Tutto pronto!',

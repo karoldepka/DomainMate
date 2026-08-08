@@ -35,7 +35,7 @@ export default {
     bridge: 'Pont vocalique',
     compact: 'Fusion compacte',
     suffix: 'Suffixe de marque',
-    reverse: 'Ordre inversé',
+    reverse: 'Permuter les parties du nom',
   },
   results: {
     heading: 'Domaines candidats',
@@ -43,6 +43,8 @@ export default {
     available: '{count} disponibles',
     empty: 'Aucun domaine disponible dans les résultats vérifiés.',
     limited: 'Affichage des {count} premiers. Débloquez pro pour la liste complète.',
+    limitedPro: 'Affichage des {count} premiers (selon le niveau Pro). Débloquez Unlimited pour voir la liste complète et montrer votre soutien.',
+    unlimited: 'Vous bénéficiez du niveau Unlimited avec un nombre illimité de domaines. Profitez-en et merci pour votre soutien !',
   },
   filters: { availableOnly: 'Disponibles uniquement', checkAll: 'Tout vérifier' },
   table: { candidate: 'Candidat', status: 'Statut du domaine', google: 'Résultats Google' },
@@ -101,6 +103,8 @@ export default {
     currentTierLabel: 'Niveau actuel',
     domainsCount: '{count} propositions de domaine',
     unlimitedDomains: 'Propositions de domaine illimitées',
+    oneTime: 'paiement unique', loading: 'Chargement des options…', verifying: 'Confirmation de votre paiement…', retry: 'Réessayer',
+    benefits: { results: 'Résultats complets et suggestions IA', sync: 'Notes et commentaires synchronisés' },
     notConfigured: 'Les paiements nécessitent la variable STRIPE_SECRET_KEY.',
     errors: { loadFailed: 'Impossible de charger les options de paiement.', checkoutFailed: 'Le paiement a échoué.' },
     notice: {
@@ -109,7 +113,7 @@ export default {
       notCompleted: 'Le paiement n’a pas été finalisé.',
       verifyFailed: 'Impossible de vérifier le paiement.',
     },
-    methods: { card: 'Carte', secure: 'Paiement sécurisé par Stripe' },
+    methods: { card: 'Carte', dynamic: 'Moyens de paiement flexibles', secure: 'Paiement sécurisé par Stripe' },
     success: {
       eyebrow: 'Paiement réussi',
       title: 'Tout est prêt !',
