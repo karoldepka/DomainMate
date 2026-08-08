@@ -147,13 +147,20 @@ test.describe('naming workspace', () => {
     await expect(page.locator('.result-row').first().locator('.status')).toHaveText('Niesprawdzone')
   })
 
-  test('backend/AI extras are hidden by default while registrar comparison stays available', async ({ page }) => {
+  test('AI extras are hidden while payments and registrar comparison are available by default', async ({ page }) => {
     await page.goto('/')
     const firstRow = page.locator('.result-row').first()
     await expect(firstRow).toBeVisible()
-    await expect(page.locator('.credit-button')).toHaveCount(0)
-    await expect(page.locator('.free-tier-badge')).toHaveText('Unlock pro tier')
+    await expect(page.locator('.credit-button')).toBeVisible()
+    await expect(page.getByLabel('Use thesaurus')).toHaveCount(0)
+    await expect(page.locator('.free-tier-badge')).toHaveText('Unlock Basic')
     await expect(firstRow.getByRole('button', { name: /Compare prices/ })).toBeVisible()
+  })
+
+  test('shows suggestion enrichment only when the AI suggestions flag is enabled', async ({ page }) => {
+    await seedFlags(page, { aiSuggestions: true })
+    await page.goto('/')
+    await expect(page.getByLabel('Use thesaurus')).toBeVisible()
   })
 
   test('clicking the logo five times reveals the feature-flags panel, and toggling one persists', async ({ page }) => {
@@ -164,23 +171,43 @@ test.describe('naming workspace', () => {
     const dialog = page.getByRole('dialog')
     await expect(dialog).toBeVisible()
 
-    await dialog.getByLabel('Credits & payments').check()
+    await dialog.getByLabel('Credits & payments').uncheck()
     await dialog.getByRole('button', { name: 'Close feature flags' }).click()
     await expect(dialog).toBeHidden()
-    await expect(page.locator('.credit-button')).toBeVisible()
+    await expect(page.locator('.credit-button')).toHaveCount(0)
 
     const stored = await page.evaluate(() => JSON.parse(localStorage.getItem('domainmate.featureFlags')))
-    expect(stored.payments).toBe(true)
+    expect(stored.payments).toBe(false)
   })
 
   test('opens the payment dialog showing the not-configured state when payments are enabled', async ({ page }) => {
     await seedFlags(page, { payments: true })
+    await page.route('**/api/payments/packs', (route) => route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({ configured: false, currency: 'USD', tiers: [
+        { id: 'pro', domainLimit: 500, amount: 500 },
+        { id: 'unlimited', domainLimit: null, amount: 1000 },
+      ] }),
+    }))
     await page.goto('/')
+    await expect(page.locator('.result-row').first()).toBeVisible()
     await page.locator('.credit-button').click()
     const dialog = page.getByRole('dialog')
     await expect(dialog).toBeVisible()
     await expect(dialog.getByText('Payments require STRIPE_SECRET_KEY.')).toBeVisible()
-    await expect(dialog.getByText('BLIK')).toBeVisible()
+    await expect(dialog.getByText('Flexible payment methods')).toBeVisible()
+  })
+
+  test('shows the thank-you screen after a verified Stripe return even before flags hydrate', async ({ page }) => {
+    await page.route('**/api/payments/verify*', (route) => route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({ paid: true, tierId: 'pro' }),
+    }))
+    await page.goto('/?payment=success&session_id=cs_test_success_screen')
+    const dialog = page.getByRole('dialog')
+    await expect(dialog.getByRole('heading', { name: 'You’re all set!' })).toBeVisible()
+    await expect(dialog.getByText('Pro is unlocked. Enjoy your extra domain candidates.')).toBeVisible()
+    await expect(page).not.toHaveURL(/payment=|session_id=/)
   })
 
   test('compares registrar prices and exposes providers that need credentials', async ({ page }) => {
@@ -266,6 +293,13 @@ test.describe('naming workspace', () => {
     await expect(page.locator('.result-row').first()).toBeVisible()
     await expect(page.locator('.free-tier-badge')).toHaveText('Unlimited unlocked')
     await expect(page.locator('.free-tier-note')).toHaveCount(0)
+  })
+
+  test('the Pro tier limit points to the Unlimited upgrade', async ({ page }) => {
+    await seedFlags(page, { proTier: true })
+    await page.goto('/')
+    await expect(page.locator('.result-row').first()).toBeVisible()
+    await expect(page.locator('.free-tier-note').first()).toHaveText('Showing the first 500 (as per Pro tier). Unlock Unlimited to see the full list and show your appreciation.')
   })
 
   test('search events are sent to the server when analytics is enabled', async ({ page }) => {

@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { t } from '../i18n/index.js'
 import { track } from '../services/analytics.js'
 import { flags, paidTier } from '../featureFlags.js'
@@ -14,17 +14,35 @@ const error = ref('')
 const paymentNotice = ref('')
 const successOpen = ref(false)
 const successTier = ref('')
+const fetching = ref(false)
+const verifying = ref(false)
+const tiersLoaded = ref(false)
+const eligibleTiers = computed(() => tiers.value.filter((tier) => {
+  if (paidTier.value === 'unlimited') return false
+  if (paidTier.value === 'pro') return tier.id === 'unlimited'
+  return true
+}))
 
 /** Open the modal and fetch current server-owned pricing. */
 async function open() {
   error.value = ''
   isOpen.value = true
+  if (tiersLoaded.value) return
+  await loadTiers()
+}
+
+async function loadTiers() {
+  fetching.value = true
   try {
     const response = await fetch('/api/payments/packs')
     const data = await response.json()
+    if (!response.ok) throw new Error(data.error || t('payment.errors.loadFailed'))
     tiers.value = data.tiers || []
     configured.value = data.configured
-  } catch { error.value = t('payment.errors.loadFailed') }
+    tiersLoaded.value = true
+  } catch (reason) {
+    error.value = reason instanceof Error ? reason.message : t('payment.errors.loadFailed')
+  } finally { fetching.value = false }
 }
 
 /** @param {{id: string}} tier */
@@ -36,7 +54,11 @@ async function checkout(tier) {
     const response = await fetch('/api/payments/checkout', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ tierId: tier.id, clientId }),
+      body: JSON.stringify({
+        tierId: tier.id,
+        clientId,
+        returnPath: `${window.location.pathname}${window.location.search}${window.location.hash}`,
+      }),
     })
     const data = await response.json()
     if (!response.ok) throw new Error(data.error || t('payment.errors.checkoutFailed'))
@@ -62,9 +84,13 @@ async function verifyPaymentReturn() {
   const params = new URLSearchParams(window.location.search)
   if (params.get('payment') === 'cancelled') paymentNotice.value = t('payment.notice.cancelled')
   const sessionId = params.get('session_id')
-  if (params.get('payment') !== 'success' || !sessionId) return
+  if (params.get('payment') !== 'success' || !sessionId) {
+    if (params.get('payment') === 'cancelled') clearPaymentQuery()
+    return
+  }
   const claimed = JSON.parse(localStorage.getItem('domainmate.claimedSessions') || '[]')
   if (claimed.includes(sessionId)) return clearPaymentQuery()
+  verifying.value = true
   try {
     const response = await fetch(`/api/payments/verify?session_id=${encodeURIComponent(sessionId)}`)
     const data = await response.json()
@@ -77,6 +103,7 @@ async function verifyPaymentReturn() {
       successOpen.value = true
     } else paymentNotice.value = t('payment.notice.notCompleted')
   } catch { paymentNotice.value = t('payment.notice.verifyFailed') }
+  finally { verifying.value = false }
   clearPaymentQuery()
 }
 
@@ -94,7 +121,11 @@ defineExpose({ open })
 </script>
 
 <template>
-  <p v-if="paymentNotice" class="payment-toast" aria-live="polite"><UIcon name="i-lucide-check" class="size-4" />{{ paymentNotice }}</p>
+  <div v-if="paymentNotice" class="payment-toast" role="status">
+    <UIcon name="i-lucide-info" class="size-4" />
+    <span>{{ paymentNotice }}</span>
+    <button type="button" :aria-label="t('payment.close')" @click="paymentNotice = ''"><UIcon name="i-lucide-x" class="size-3.5" /></button>
+  </div>
   <UModal v-model:open="isOpen" :ui="{ content: 'payment-dialog-body' }">
     <template #header>
       <div class="dialog-header w-full">
@@ -104,18 +135,27 @@ defineExpose({ open })
     </template>
     <template #body>
       <p class="balance-line"><span>{{ t('payment.currentTierLabel') }}</span><strong>{{ t(`tierName.${paidTier || 'free'}`) }}</strong></p>
-      <div class="pack-grid">
-        <button v-for="tier in tiers" :key="tier.id" type="button" class="pack-option" :disabled="loading || !configured" @click="checkout(tier)">
-          <span class="pack-label">{{ t(`tierName.${tier.id}`) }}</span>
+      <p v-if="fetching" class="payment-loading" role="status"><UIcon name="i-lucide-loader-circle" class="spin size-4.5" />{{ t('payment.loading') }}</p>
+      <div v-else class="pack-grid">
+        <article v-for="tier in eligibleTiers" :key="tier.id" class="pack-option" :class="{ featured: tier.id === 'unlimited' }">
+          <div class="pack-heading"><span class="pack-label">{{ t(`tierName.${tier.id}`) }}</span><UIcon v-if="tier.id === 'unlimited'" name="i-lucide-sparkles" class="size-4" /></div>
           <strong>{{ tier.domainLimit ? t('payment.domainsCount', { count: tier.domainLimit }) : t('payment.unlimitedDomains') }}</strong>
-          <span>${{ (tier.amount / 100).toFixed(2) }}</span>
-          <UIcon v-if="loading === tier.id" name="i-lucide-loader-circle" class="spin size-4.5" />
-        </button>
+          <p class="pack-price"><span>${{ (tier.amount / 100).toFixed(2) }}</span><small>{{ t('payment.oneTime') }}</small></p>
+          <ul class="pack-benefits">
+            <li><UIcon name="i-lucide-check" class="size-4" />{{ t('payment.benefits.results') }}</li>
+            <li><UIcon name="i-lucide-check" class="size-4" />{{ t('payment.benefits.sync') }}</li>
+          </ul>
+          <UButton color="primary" block :variant="tier.id === 'unlimited' ? 'solid' : 'soft'" :loading="loading === tier.id" :disabled="Boolean(loading) || !configured" @click="checkout(tier)">{{ t('topbar.upgrade') }} {{ t(`tierName.${tier.id}`) }}</UButton>
+        </article>
       </div>
       <p v-if="error" class="payment-error" aria-live="polite">{{ error }}</p>
-      <p v-else-if="!configured" class="payment-error">{{ t('payment.notConfigured') }}</p>
-      <div class="payment-methods"><span><UIcon name="i-lucide-credit-card" class="size-4.5" />{{ t('payment.methods.card') }}</span><small>{{ t('payment.methods.secure') }}</small></div>
+      <UButton v-if="error && !tiersLoaded" class="payment-retry" color="neutral" variant="outline" @click="loadTiers">{{ t('payment.retry') }}</UButton>
+      <p v-if="!error && !configured" class="payment-error">{{ t('payment.notConfigured') }}</p>
+      <div class="payment-methods"><span><UIcon name="i-lucide-lock-keyhole" class="size-4.5" />{{ t('payment.methods.dynamic') }}</span><small>{{ t('payment.methods.secure') }}</small></div>
     </template>
+  </UModal>
+  <UModal v-model:open="verifying" :dismissible="false" :ui="{ content: 'payment-success-body' }">
+    <template #body><p class="payment-verifying" role="status"><UIcon name="i-lucide-loader-circle" class="spin size-5" />{{ t('payment.verifying') }}</p></template>
   </UModal>
   <UModal v-model:open="successOpen" :ui="{ content: 'payment-success-body' }">
     <template #header>

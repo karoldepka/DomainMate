@@ -6,7 +6,7 @@ const storageKey = 'domainmate.featureFlags'
 const defaultFlags = {
   searchResults: false,
   aiSuggestions: false,
-  payments: false,
+  payments: true,
   favoritesSync: false,
   crashReporting: false,
   analytics: false,

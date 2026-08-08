@@ -7,7 +7,7 @@ import { recordPurchase } from './purchases.js'
 /** One-time purchases that raise the domain-candidate cap. Amounts are in US cents. domainLimit: null means uncapped. */
 export const proTiers = [
   { id: 'pro', domainLimit: 500, amount: 500, label: 'Pro' },
-  { id: 'unlimited', domainLimit: null, amount: 1000, label: 'Unlimited' },
+  { id: 'unlimited', domainLimit: null, amount: 1000, label: 'Unlimited' }
 ]
 
 /** @returns {Stripe|null} */
@@ -15,29 +15,51 @@ export function getStripe() {
   return process.env.STRIPE_SECRET_KEY ? new Stripe(process.env.STRIPE_SECRET_KEY) : null
 }
 
-/** @param {string} tierId @param {string} origin @param {string} clientId */
-export async function createCheckout(tierId, origin, clientId) {
+/** Keep Stripe redirects on this app and preserve the workspace query that led to checkout. */
+export function normalizeReturnPath(value) {
+  const path = String(value || '/')
+  if (!path.startsWith('/') || path.startsWith('//') || /[\r\n]/.test(path)) return '/'
+  try {
+    const url = new URL(path, 'https://domainmate.local')
+    if (url.origin !== 'https://domainmate.local') return '/'
+    url.searchParams.delete('payment')
+    url.searchParams.delete('session_id')
+    return `${url.pathname}${url.search}${url.hash}`
+  } catch { return '/' }
+}
+
+/** Add Stripe return parameters without discarding an existing workspace query. */
+function paymentReturnUrl(origin, returnPath, state, includeSession = false) {
+  const url = new URL(normalizeReturnPath(returnPath), origin)
+  url.hash = ''
+  url.searchParams.set('payment', state)
+  if (includeSession) url.searchParams.set('session_id', '{CHECKOUT_SESSION_ID}')
+  return url.toString().replace('%7BCHECKOUT_SESSION_ID%7D', '{CHECKOUT_SESSION_ID}')
+}
+
+/** @param {string} tierId @param {string} origin @param {string} clientId @param {string} [returnPath] */
+export async function createCheckout(tierId, origin, clientId, returnPath = '/') {
   const stripe = getStripe()
   if (!stripe) throw new PaymentError('Payments are not configured.', 503)
-  const tier = proTiers.find((item) => item.id === tierId)
+  const tier = proTiers.find(item => item.id === tierId)
   if (!tier) throw new PaymentError('Unknown pro tier.', 400)
   if (!/^[0-9a-f-]{36}$/i.test(clientId)) throw new PaymentError('Invalid client ID.', 400)
 
   const session = await stripe.checkout.sessions.create({
     mode: 'payment',
-    payment_method_types: ['card'],
+    integration_identifier: 'domainmate_web_kqjtzxmw',
     line_items: [{
       quantity: 1,
       price_data: {
         currency: 'usd',
         unit_amount: tier.amount,
-        product_data: { name: `DomainMate ${tier.label}`, description: `One-time unlock: ${tier.domainLimit ? `${tier.domainLimit} domain candidates` : 'unlimited domain candidates'}` },
-      },
+        product_data: { name: `DomainMate ${tier.label}`, description: `One-time unlock: ${tier.domainLimit ? `${tier.domainLimit} domain candidates` : 'unlimited domain candidates'}` }
+      }
     }],
     metadata: { tierId: tier.id, clientId },
     payment_intent_data: { description: `DomainMate ${tier.label} unlock` },
-    success_url: `${origin}/?payment=success&session_id={CHECKOUT_SESSION_ID}`,
-    cancel_url: `${origin}/?payment=cancelled`,
+    success_url: paymentReturnUrl(origin, returnPath, 'success', true),
+    cancel_url: paymentReturnUrl(origin, returnPath, 'cancelled')
   })
   return { url: session.url }
 }
