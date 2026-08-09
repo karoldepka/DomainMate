@@ -7,7 +7,7 @@ import { recordPurchase } from './purchases.js'
 /** One-time purchases that raise the domain-candidate cap. Amounts are in US cents. domainLimit: null means uncapped. */
 export const proTiers = [
   { id: 'pro', domainLimit: 500, amount: 500, label: 'Pro' },
-  { id: 'unlimited', domainLimit: null, amount: 1000, label: 'Unlimited' }
+  { id: 'unlimited', domainLimit: null, amount: 1500, label: 'Unlimited' }
 ]
 
 /** @returns {Stripe|null} */

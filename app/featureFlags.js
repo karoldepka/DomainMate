@@ -23,7 +23,7 @@ export const flagList = [
   { key: 'crashReporting', label: 'Send crash reports', description: 'Sends unexpected error details to the backend to help fix bugs.' },
   { key: 'analytics', label: 'Product analytics', description: 'Sends anonymous usage events (searches run, favorites, price checks) to help improve the product.' },
   { key: 'proTier', label: 'Pro tier (dev)', description: 'Unlocks the Pro tier (500 domain candidates) on this device, as if a $5 payment succeeded.' },
-  { key: 'unlimitedPro', label: 'Unlimited tier (dev)', description: 'Unlocks the Unlimited tier (no domain cap) on this device, as if a $10 payment succeeded.' },
+  { key: 'unlimitedPro', label: 'Unlimited tier (dev)', description: 'Unlocks the Unlimited tier (no domain cap) on this device, as if a $15 payment succeeded.' },
   { key: 'advancedQuery', label: 'Advanced query editor', description: 'Shows the raw editable query text behind the generated form fields.' },
 ]
 
