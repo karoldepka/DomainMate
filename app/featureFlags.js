@@ -13,6 +13,7 @@ const defaultFlags = {
   proTier: false,
   unlimitedPro: false,
   advancedQuery: false,
+  isInternalUser: false,
 }
 
 export const flagList = [
@@ -25,6 +26,7 @@ export const flagList = [
   { key: 'proTier', label: 'Pro tier (dev)', description: 'Unlocks the Pro tier (500 domain candidates) on this device, as if a $5 payment succeeded.' },
   { key: 'unlimitedPro', label: 'Unlimited tier (dev)', description: 'Unlocks the Unlimited tier (no domain cap) on this device, as if a $15 payment succeeded.' },
   { key: 'advancedQuery', label: 'Advanced query editor', description: 'Shows the raw editable query text behind the generated form fields.' },
+  { key: 'isInternalUser', label: 'Internal user (dev)', description: 'Tags PostHog events from this device as internal, so the "filter out internal and test users" project setting can exclude them.' },
 ]
 
 // Always starts at the all-off defaults, matching the prerendered/SSR shell exactly,

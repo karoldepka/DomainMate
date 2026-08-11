@@ -1,4 +1,6 @@
 import posthog from 'posthog-js'
+import { watch } from 'vue'
+import { flags } from '../featureFlags.js'
 
 export default defineNuxtPlugin((nuxtApp) => {
   const runtimeConfig = useRuntimeConfig()
@@ -17,6 +19,14 @@ export default defineNuxtPlugin((nuxtApp) => {
   const posthogClient = posthog.init(projectToken, {
     api_host: host
   })
+
+  // Tags every event (including autocapture) so the PostHog-side "internal and test
+  // users" filter can exclude this device's traffic; toggled from the hidden feature-flags
+  // panel (five clicks on the logo — see featureFlags.js), so it survives hydration timing.
+  watch(() => flags.isInternalUser, (value) => {
+    if (value) posthogClient.register({ is_internal_user: true })
+    else posthogClient.unregister('is_internal_user')
+  }, { immediate: true })
 
   nuxtApp.hook('vue:error', (error) => {
     posthogClient.captureException(error)
