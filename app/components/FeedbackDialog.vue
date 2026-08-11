@@ -3,7 +3,7 @@ import { ref } from 'vue'
 import { t } from '../i18n/index.js'
 import { getClientId } from '../services/favorites.js'
 import { flags } from '../featureFlags.js'
-import { track } from '../services/analytics.js'
+import { track, trackUetEvent } from '../services/analytics.js'
 
 const emit = defineEmits(['unlocked'])
 const isOpen = ref(false)
@@ -17,6 +17,7 @@ function open() {
   done.value = false
   message.value = ''
   isOpen.value = true
+  trackUetEvent('feedback_dialog_open', 'Feedback dialog opened')
 }
 
 async function submit() {

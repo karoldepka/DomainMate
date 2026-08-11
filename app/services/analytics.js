@@ -13,3 +13,9 @@ export function track(name, properties) {
     keepalive: true,
   })).catch(() => {})
 }
+
+/** Fires a Microsoft UET (Bing Ads) custom event; unconditional, matching the base pageLoad tag in nuxt.config.js. */
+export function trackUetEvent(action, label) {
+  window.uetq = window.uetq || []
+  window.uetq.push('event', action, { event_category: 'engagement', event_label: label })
+}
