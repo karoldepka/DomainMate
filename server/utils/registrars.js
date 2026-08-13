@@ -44,6 +44,7 @@ export async function compareRegistrarPrices(domain, onQuote) {
     quoteDynadot(domain),
     quoteNameSilo(domain),
     quoteCloudflare(domain),
+    quoteNameCom(domain),
   ]
   for (const providerPromise of providerPromises) providerPromise.then(emit)
 
@@ -158,6 +159,28 @@ async function quoteCloudflare(domain) {
       quoteKind: 'exact', premium: result.tier === 'premium', url,
     }
   } catch (error) { return errorQuote('Cloudflare', url, error) }
+}
+
+/** Domain-specific Name.com registration quote through its Domains v4 API. */
+async function quoteNameCom(domain) {
+  const url = `https://www.name.com/domain/search/${encodeURIComponent(domain)}`
+  const username = process.env.NAMECOM_USERNAME
+  const token = process.env.NAMECOM_API_TOKEN
+  if (!username || !token) return notConfigured('Name.com', url)
+  try {
+    const data = await requestJson('https://api.name.com/v4/domains:checkAvailability', {
+      method: 'POST',
+      headers: { Authorization: `Basic ${btoa(`${username}:${token}`)}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ domainNames: [domain] }),
+    })
+    const result = data.results?.find((item) => item.domainName === domain)
+    if (!result?.purchasable) return { registrar: 'Name.com', status: 'unavailable', url, message: 'Domain unavailable or unquoted.' }
+    return {
+      registrar: 'Name.com', status: 'ok', currency: 'USD',
+      registration: Number(result.purchasePrice), renewal: Number(result.renewalPrice),
+      quoteKind: 'exact', premium: Boolean(result.premium), url,
+    }
+  } catch (error) { return errorQuote('Name.com', url, error) }
 }
 
 async function getPorkbunPricing() {

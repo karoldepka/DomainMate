@@ -14,9 +14,12 @@ const limitedMessageKey = computed(() => paidTier.value === 'pro' ? 'results.lim
 const paymentDialog = useTemplateRef('paymentDialog')
 const feedbackDialog = useTemplateRef('feedbackDialog')
 const privacyDialog = useTemplateRef('privacyDialog')
+const bulkCheckDialog = useTemplateRef('bulkCheckDialog')
+const favoritesDialog = useTemplateRef('favoritesDialog')
 const colorMode = useColorMode()
 const availableOnly = ref(true)
 const favorites = ref(new Map())
+const favoritesCount = computed(() => [...favorites.value.values()].filter((record) => record.rating > 0).length)
 const expandedComments = ref(new Set())
 const commentTextareas = new Map()
 const showFlagsPanel = ref(false)
@@ -24,7 +27,7 @@ const logoClicks = ref(0)
 const languageItems = computed(() => locales.map((item) => ({ label: item.label, value: item.code })))
 const themeIcon = computed(() => ({ system: 'i-lucide-monitor', light: 'i-lucide-sun', dark: 'i-lucide-moon' })[colorMode.preference] || 'i-lucide-monitor')
 const themeLabel = computed(() => t(`theme.${colorMode.preference || 'system'}`))
-const briefPlaceholder = 'inno inter\ntech tek\n.dev .ai .com'
+const briefPlaceholder = 'nova arc swift\nsync flux core\nhub io labs\n.dev .ai .com'
 const workspaceStorageKey = 'domainmate.workspace'
 const buildInfo = useRuntimeConfig().public.build
 let logoClickResetTimer
@@ -129,6 +132,35 @@ function formatCount(value) {
   return new Intl.NumberFormat('en', { notation: value >= 10000 ? 'compact' : 'standard' }).format(value)
 }
 
+/** Download the currently filtered results as a CSV file, e.g. to share a shortlist with a co-founder. */
+function exportCsv() {
+  const rows = [['Domain', 'Status', 'Rating', 'Comment', 'Google results']]
+  for (const item of displayedResults.value) {
+    rows.push([
+      item.name,
+      item.status === 'idle' ? 'not checked' : (item.availability || item.status),
+      String(ratingOf(item)),
+      commentOf(item),
+      item.search?.totalResults != null ? String(item.search.totalResults) : '',
+    ])
+  }
+  const csv = rows.map((row) => row.map(csvEscape).join(',')).join('\r\n')
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = `domainmate-results-${new Date().toISOString().slice(0, 10)}.csv`
+  link.click()
+  URL.revokeObjectURL(url)
+  track('results_exported', { count: displayedResults.value.length })
+}
+
+/** @param {unknown} value */
+function csvEscape(value) {
+  const text = String(value ?? '')
+  return /[",\r\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text
+}
+
 /** @param {{name: string, copied?: boolean}} item */
 async function copyDomain(item) {
   await navigator.clipboard.writeText(item.name)
@@ -188,12 +220,20 @@ function ratingRank(item) { return -ratingOf(item) }
 /** @param {{name: string}} item @param {number} value */
 async function setRating(item, value) {
   const next = ratingOf(item) === value ? 0 : value
-  const map = new Map(favorites.value)
-  map.set(item.name, { ...favoriteOf(item), rating: next })
-  favorites.value = map
-  await saveRating(item.name, next)
+  await setFavoriteRating(item.name, next)
   if (next > 0) track('domain_favorited', { rating: next })
 }
+
+/** Shared by the results table's star buttons and the favorites watchlist's remove button. @param {string} domain @param {number} rating */
+async function setFavoriteRating(domain, rating) {
+  const map = new Map(favorites.value)
+  map.set(domain, { ...(favorites.value.get(domain) || { comment: '' }), rating })
+  favorites.value = map
+  await saveRating(domain, rating)
+}
+
+/** @param {string} domain */
+function removeFavorite(domain) { setFavoriteRating(domain, 0) }
 
 /** @param {{showPrices?: boolean}} item */
 function togglePrices(item) {
@@ -405,6 +445,7 @@ function normalizeLetterRange(min, max) {
           <UBadge v-if="basicUnlocked" color="neutral" variant="subtle" size="lg" class="free-tier-badge">{{ t('topbar.basicUnlocked') }}</UBadge>
           <UButton v-else class="free-tier-badge" color="neutral" variant="outline" @click="feedbackDialog?.open()">{{ t('topbar.unlockBasic') }}</UButton>
         </template>
+        <UButton v-if="favoritesCount" class="free-tier-badge" color="neutral" variant="outline" icon="i-lucide-star" @click="favoritesDialog?.open()">{{ t('favorites.button', { count: favoritesCount }) }}</UButton>
         <UButton v-if="flags.payments && !flags.unlimitedPro" class="credit-button" :ui="{ base: 'rounded-md' }" @click="paymentDialog?.open()">{{ t('topbar.upgrade') }}</UButton>
       </div>
     </header>
@@ -426,6 +467,7 @@ function normalizeLetterRange(min, max) {
                 <textarea id="brief" v-model="brief" name="brief" rows="3" required minlength="2" maxlength="240" :placeholder="briefPlaceholder" autocomplete="off" @change="store.expandBrief"></textarea>
                 <UButton class="expand-button" variant="soft" color="primary" trailing-icon="i-lucide-arrow-down" @click="store.expandBrief">{{ t('form.expand') }}</UButton>
               </div>
+              <button type="button" class="footer-link bulk-check-trigger" @click="bulkCheckDialog?.open()">{{ t('bulkCheck.trigger') }}</button>
             </div>
             <div v-if="flags.advancedQuery" class="field query-field">
               <label for="effective-query">{{ t('form.queryLabel') }} <span>{{ t('form.queryEditable') }}</span></label>
@@ -511,6 +553,7 @@ function normalizeLetterRange(min, max) {
           <div class="result-filters">
             <label class="available-filter"><input v-model="availableOnly" type="checkbox" />{{ t('filters.availableOnly') }}</label>
             <UButton v-if="results.length && !running && checkedCount < results.length" class="secondary-button" color="neutral" variant="outline" @click="store.checkAll">{{ t('filters.checkAll') }}</UButton>
+            <UButton v-if="results.length" class="secondary-button" color="neutral" variant="outline" icon="i-lucide-download" @click="exportCsv">{{ t('filters.export') }}</UButton>
           </div>
         </div>
 
@@ -566,5 +609,7 @@ function normalizeLetterRange(min, max) {
     <LazyFeatureFlagsPanel v-model="showFlagsPanel" />
     <FeedbackDialog v-if="!basicUnlocked" ref="feedbackDialog" />
     <PrivacyPolicyDialog ref="privacyDialog" />
+    <BulkCheckDialog ref="bulkCheckDialog" />
+    <FavoritesDialog ref="favoritesDialog" :favorites="favorites" @remove="removeFavorite" />
   </div>
 </template>

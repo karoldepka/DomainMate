@@ -35,7 +35,7 @@ test('normalizes registrar-specific price representations', () => {
 test('fetches and caches normalized quotes with provider-specific authentication', async () => {
   const originalFetch = globalThis.fetch
   const originalEnvironment = Object.fromEntries(
-    ['GODADDY_PAT', 'GODADDY_API_KEY', 'GODADDY_API_SECRET', 'NAMESILO_API_KEY', 'DYNADOT_API_KEY', 'CLOUDFLARE_ACCOUNT_ID', 'CLOUDFLARE_REGISTRAR_TOKEN']
+    ['GODADDY_PAT', 'GODADDY_API_KEY', 'GODADDY_API_SECRET', 'NAMESILO_API_KEY', 'DYNADOT_API_KEY', 'CLOUDFLARE_ACCOUNT_ID', 'CLOUDFLARE_REGISTRAR_TOKEN', 'NAMECOM_USERNAME', 'NAMECOM_API_TOKEN']
       .map((key) => [key, process.env[key]]),
   )
   const requests = []
@@ -46,6 +46,8 @@ test('fetches and caches normalized quotes with provider-specific authentication
     DYNADOT_API_KEY: 'dynadot-key',
     CLOUDFLARE_ACCOUNT_ID: 'cloudflare-account',
     CLOUDFLARE_REGISTRAR_TOKEN: 'cloudflare-token',
+    NAMECOM_USERNAME: 'namecom-user',
+    NAMECOM_API_TOKEN: 'namecom-token',
   })
   delete process.env.GODADDY_API_KEY
   delete process.env.GODADDY_API_SECRET
@@ -110,6 +112,11 @@ test('fetches and caches normalized quotes with provider-specific authentication
         },
       })
     }
+    if (url.hostname === 'api.name.com') {
+      assert.equal(options.headers.Authorization, `Basic ${btoa('namecom-user:namecom-token')}`)
+      const [domain] = JSON.parse(options.body).domainNames
+      return jsonResponse({ results: [{ domainName: domain, purchasable: true, purchasePrice: 9.99, renewalPrice: 14.99, premium: false }] })
+    }
     throw new Error(`Unexpected registrar request: ${url}`)
   }
 
@@ -132,6 +139,7 @@ test('fetches and caches normalized quotes with provider-specific authentication
         { registrar: 'Dynadot', status: 'ok', currency: 'USD', registration: 10.5, renewal: 15, transfer: undefined },
         { registrar: 'NameSilo', status: 'ok', currency: 'USD', registration: 9.5, renewal: 13, transfer: 10 },
         { registrar: 'Cloudflare', status: 'ok', currency: 'USD', registration: 10.11, renewal: 10.11, transfer: undefined },
+        { registrar: 'Name.com', status: 'ok', currency: 'USD', registration: 9.99, renewal: 14.99, transfer: undefined },
       ],
     )
     assert.equal(quotes.find((quote) => quote.registrar === 'GoDaddy').premium, true)
@@ -147,7 +155,7 @@ test('fetches and caches normalized quotes with provider-specific authentication
       compareRegistrarPrices('parallel.dev'),
     ])
     assert.strictEqual(parallelA, parallelB)
-    assert.equal(requests.length - beforeParallel, 3)
+    assert.equal(requests.length - beforeParallel, 4)
 
     const rateLimited = await compareRegistrarPrices('rate-limit.dev')
     assert.deepEqual(
@@ -161,10 +169,10 @@ test('fetches and caches normalized quotes with provider-specific authentication
       },
     )
     // One provider erroring must not affect the others' results.
-    assert.equal(rateLimited.length, 5)
+    assert.equal(rateLimited.length, 6)
     assert.deepEqual(
       rateLimited.filter((quote) => quote.registrar !== 'GoDaddy').map((quote) => quote.status),
-      ['ok', 'ok', 'ok', 'ok'],
+      ['ok', 'ok', 'ok', 'ok', 'ok'],
     )
 
     const invalidKey = await compareRegistrarPrices('invalid-key.dev')
@@ -184,7 +192,7 @@ test('fetches and caches normalized quotes with provider-specific authentication
 test('emits each registrar quote via onQuote as soon as it settles, in settlement order, not batched at the end', async () => {
   const originalFetch = globalThis.fetch
   const originalEnvironment = Object.fromEntries(
-    ['GODADDY_PAT', 'NAMESILO_API_KEY', 'DYNADOT_API_KEY', 'CLOUDFLARE_ACCOUNT_ID', 'CLOUDFLARE_REGISTRAR_TOKEN']
+    ['GODADDY_PAT', 'NAMESILO_API_KEY', 'DYNADOT_API_KEY', 'CLOUDFLARE_ACCOUNT_ID', 'CLOUDFLARE_REGISTRAR_TOKEN', 'NAMECOM_USERNAME', 'NAMECOM_API_TOKEN']
       .map((key) => [key, process.env[key]]),
   )
   Object.assign(process.env, {
@@ -193,12 +201,14 @@ test('emits each registrar quote via onQuote as soon as it settles, in settlemen
     DYNADOT_API_KEY: 'dynadot-key',
     CLOUDFLARE_ACCOUNT_ID: 'cloudflare-account',
     CLOUDFLARE_REGISTRAR_TOKEN: 'cloudflare-token',
+    NAMECOM_USERNAME: 'namecom-user',
+    NAMECOM_API_TOKEN: 'namecom-token',
   })
 
   // Only stagger the live per-domain APIs. Porkbun/NameSilo share a long-TTL pricing-table
   // cache that an earlier test may have already warmed, making their own timing unpredictable
   // here — so this test proves progressiveness using the providers with no such cache.
-  const delaysMs = { 'api.godaddy.com': 5, 'api.cloudflare.com': 10, 'api.dynadot.com': 50 }
+  const delaysMs = { 'api.godaddy.com': 5, 'api.cloudflare.com': 10, 'api.name.com': 15, 'api.dynadot.com': 50 }
   globalThis.fetch = async (input, options = {}) => {
     const url = new URL(String(input))
     await new Promise((resolve) => setTimeout(resolve, delaysMs[url.hostname] ?? 0))
@@ -220,6 +230,10 @@ test('emits each registrar quote via onQuote as soon as it settles, in settlemen
       const [domain] = JSON.parse(options.body).domains
       return jsonResponse({ result: { domains: [{ name: domain, registrable: true, tier: 'standard', pricing: { currency: 'USD', registration_cost: '10.00', renewal_cost: '10.00' } }] } })
     }
+    if (url.hostname === 'api.name.com') {
+      const [domain] = JSON.parse(options.body).domainNames
+      return jsonResponse({ results: [{ domainName: domain, purchasable: true, purchasePrice: 9.99, renewalPrice: 14.99, premium: false }] })
+    }
     throw new Error(`Unexpected registrar request: ${url}`)
   }
 
@@ -232,7 +246,7 @@ test('emits each registrar quote via onQuote as soon as it settles, in settlemen
       emittedElapsed.push(Date.now() - start)
     })
 
-    assert.equal(emittedOrder.length, 5)
+    assert.equal(emittedOrder.length, 6)
     assert.deepEqual(new Set(emittedOrder), new Set(quotes.map((quote) => quote.registrar)))
 
     // Dynadot (50ms) is the slowest provider; the others must not wait for it.
@@ -240,6 +254,7 @@ test('emits each registrar quote via onQuote as soon as it settles, in settlemen
     assert.equal(dynadotIndex, emittedOrder.length - 1, `expected Dynadot to emit last, got order ${emittedOrder}`)
     assert.ok(emittedOrder.indexOf('GoDaddy') < dynadotIndex, 'GoDaddy (5ms) should emit before Dynadot (50ms)')
     assert.ok(emittedOrder.indexOf('Cloudflare') < dynadotIndex, 'Cloudflare (10ms) should emit before Dynadot (50ms)')
+    assert.ok(emittedOrder.indexOf('Name.com') < dynadotIndex, 'Name.com (15ms) should emit before Dynadot (50ms)')
     assert.ok(
       emittedElapsed[dynadotIndex] - emittedElapsed[0] >= 30,
       `expected a meaningful time gap between the first and last emission, got elapsed offsets ${emittedElapsed}`,

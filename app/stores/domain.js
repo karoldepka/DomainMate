@@ -15,7 +15,7 @@ import { track } from '../services/analytics.js'
 const clean = (value) => value.toLowerCase().replace(/[^a-z0-9]/g, '')
 /** @param {string[]} items */
 const unique = (items) => [...new Set(items.filter(Boolean))]
-const defaultBrief = 'inno Inter\ntech tek\n.dev .ai .com'
+const defaultBrief = 'nova arc swift\nsync flux core\nhub io labs\n.dev .ai .com'
 const defaultSubstitutions = ['ch:k', 'ch:ck', 'ch:kk', 'cs:x', 'c:k', 'c:ck', 'c:kk', 'ph:f', 'x:ks', 's:z', 'double:n', 'double:t', 'double:k']
 const defaultStrategies = ['direct', 'blend', 'overlap', 'bridge', 'compact', 'suffix']
 const defaultPartMinLetters = 1
@@ -24,7 +24,7 @@ const defaultPartMaxLetters = 24
 export const useDomainStore = defineStore('domains', () => {
   const brief = ref(defaultBrief)
   const effectiveQuery = ref('')
-  const keywords = ref('innovation technology')
+  const keywords = ref('nova sync hub')
   const maxSyllables = ref(3)
   const maxConsonants = ref(2)
   const maxLength = ref('innotek'.length)
@@ -223,9 +223,40 @@ export const useDomainStore = defineStore('domains', () => {
     running.value = false
   }
 
+  /**
+   * Load an explicit list of full domain names (pasted by the user) as results, bypassing
+   * name generation entirely. Useful when someone already has candidates in mind and just
+   * wants availability, pricing, and search data for that exact list.
+   * @param {string} text
+   * @returns {number} how many valid, unique domains were loaded
+   */
+  function checkExactDomains(text) {
+    const seen = new Set()
+    const generated = []
+    for (const raw of text.split(/[\n,]+/)) {
+      const domain = normalizeDomainInput(raw)
+      if (!domain || seen.has(domain)) continue
+      seen.add(domain)
+      const dot = domain.lastIndexOf('.')
+      generated.push({
+        id: domain,
+        name: domain,
+        brand: dot > 0 ? domain.slice(0, dot) : domain,
+        tld: dot > 0 ? domain.slice(dot + 1) : '',
+        status: 'idle',
+        availability: null,
+        search: null,
+      })
+    }
+    resultsLimited.value = generated.length > domainLimit.value
+    results.value = resultsLimited.value ? generated.slice(0, domainLimit.value) : generated
+    track('bulk_check_run', { resultCount: results.value.length })
+    return generated.length
+  }
+
   expandBrief()
-  const defaults = { brief: defaultBrief, substitutions: defaultSubstitutions, strategies: defaultStrategies, maxSyllables: 3, maxConsonants: 2, maxLength: 'innotek'.length, maxNames: 150, part1MinLetters: defaultPartMinLetters, part1MaxLetters: defaultPartMaxLetters, part2MinLetters: defaultPartMinLetters, part2MaxLetters: defaultPartMaxLetters, part3MinLetters: defaultPartMinLetters, part3MaxLetters: defaultPartMaxLetters }
-  return { brief, effectiveQuery, keywords, maxSyllables, maxConsonants, maxLength, maxNames, part1MinLetters, part1MaxLetters, part2MinLetters, part2MaxLetters, part3MinLetters, part3MaxLetters, substitutions, strategies, useThesaurus, enriching, results, resultsLimited, running, checkedCount, availableCount, defaults, getBriefDefaults, expandBrief, enrichWithThesaurus, generate, checkOne, checkAll, stopChecking }
+  const defaults = { brief: defaultBrief, substitutions: defaultSubstitutions, strategies: defaultStrategies, maxSyllables: 3, maxConsonants: 2, maxLength: 'novacore'.length, maxNames: 150, part1MinLetters: defaultPartMinLetters, part1MaxLetters: defaultPartMaxLetters, part2MinLetters: defaultPartMinLetters, part2MaxLetters: defaultPartMaxLetters, part3MinLetters: defaultPartMinLetters, part3MaxLetters: defaultPartMaxLetters }
+  return { brief, effectiveQuery, keywords, maxSyllables, maxConsonants, maxLength, maxNames, part1MinLetters, part1MaxLetters, part2MinLetters, part2MaxLetters, part3MinLetters, part3MaxLetters, substitutions, strategies, useThesaurus, enriching, results, resultsLimited, running, checkedCount, availableCount, defaults, getBriefDefaults, expandBrief, enrichWithThesaurus, generate, checkOne, checkAll, checkExactDomains, stopChecking }
 })
 
 /**
@@ -399,6 +430,12 @@ function retryDelay(headers, fallback) {
 
 /** @param {number} milliseconds */
 function delay(milliseconds) { return new Promise((resolve) => setTimeout(resolve, milliseconds)) }
+
+/** Strip a scheme/www/path from a pasted line and accept it only if it still looks like a real domain. */
+function normalizeDomainInput(value) {
+  const trimmed = String(value).trim().toLowerCase().replace(/^https?:\/\//, '').replace(/^www\./, '').split(/[/\s?#]/)[0]
+  return /^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}$/.test(trimmed) ? trimmed : null
+}
 
 /** Keep provider credentials server-side while normalizing the response for the browser. */
 async function checkSearchOnServer(domain, keywords) {
@@ -639,7 +676,7 @@ function parseEffectiveQuery(source) {
     part2Limits: { minLetters: defaultPartMinLetters, maxLetters: defaultPartMaxLetters },
     part3Limits: { minLetters: defaultPartMinLetters, maxLetters: defaultPartMaxLetters },
     tlds: [], context: '', substitutions: [], strategies: [],
-    maxSyllables: 3, maxConsonants: 2, maxLength: 'innotek'.length, maxNames: 150,
+    maxSyllables: 3, maxConsonants: 2, maxLength: 'novacore'.length, maxNames: 150,
   }
   for (const line of source.split('\n')) {
     const [rawKey, ...rest] = line.split(':')

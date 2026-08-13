@@ -152,6 +152,16 @@ footer a { color: #52665d; }
 .success-icon { width: 44px; height: 44px; color: #167054; }
 .success-message { margin: 0; color: #3c4a43; font-size: 14px; line-height: 1.5; }
 .success-body .u-button { width: 100%; margin-top: 6px; }
+.bulk-check-trigger { display: block; margin-top: 6px; font-size: 12px; }
+.favorites-recheck-all { margin: 2px 0 12px; }
+.favorites-list { display: flex; flex-direction: column; gap: 2px; margin: 0; padding: 0; list-style: none; max-height: 360px; overflow-y: auto; }
+.favorite-row { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-top: 1px solid #edf0ee; }
+.favorite-row:first-child { border-top: 0; }
+.favorite-main { flex: 1 1 auto; min-width: 0; }
+.favorite-main a { color: #17211d; font-weight: 700; text-decoration: none; }
+.favorite-main a:hover { color: #176b52; text-decoration: underline; }
+.favorite-comment { margin: 2px 0 0; overflow: hidden; color: #69756f; font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
+.favorite-actions { display: flex; flex: 0 0 auto; gap: 6px; }
 .flags-dialog-body { color: #17211d; }
 .flags-dialog-body .dialog-eyebrow { display: flex; align-items: center; gap: 5px; }
 .flags-hint { margin: 0 0 14px; color: #69756f; font-size: 12px; line-height: 1.5; }
@@ -219,6 +229,7 @@ footer a { color: #52665d; }
 .dark .success-icon { color: #7ed2ad; }
 .dark .balance-line, .dark .payment-methods, .dark .pack-option { border-color: #3b4941; background: #1a241f; color: #b5c1ba; }.dark .pack-option.featured { border-color: #5a9a80; }.dark .pack-price span { color: #e2ebe6; }.dark .pack-benefits, .dark .payment-loading, .dark .payment-verifying { color: #b5c1ba; }
 .dark .feedback-success, .dark .payment-toast { background: #173c2e; color: #8dd7b7; }.dark .payment-error { background: #40321b; color: #e9c47c; }
+.dark .favorite-row { border-color: #303d36; }.dark .favorite-main a { color: #e2ebe6; }.dark .favorite-comment { color: #9aa79f; }
 .dark .admin-page h2 { color: #c3cec8; }
 .dark .stat-tile, .dark .bar-chart { border-color: #344139; background: #18211c; }
 .dark .stat-value { color: #7ed2ad; }
