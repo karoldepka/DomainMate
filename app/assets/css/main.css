@@ -73,6 +73,9 @@ main { flex: 1; width: min(1180px, calc(100% - 48px)); margin: 0 auto; }
 .strategy-fieldset { grid-column: 1 / -1; padding-top: 4px; }
 .strategy-options { display: flex; flex-wrap: wrap; gap: 7px; }
 .strategy-options label { min-height: 36px; display: inline-flex; align-items: center; padding: 0 12px; border: 1px solid #d2dad6; border-radius: 5px; color: #637069; background: white; cursor: pointer; font-size: 12px; font-weight: 700; }.strategy-options label.active { border-color: #d39a69; color: #8d4812; background: #fff4ea; }.strategy-options input { position: absolute; width: 1px; height: 1px; clip-path: inset(50%); }
+.suffix-fieldset { padding-top: 10px; border-top: 1px dashed #e3e8e5; }
+.suffix-options { display: flex; flex-wrap: wrap; gap: 6px; max-height: 160px; overflow-y: auto; padding: 2px 2px 4px; }
+.suffix-options label { min-height: 32px; display: inline-flex; align-items: center; padding: 0 10px; border: 1px solid #d2dad6; border-radius: 5px; color: #68756f; background: #fff; cursor: pointer; font: 600 12px ui-monospace, SFMono-Regular, Consolas, monospace; }.suffix-options label.active { border-color: #176b52; color: #fff; background: #176b52; }.suffix-options input { position: absolute; width: 1px; height: 1px; clip-path: inset(50%); }
 .initial { width: 40px; height: 40px; display: grid; place-items: center; flex: 0 0 auto; background: #e0f2eb; color: #116548; font-family: Manrope, sans-serif; font-weight: 700; border-radius: 5px; }
 .initial.second { background: #fce9d8; color: #9a4f12; }
 .joiner { display: grid; place-items: center; height: 62px; color: #9ba6a1; font-size: 22px; }
@@ -211,8 +214,9 @@ footer a { color: #52665d; }
 .dark .search-workspace, .dark .results-table { border-color: #344139; background: #18211c; box-shadow: 0 12px 34px rgba(0,0,0,.22); }
 .dark .field label, .dark legend, .dark .generation-options label, .dark .available-filter, .dark .thesaurus-toggle { color: #c3cec8; }
 .dark .field label span, .dark .row-index, .dark .google-cell span, .dark .muted { color: #89968f !important; }
-.dark .input-wrap, .dark .parts-fields textarea, .dark .part-letter-fields input, .dark .generation-options input, .dark .substitution-options label, .dark .strategy-options label, .dark .secondary-button, .dark .copy-button, .dark .icon-button, .dark .free-tier-badge { border-color: #425048; background: #202b25; color: #dbe5df; }
-.dark .substitution-options label.active { border-color: #2f7a5c; color: #f4faf7; background: #2f7a5c; }
+.dark .input-wrap, .dark .parts-fields textarea, .dark .part-letter-fields input, .dark .generation-options input, .dark .substitution-options label, .dark .strategy-options label, .dark .suffix-options label, .dark .secondary-button, .dark .copy-button, .dark .icon-button, .dark .free-tier-badge { border-color: #425048; background: #202b25; color: #dbe5df; }
+.dark .substitution-options label.active, .dark .suffix-options label.active { border-color: #2f7a5c; color: #f4faf7; background: #2f7a5c; }
+.dark .suffix-fieldset { border-top-color: #344139; }
 .dark .strategy-options label.active { border-color: #b9803f; color: #e8c471; background: #2c2013; }
 .dark .featured-input textarea, .dark .query-field textarea, .dark .feedback-textarea { color: #edf4f0; }
 .dark .query-field textarea, .dark .domain-comment { border-color: #425048; background: #141c18; color: #dbe5df; }

@@ -22,6 +22,7 @@ export default {
     substitutionsLegend: 'Substitucions i vocabulari',
     useThesaurus: 'Fes servir el tesaurus',
     strategiesLegend: 'Estratègies de generació',
+    suffixesLegend: 'Sufixos',
     maxSyllables: 'Màx. de síl·labes',
     maxConsonants: 'Màx. de consonants seguides',
     maxLength: 'Màx. de caràcters',

@@ -22,6 +22,7 @@ export default {
     substitutionsLegend: '替换规则与词汇',
     useThesaurus: '使用同义词库',
     strategiesLegend: '生成策略',
+    suffixesLegend: '后缀',
     maxSyllables: '最大音节数',
     maxConsonants: '最大连续辅音数',
     maxLength: '最大字符数',

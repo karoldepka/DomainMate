@@ -18,6 +18,20 @@ const unique = (items) => [...new Set(items.filter(Boolean))]
 const defaultBrief = 'nova arc swift\nsync flux core\nhub io labs\n.dev .ai .com'
 const defaultSubstitutions = ['ch:k', 'ch:ck', 'ch:kk', 'cs:x', 'c:k', 'c:ck', 'c:kk', 'ph:f', 'x:ks', 's:z', 'double:n', 'double:t', 'double:k']
 const defaultStrategies = ['direct', 'blend', 'overlap', 'bridge', 'compact', 'suffix']
+/** Every suffix the "suffix" strategy can append; used to render checkboxes and to validate the SUFFIXES query line. */
+export const allSuffixes = [
+  'ly', 'ify', 'fy', 'ster', 'able', 'ish', 'esque', 'tron', 'verse', 'ology',
+  'nomics', 'scape', 'sphere', 'matic', 'ium', 'eo', 'ora', 'ix', 'ex', 'ax',
+  'on', 'os', 'ent', 'ary', 'ize', 'ade', 'hub', 'labs', 'forge', 'base',
+  'flow', 'wise', 'kit', 'app', 'io', 'hq', 'works', 'craft', 'mind', 'sense',
+  'loop', 'path', 'core', 'edge', 'peak', 'rise', 'boost', 'nova', 'zen', 'prime',
+  'byte', 'bit', 'sync', 'link', 'node', 'cloud', 'vault', 'pod', 'dash', 'deck',
+  'board', 'desk', 'port', 'dock', 'fold', 'mesh', 'web', 'net', 'code', 'logic',
+  'cube', 'orbit', 'axis', 'beam', 'flux', 'spire', 'tide', 'drift', 'glow', 'shift',
+  'blend', 'merge', 'unity', 'plex', 'stack', 'grid', 'spark', 'pulse', 'wave', 'genix',
+  'ory', 'ista', 'eer', 'dom', 'land', 'ville', 'topia', 'zone', 'spot', 'ery',
+]
+const defaultSuffixes = ['labs', 'flow', 'forge', 'base']
 const defaultPartMinLetters = 1
 const defaultPartMaxLetters = 24
 
@@ -38,6 +52,7 @@ export const useDomainStore = defineStore('domains', () => {
   const useThesaurus = ref(true)
   const enriching = ref(false)
   const strategies = ref([...defaultStrategies])
+  const suffixes = ref([...defaultSuffixes])
   const maxNames = ref(150)
   /** @type {import('vue').Ref<DomainCandidate[]>} */
   const results = ref([])
@@ -66,6 +81,7 @@ export const useDomainStore = defineStore('domains', () => {
       `CONTEXT: ${words.join(' ')}`,
       `SUBSTITUTIONS: ${substitutions.value.join(', ')}`,
       `STRATEGIES: ${strategies.value.join(', ')}`,
+      `SUFFIXES: ${suffixes.value.join(', ')}`,
       `MAX_SYLLABLES: ${maxSyllables.value}`,
       `MAX_CONSONANTS: ${maxConsonants.value}`,
       `MAX_LENGTH: ${maxLength.value}`,
@@ -102,6 +118,7 @@ export const useDomainStore = defineStore('domains', () => {
     part3MaxLetters.value = query.part3Limits.maxLetters
     substitutions.value = query.substitutions
     strategies.value = query.strategies
+    suffixes.value = query.suffixes
     maxNames.value = query.maxNames
 
     // Thesaurus additions widen generation without being written back into the
@@ -123,7 +140,7 @@ export const useDomainStore = defineStore('domains', () => {
     ) : []
     const makePairs = (lefts, rights, lLimits, rLimits) =>
       lefts.flatMap((left) => rights.flatMap((right) =>
-        generateCreativeNames(left.name, right.name, query.strategies, query.maxConsonants, left.editCost + right.editCost, lLimits, rLimits)))
+        generateCreativeNames(left.name, right.name, query.strategies, query.suffixes, query.maxConsonants, left.editCost + right.editCost, lLimits, rLimits)))
     const candidates = dedupeCandidates([
       ...makePairs(part1Variants, part2Variants, query.part1Limits, query.part2Limits),
       ...(part3Variants.length ? makePairs(part1Variants, part3Variants, query.part1Limits, query.part3Limits) : []),
@@ -255,8 +272,8 @@ export const useDomainStore = defineStore('domains', () => {
   }
 
   expandBrief()
-  const defaults = { brief: defaultBrief, substitutions: defaultSubstitutions, strategies: defaultStrategies, maxSyllables: 3, maxConsonants: 2, maxLength: 'novacore'.length, maxNames: 150, part1MinLetters: defaultPartMinLetters, part1MaxLetters: defaultPartMaxLetters, part2MinLetters: defaultPartMinLetters, part2MaxLetters: defaultPartMaxLetters, part3MinLetters: defaultPartMinLetters, part3MaxLetters: defaultPartMaxLetters }
-  return { brief, effectiveQuery, keywords, maxSyllables, maxConsonants, maxLength, maxNames, part1MinLetters, part1MaxLetters, part2MinLetters, part2MaxLetters, part3MinLetters, part3MaxLetters, substitutions, strategies, useThesaurus, enriching, results, resultsLimited, running, checkedCount, availableCount, defaults, getBriefDefaults, expandBrief, enrichWithThesaurus, generate, checkOne, checkAll, checkExactDomains, stopChecking }
+  const defaults = { brief: defaultBrief, substitutions: defaultSubstitutions, strategies: defaultStrategies, suffixes: defaultSuffixes, maxSyllables: 3, maxConsonants: 2, maxLength: 'novacore'.length, maxNames: 150, part1MinLetters: defaultPartMinLetters, part1MaxLetters: defaultPartMaxLetters, part2MinLetters: defaultPartMinLetters, part2MaxLetters: defaultPartMaxLetters, part3MinLetters: defaultPartMinLetters, part3MaxLetters: defaultPartMaxLetters }
+  return { brief, effectiveQuery, keywords, maxSyllables, maxConsonants, maxLength, maxNames, part1MinLetters, part1MaxLetters, part2MinLetters, part2MaxLetters, part3MinLetters, part3MaxLetters, substitutions, strategies, suffixes, useThesaurus, enriching, results, resultsLimited, running, checkedCount, availableCount, defaults, getBriefDefaults, expandBrief, enrichWithThesaurus, generate, checkOne, checkAll, checkExactDomains, stopChecking }
 })
 
 /**
@@ -536,12 +553,13 @@ function expandVariantsToLetterLimits(variants, limits) {
  * @param {string} left
  * @param {string} right
  * @param {string[]} enabled
+ * @param {string[]} suffixList
  * @param {number} maxConsonants
  * @param {number} editCost
  * @param {PartLetterLimits} part1Limits
  * @param {PartLetterLimits} part2Limits
  */
-function generateCreativeNames(left, right, enabled, maxConsonants, editCost, part1Limits, part2Limits) {
+function generateCreativeNames(left, right, enabled, suffixList, maxConsonants, editCost, part1Limits, part2Limits) {
   const names = []
   const use = (strategy) => enabled.includes(strategy)
   const leftCuts = prefixCuts(left)
@@ -579,7 +597,7 @@ function generateCreativeNames(left, right, enabled, maxConsonants, editCost, pa
   }
   if (use('suffix')) {
     const stem = collapseBoundary(left.slice(0, 4), right.slice(0, 3))
-    for (const suffix of ['labs', 'flow', 'forge', 'base']) {
+    for (const suffix of suffixList) {
       add(`${stem}${suffix}`, 'suffix', 1, Math.min(4, left.length), Math.min(3, right.length))
     }
   }
@@ -675,7 +693,7 @@ function parseEffectiveQuery(source) {
     part1Limits: { minLetters: defaultPartMinLetters, maxLetters: defaultPartMaxLetters },
     part2Limits: { minLetters: defaultPartMinLetters, maxLetters: defaultPartMaxLetters },
     part3Limits: { minLetters: defaultPartMinLetters, maxLetters: defaultPartMaxLetters },
-    tlds: [], context: '', substitutions: [], strategies: [],
+    tlds: [], context: '', substitutions: [], strategies: [], suffixes: [],
     maxSyllables: 3, maxConsonants: 2, maxLength: 'novacore'.length, maxNames: 150,
   }
   for (const line of source.split('\n')) {
@@ -696,6 +714,7 @@ function parseEffectiveQuery(source) {
     if (key === 'CONTEXT') parsed.context = value
     if (key === 'SUBSTITUTIONS') parsed.substitutions = value.split(/[\s,]+/).filter((rule) => /^[a-z]+:[a-z]+$/.test(rule))
     if (key === 'STRATEGIES') parsed.strategies = value.split(/[\s,]+/).filter((strategy) => /^[a-z]+$/.test(strategy))
+    if (key === 'SUFFIXES') parsed.suffixes = value.split(/[\s,]+/).filter((suffix) => allSuffixes.includes(suffix))
     if (key === 'MAX_SYLLABLES') parsed.maxSyllables = clampOption(value, 1, 8, 3)
     if (key === 'MAX_CONSONANTS') parsed.maxConsonants = clampOption(value, 1, 6, 2)
     if (key === 'MAX_LENGTH') parsed.maxLength = clampOption(value, 4, 24, 'innotek'.length)
@@ -706,6 +725,7 @@ function parseEffectiveQuery(source) {
   parsed.part3Limits = normalizePartLetterLimits(parsed.part3Limits)
   if (!parsed.substitutions.length) parsed.substitutions = [...defaultSubstitutions]
   if (!parsed.strategies.length) parsed.strategies = [...defaultStrategies]
+  if (!parsed.suffixes.length) parsed.suffixes = [...defaultSuffixes]
   return parsed
 }
 

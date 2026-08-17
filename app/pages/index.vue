@@ -1,14 +1,14 @@
 <script setup>
 import { computed, nextTick, onMounted, ref, useTemplateRef, watch } from 'vue'
 import { storeToRefs } from 'pinia'
-import { useDomainStore } from '../stores/domain.js'
+import { allSuffixes, useDomainStore } from '../stores/domain.js'
 import { getClientId, loadAndSyncFavorites, saveComment, saveRating } from '../services/favorites.js'
 import { track } from '../services/analytics.js'
 import { locale, locales, t } from '../i18n/index.js'
 import { basicUnlocked, domainLimit, flags, paidTier } from '../featureFlags.js'
 
 const store = useDomainStore()
-const { brief, effectiveQuery, keywords, part1MinLetters, part1MaxLetters, part2MinLetters, part2MaxLetters, part3MinLetters, part3MaxLetters, maxSyllables, maxConsonants, maxLength, maxNames, substitutions, strategies, useThesaurus, enriching, results, resultsLimited, running, checkedCount, availableCount } = storeToRefs(store)
+const { brief, effectiveQuery, keywords, part1MinLetters, part1MaxLetters, part2MinLetters, part2MaxLetters, part3MinLetters, part3MaxLetters, maxSyllables, maxConsonants, maxLength, maxNames, substitutions, strategies, suffixes, useThesaurus, enriching, results, resultsLimited, running, checkedCount, availableCount } = storeToRefs(store)
 const progressText = computed(() => t('results.progress', { checked: checkedCount.value, total: results.value.length }))
 const limitedMessageKey = computed(() => paidTier.value === 'pro' ? 'results.limitedPro' : 'results.limited')
 const paymentDialog = useTemplateRef('paymentDialog')
@@ -57,6 +57,7 @@ const strategyOptions = [
   ['bridge', 'strategy.bridge'], ['compact', 'strategy.compact'], ['suffix', 'strategy.suffix'],
   ['reverse', 'strategy.reverse'],
 ]
+const suffixOptions = allSuffixes.map((value) => [value, `-${value}`])
 
 onMounted(async () => {
   restoreSavedWorkspace()
@@ -287,6 +288,9 @@ function syncSubstitutions() { setQueryLine('SUBSTITUTIONS', substitutions.value
 /** Copy selected generation strategies into the effective query. */
 function syncStrategies() { setQueryLine('STRATEGIES', strategies.value.join(', ')) }
 
+/** Copy selected "suffix" strategy suffixes into the effective query. */
+function syncSuffixes() { setQueryLine('SUFFIXES', suffixes.value.join(', ')) }
+
 /**
  * Copy a per-part letter limit into the editable effective query.
  * @param {string} key
@@ -350,6 +354,10 @@ function restoreQueryParams() {
     strategies.value = (params.get('strategies') || '').split(',').filter(Boolean)
     syncStrategies()
   }
+  if (params.has('suffixes')) {
+    suffixes.value = (params.get('suffixes') || '').split(',').filter(Boolean)
+    syncSuffixes()
+  }
 }
 
 /** Keep all user-editable generation parameters in the address bar. */
@@ -382,6 +390,7 @@ function syncQueryParams() {
   setOverride(params, 'context', getQueryLine('CONTEXT'), baseline.context)
   setOverride(params, 'subs', normalizeList(getQueryLine('SUBSTITUTIONS')), store.defaults.substitutions.join(','))
   setOverride(params, 'strategies', normalizeList(getQueryLine('STRATEGIES')), store.defaults.strategies.join(','))
+  setOverride(params, 'suffixes', normalizeList(getQueryLine('SUFFIXES')), store.defaults.suffixes.join(','))
   setOverride(params, 'syllables', getQueryLine('MAX_SYLLABLES'), String(store.defaults.maxSyllables))
   setOverride(params, 'consonants', getQueryLine('MAX_CONSONANTS'), String(store.defaults.maxConsonants))
   setOverride(params, 'length', getQueryLine('MAX_LENGTH'), String(store.defaults.maxLength))
@@ -523,6 +532,14 @@ function normalizeLetterRange(min, max) {
               <div class="strategy-options">
                 <label v-for="([value, labelKey]) in strategyOptions" :key="value" :class="{ active: strategies.includes(value) }">
                   <input v-model="strategies" type="checkbox" :value="value" @change="syncStrategies" />{{ t(labelKey) }}
+                </label>
+              </div>
+            </fieldset>
+            <fieldset v-if="strategies.includes('suffix')" class="strategy-fieldset suffix-fieldset">
+              <legend>{{ t('form.suffixesLegend') }}</legend>
+              <div class="suffix-options">
+                <label v-for="([value, label]) in suffixOptions" :key="value" :class="{ active: suffixes.includes(value) }">
+                  <input v-model="suffixes" type="checkbox" :value="value" @change="syncSuffixes" />{{ label }}
                 </label>
               </div>
             </fieldset>

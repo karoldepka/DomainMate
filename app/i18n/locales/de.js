@@ -22,6 +22,7 @@ export default {
     substitutionsLegend: 'Ersetzungen und Vokabular',
     useThesaurus: 'Thesaurus verwenden',
     strategiesLegend: 'Generierungsstrategien',
+    suffixesLegend: 'Suffixe',
     maxSyllables: 'Max. Silben',
     maxConsonants: 'Max. aufeinanderfolgende Konsonanten',
     maxLength: 'Max. Zeichen',
