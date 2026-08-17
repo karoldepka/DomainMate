@@ -58,6 +58,7 @@ const strategyOptions = [
   ['reverse', 'strategy.reverse'],
 ]
 const suffixOptions = allSuffixes.map((value) => [value, `-${value}`])
+const allSuffixesSelected = computed(() => suffixes.value.length === allSuffixes.length)
 
 onMounted(async () => {
   restoreSavedWorkspace()
@@ -290,6 +291,12 @@ function syncStrategies() { setQueryLine('STRATEGIES', strategies.value.join(', 
 
 /** Copy selected "suffix" strategy suffixes into the effective query. */
 function syncSuffixes() { setQueryLine('SUFFIXES', suffixes.value.join(', ')) }
+
+/** Select every suffix, or clear them all, in one click. */
+function toggleAllSuffixes() {
+  suffixes.value = allSuffixesSelected.value ? [] : [...allSuffixes]
+  syncSuffixes()
+}
 
 /**
  * Copy a per-part letter limit into the editable effective query.
@@ -535,8 +542,9 @@ function normalizeLetterRange(min, max) {
                 </label>
               </div>
             </fieldset>
-            <fieldset v-if="strategies.includes('suffix')" class="strategy-fieldset suffix-fieldset">
+            <fieldset class="strategy-fieldset suffix-fieldset">
               <legend>{{ t('form.suffixesLegend') }}</legend>
+              <button type="button" class="suffix-toggle-all" @click="toggleAllSuffixes">{{ allSuffixesSelected ? t('form.suffixesClearAll') : t('form.suffixesSelectAll') }}</button>
               <div class="suffix-options">
                 <label v-for="([value, label]) in suffixOptions" :key="value" :class="{ active: suffixes.includes(value) }">
                   <input v-model="suffixes" type="checkbox" :value="value" @change="syncSuffixes" />{{ label }}

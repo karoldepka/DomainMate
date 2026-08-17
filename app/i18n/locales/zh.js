@@ -23,6 +23,8 @@ export default {
     useThesaurus: '使用同义词库',
     strategiesLegend: '生成策略',
     suffixesLegend: '后缀',
+    suffixesSelectAll: '全选',
+    suffixesClearAll: '全部清除',
     maxSyllables: '最大音节数',
     maxConsonants: '最大连续辅音数',
     maxLength: '最大字符数',

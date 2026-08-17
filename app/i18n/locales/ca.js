@@ -23,6 +23,8 @@ export default {
     useThesaurus: 'Fes servir el tesaurus',
     strategiesLegend: 'Estratègies de generació',
     suffixesLegend: 'Sufixos',
+    suffixesSelectAll: 'Selecciona-ho tot',
+    suffixesClearAll: 'Esborra-ho tot',
     maxSyllables: 'Màx. de síl·labes',
     maxConsonants: 'Màx. de consonants seguides',
     maxLength: 'Màx. de caràcters',

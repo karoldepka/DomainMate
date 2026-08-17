@@ -23,6 +23,8 @@ export default {
     useThesaurus: 'Usa il thesaurus',
     strategiesLegend: 'Strategie di generazione',
     suffixesLegend: 'Suffissi',
+    suffixesSelectAll: 'Seleziona tutto',
+    suffixesClearAll: 'Deseleziona tutto',
     maxSyllables: 'Sillabe massime',
     maxConsonants: 'Consonanti consecutive massime',
     maxLength: 'Caratteri massimi',
