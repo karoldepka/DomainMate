@@ -30,7 +30,7 @@ export const allSuffixes = [
   'cube', 'orbit', 'axis', 'beam', 'flux', 'spire', 'tide', 'drift', 'glow', 'shift',
   'blend', 'merge', 'unity', 'plex', 'stack', 'grid', 'spark', 'pulse', 'wave', 'genix',
   'ory', 'ista', 'eer', 'dom', 'land', 'ville', 'topia', 'zone', 'spot', 'ery',
-  'house',
+  'house', 'genius',
 ]
 const defaultSuffixes = ['labs', 'flow', 'forge', 'base']
 const defaultPartMinLetters = 1
