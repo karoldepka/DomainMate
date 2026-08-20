@@ -81,6 +81,7 @@ main { flex: 1; width: min(1180px, calc(100% - 48px)); margin: 0 auto; }
 .suffix-toggle-all { display: inline-block; margin: 6px 0 8px; padding: 0; border: 0; background: none; color: #176b52; font-size: 12px; font-weight: 700; text-decoration: underline; cursor: pointer; }
 .suffix-options { display: flex; flex-wrap: wrap; gap: 6px; max-height: 160px; overflow-y: auto; padding: 2px 2px 4px; }
 .suffix-options label { min-height: 32px; display: inline-flex; align-items: center; padding: 0 10px; border: 1px solid #d2dad6; border-radius: 5px; color: #68756f; background: #fff; cursor: pointer; font: 600 12px ui-monospace, SFMono-Regular, Consolas, monospace; }.suffix-options label.active { border-color: #176b52; color: #fff; background: #176b52; }.suffix-options input { position: absolute; width: 1px; height: 1px; clip-path: inset(50%); }
+.tld-selector { min-width: 0; }.tld-toolbar { display: flex; align-items: center; gap: 10px; }.tld-search { min-width: 0; flex: 1; min-height: 40px; padding: 0 10px; border: 1px solid #cbd5d0; border-radius: 5px; background: white; color: #17211d; font: 400 14px 'DM Sans', sans-serif; }.tld-search:focus { outline: 0; border-color: #2b896b; box-shadow: 0 0 0 3px #e1f2ec; }.tld-summary, .tld-group > p { margin: 7px 0; color: #75817b; font-size: 12px; line-height: 1.4; }.tld-group { margin-top: 12px; }.tld-group > p { color: #46564e; font-weight: 700; }.tld-selector .suffix-options { max-height: 180px; }
 .initial { width: 40px; height: 40px; display: grid; place-items: center; flex: 0 0 auto; background: #e0f2eb; color: #116548; font-family: Manrope, sans-serif; font-weight: 700; border-radius: 5px; }
 .initial.second { background: #fce9d8; color: #9a4f12; }
 .joiner { display: grid; place-items: center; height: 62px; color: #9ba6a1; font-size: 22px; }
@@ -227,6 +228,7 @@ footer a { color: #52665d; }
 .dark .strategy-options label.active { border-color: #b9803f; color: #e8c471; background: #2c2013; }
 .dark .featured-input textarea, .dark .query-field textarea, .dark .feedback-textarea { color: #edf4f0; }
 .dark .query-field textarea, .dark .domain-comment { border-color: #425048; background: #141c18; color: #dbe5df; }
+.dark .tld-search { border-color: #425048; background: #141c18; color: #dbe5df; }
 .dark .parts-editor, .dark .options-row, .dark .table-head, .dark .result-row, .dark footer, .dark .flags-list li, .dark .free-tier-note-bottom, .dark .unlimited-tier-note-bottom { border-color: #303d36; }
 .dark .status-dot { box-shadow: 0 0 0 3px #163527; }
 .dark .free-tier-note { color: #e8c471; }.dark .free-tier-note:hover { color: #f0d38f; }

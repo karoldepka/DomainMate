@@ -17,6 +17,7 @@ export default {
     swapParts: 'Inverti l\'ordine delle parti del nome',
     swapPartsAria: 'Inverti l\'ordine delle parti del nome',
     tldLabel: 'Estensioni di dominio (TLD)',
+    tldSearch: 'Cerca estensioni', tldAll: 'Tutte le estensioni IANA', tldSecondLevel: 'Domini comuni di secondo livello', tldSelected: 'selezionate', tldLoading: 'Caricamento estensioni…', tldNoMatch: 'Nessuna estensione corrisponde alla ricerca.',
     minLetters: 'Minimo di lettere',
     maxLetters: 'Massimo di lettere',
     substitutionsLegend: 'Sostituzioni e vocabolario',

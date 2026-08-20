@@ -143,6 +143,17 @@ test('a leading dot marks a TLD on any line, not just the extensions line', () =
   assert.ok(store.results.every(({ name }) => name.endsWith('.dev')))
 })
 
+test('preserves dots in common second-level domain suffixes', () => {
+  setActivePinia(createPinia())
+  const store = useDomainStore()
+  store.brief = 'inno\ntech\n.co.uk'
+  store.maxLength = 24
+  store.expandBrief()
+  store.generate()
+  assert.ok(store.results.length > 0)
+  assert.ok(store.results.every(({ name, tld }) => name.endsWith('.co.uk') && tld === 'co.uk'))
+})
+
 test('maxNames caps the base names before multiplying by the TLD count', () => {
   setActivePinia(createPinia())
   const store = useDomainStore()

@@ -13,6 +13,11 @@ import { track } from '../services/analytics.js'
 
 /** @param {string} value */
 const clean = (value) => value.toLowerCase().replace(/[^a-z0-9]/g, '')
+/** Preserve dots in public suffixes such as co.uk while rejecting malformed input. */
+const cleanTld = (value) => {
+  const tld = String(value).trim().toLowerCase().replace(/^\.+/, '')
+  return /^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)*[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/.test(tld) ? tld : ''
+}
 /** @param {string[]} items */
 const unique = (items) => [...new Set(items.filter(Boolean))]
 const defaultBrief = 'nova arc swift\nsync flux core\nhub io labs\n.dev .ai .com'
@@ -290,7 +295,7 @@ export const useDomainStore = defineStore('domains', () => {
  */
 function parseBrief(source) {
   const lines = source.split('\n')
-  const tlds = unique(source.split(/[\s,]+/).map((token) => token.trim()).filter((token) => token.startsWith('.')).map((token) => `.${clean(token)}`))
+  const tlds = unique(source.split(/[\s,]+/).map((token) => token.trim()).filter((token) => token.startsWith('.')).map(cleanTld))
 
   let part1Roots = wordsOfLine(lines[0])
   let part2Roots = wordsOfLine(lines[1])
@@ -716,7 +721,7 @@ function parseEffectiveQuery(source) {
     if (key === 'PART2_MAX_LETTERS') parsed.part2Limits.maxLetters = clampOption(value, defaultPartMinLetters, defaultPartMaxLetters, defaultPartMaxLetters)
     if (key === 'PART3_MIN_LETTERS') parsed.part3Limits.minLetters = clampOption(value, defaultPartMinLetters, defaultPartMaxLetters, defaultPartMinLetters)
     if (key === 'PART3_MAX_LETTERS') parsed.part3Limits.maxLetters = clampOption(value, defaultPartMinLetters, defaultPartMaxLetters, defaultPartMaxLetters)
-    if (key === 'TLD') parsed.tlds = unique(values)
+    if (key === 'TLD') parsed.tlds = unique(value.split(/[\s,]+/).map(cleanTld))
     if (key === 'CONTEXT') parsed.context = value
     if (key === 'SUBSTITUTIONS') parsed.substitutions = value.split(/[\s,]+/).filter((rule) => /^[a-z]+:[a-z]+$/.test(rule))
     if (key === 'STRATEGIES') parsed.strategies = value.split(/[\s,]+/).filter((strategy) => /^[a-z]+$/.test(strategy))

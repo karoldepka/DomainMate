@@ -520,10 +520,7 @@ function normalizeLetterRange(min, max) {
                   <label for="part3-max-letters">{{ t('form.maxLetters') }}<input id="part3-max-letters" v-model.number="part3MaxLetters" name="p3max" type="number" :min="part3MinLetters" max="24" step="1" @change="syncPartLimit('PART3_MAX_LETTERS', part3MaxLetters)" /></label>
                 </div>
               </fieldset>
-              <fieldset class="part-field tld-field">
-                <legend id="tld-legend">{{ t('form.tldLabel') }}</legend>
-                <textarea id="tld-field" v-model="tlds" name="tlds" rows="2" placeholder=".dev .ai .com" aria-labelledby="tld-legend"></textarea>
-              </fieldset>
+              <TldSelector v-model="tlds" class="tld-field" />
             </div>
             <fieldset class="substitution-fieldset">
               <legend>{{ t('form.substitutionsLegend') }}</legend>

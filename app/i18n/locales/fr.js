@@ -17,6 +17,7 @@ export default {
     swapParts: 'Inverser l\'ordre des parties du nom',
     swapPartsAria: 'Inverser l\'ordre des parties du nom',
     tldLabel: 'Extensions de domaine (TLD)',
+    tldSearch: 'Rechercher des extensions', tldAll: 'Toutes les extensions IANA', tldSecondLevel: 'Domaines de second niveau courants', tldSelected: 'sélectionnées', tldLoading: 'Chargement des extensions…', tldNoMatch: 'Aucune extension ne correspond à votre recherche.',
     minLetters: 'Lettres minimum',
     maxLetters: 'Lettres maximum',
     substitutionsLegend: 'Substitutions et vocabulaire',

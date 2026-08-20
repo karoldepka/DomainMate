@@ -17,6 +17,7 @@ export default {
     swapParts: 'Odwrócona kolejność części nazwy',
     swapPartsAria: 'Odwróć kolejność części nazwy',
     tldLabel: 'Rozszerzenia domeny (TLD)',
+    tldSearch: 'Szukaj rozszerzeń', tldAll: 'Wszystkie rozszerzenia IANA', tldSecondLevel: 'Popularne domeny drugiego poziomu', tldSelected: 'wybrano', tldLoading: 'Ładowanie rozszerzeń…', tldNoMatch: 'Brak rozszerzeń pasujących do wyszukiwania.',
     minLetters: 'Minimalna liczba liter',
     maxLetters: 'Maksymalna liczba liter',
     substitutionsLegend: 'Podstawienia i słownictwo',
