@@ -59,6 +59,7 @@ const strategyOptions = [
 ]
 const suffixOptions = allSuffixes.map((value) => [value, `-${value}`])
 const allSuffixesSelected = computed(() => suffixes.value.length === allSuffixes.length)
+const allSubstitutionsSelected = computed(() => substitutionOptions.every(([value]) => substitutions.value.includes(value)))
 
 onMounted(async () => {
   restoreSavedWorkspace()
@@ -285,6 +286,12 @@ function setQueryLine(key, value) {
 
 /** Copy selected substitution chips into the effective query. */
 function syncSubstitutions() { setQueryLine('SUBSTITUTIONS', substitutions.value.join(', ')) }
+
+/** Select every spelling rule, or clear the entire set, in one click. */
+function toggleAllSubstitutions() {
+  substitutions.value = allSubstitutionsSelected.value ? [] : substitutionOptions.map(([value]) => value)
+  syncSubstitutions()
+}
 
 /** Copy selected generation strategies into the effective query. */
 function syncStrategies() { setQueryLine('STRATEGIES', strategies.value.join(', ')) }
@@ -524,6 +531,7 @@ function normalizeLetterRange(min, max) {
             </div>
             <fieldset class="substitution-fieldset">
               <legend>{{ t('form.substitutionsLegend') }}</legend>
+              <button type="button" class="suffix-toggle-all" @click="toggleAllSubstitutions">{{ allSubstitutionsSelected ? t('form.suffixesClearAll') : t('form.suffixesSelectAll') }}</button>
               <div class="substitution-options">
                 <label v-for="([value, label]) in substitutionOptions" :key="value" :class="{ active: substitutions.includes(value) }">
                   <input v-model="substitutions" type="checkbox" :value="value" @change="syncSubstitutions" />{{ label }}
