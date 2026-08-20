@@ -246,7 +246,9 @@ function togglePrices(item) {
 
 function openProPrompt() {
   track('pro_prompt_shown')
-  if (basicUnlocked.value && flags.payments) paymentDialog?.value?.open()
+  // The result-limit prompt remains actionable even when the optional header
+  // upgrade button is hidden by a feature flag.
+  if (basicUnlocked.value) paymentDialog?.value?.open()
   else feedbackDialog?.value?.open()
 }
 

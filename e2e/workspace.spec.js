@@ -302,6 +302,19 @@ test.describe('naming workspace', () => {
     await expect(page.locator('.free-tier-note').first()).toHaveText('Showing the first 500 (as per Pro tier). Unlock Unlimited to see the full list and show your appreciation.')
   })
 
+  test('the Basic-tier result limit opens upgrades even when the header upgrade button is hidden', async ({ page }) => {
+    await seedFlags(page, { searchResults: true, aiSuggestions: true, favoritesSync: true, payments: false })
+    await page.route('**/api/payments/packs', (route) => route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({ configured: false, currency: 'USD', tiers: [] }),
+    }))
+    await page.goto('/')
+    await expect(page.locator('.free-tier-note').first()).toHaveText('Showing the first 200. Unlock Pro to see the full list and show your appreciation.')
+    await expect(page.locator('.credit-button')).toHaveCount(0)
+    await page.locator('.free-tier-note').first().click()
+    await expect(page.getByRole('dialog')).toContainText('Get more domain candidates')
+  })
+
   test('search events are sent to the server when analytics is enabled', async ({ page }) => {
     await seedFlags(page, { analytics: true })
     const [trackRequest] = await Promise.all([
