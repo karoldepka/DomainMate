@@ -72,7 +72,7 @@ defineExpose({ open })
             <span v-else class="status neutral">{{ t('status.notChecked') }}</span>
             <div class="favorite-actions">
               <button class="icon-button" type="button" :title="t('favorites.recheckAria', { name: entry.domain })" :aria-label="t('favorites.recheckAria', { name: entry.domain })" @click="recheckOne(entry.domain)"><UIcon name="i-lucide-search" class="size-4.25" /></button>
-              <a class="icon-button" :href="googleUrl(entry.domain)" target="_blank" rel="noreferrer" :title="t('actions.searchGoogle')"><UIcon name="i-lucide-arrow-up-right" class="size-4.5" /></a>
+              <a class="icon-button" :href="googleUrl(entry.domain)" target="_blank" rel="noreferrer" :title="t('actions.searchGoogle')" :aria-label="t('actions.searchGoogleAria', { name: entry.domain })"><UIcon name="i-lucide-arrow-up-right" class="size-4.5" /></a>
               <button class="icon-button" type="button" :title="t('favorites.removeAria', { name: entry.domain })" :aria-label="t('favorites.removeAria', { name: entry.domain })" @click="emit('remove', entry.domain)"><UIcon name="i-lucide-star-off" class="size-4.25" /></button>
             </div>
           </li>

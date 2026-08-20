@@ -46,6 +46,7 @@ export default {
     progress: '已检查 {checked} / {total}',
     available: '{count} 个可用',
     empty: '已检查的结果中没有可用域名。',
+    noneGenerated: '未生成任何域名。请尝试扩展您的名称部分或放宽生成筛选条件。',
     limited: '仅显示前 {count} 个。解锁专业版查看完整列表。',
     limitedPro: '显示前 {count} 个（根据专业版限制）。解锁无限版以查看完整列表并表达您的支持。',
     unlimited: '您正在使用无限版，可查看无限数量的域名。祝您使用愉快，感谢您的支持！',

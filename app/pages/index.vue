@@ -622,7 +622,8 @@ function normalizeLetterRange(min, max) {
             <LazyPriceComparison v-if="item.showPrices" :domain="item.name" />
           </article>
           </TransitionGroup>
-          <p v-if="availableOnly && displayedResults.length === 0" class="empty-results">{{ t('results.empty') }}</p>
+          <p v-if="results.length === 0" class="empty-results">{{ t('results.noneGenerated') }}</p>
+          <p v-else-if="availableOnly && displayedResults.length === 0" class="empty-results">{{ t('results.empty') }}</p>
           <button v-if="!flags.unlimitedPro && results.length" class="free-tier-note free-tier-note-bottom" type="button" @click="openProPrompt">{{ t(limitedMessageKey, { count: domainLimit }) }}</button>
           <p v-else-if="results.length" class="unlimited-tier-note unlimited-tier-note-bottom">{{ t('results.unlimited') }}</p>
         </div>

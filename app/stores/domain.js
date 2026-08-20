@@ -21,7 +21,7 @@ const defaultStrategies = ['direct', 'blend', 'overlap', 'bridge', 'compact', 's
 /** Every suffix the "suffix" strategy can append; used to render checkboxes and to validate the SUFFIXES query line. */
 export const allSuffixes = [
   'ly', 'ify', 'fy', 'ster', 'able', 'ish', 'esque', 'tron', 'verse', 'ology',
-  'nomics', 'scape', 'sphere', 'matic', 'ium', 'eo', 'ora', 'ix', 'ex', 'ax',
+  'nomics', 'scape', 'sphere', 'matic', 'ium', 'eo', 'ora', 'x', 'ix', 'ex', 'ax',
   'on', 'os', 'ent', 'ary', 'ize', 'ade', 'hub', 'labs', 'forge', 'base',
   'flow', 'wise', 'kit', 'app', 'io', 'hq', 'works', 'craft', 'mind', 'sense',
   'loop', 'path', 'core', 'edge', 'peak', 'rise', 'boost', 'nova', 'zen', 'prime',
@@ -35,6 +35,8 @@ export const allSuffixes = [
 const defaultSuffixes = ['labs', 'flow', 'forge', 'base']
 const defaultPartMinLetters = 1
 const defaultPartMaxLetters = 24
+const defaultMaxLength = 'innotek'.length
+const maxVariantsPerPart = 80
 
 export const useDomainStore = defineStore('domains', () => {
   const brief = ref(defaultBrief)
@@ -42,7 +44,7 @@ export const useDomainStore = defineStore('domains', () => {
   const keywords = ref('nova sync hub')
   const maxSyllables = ref(3)
   const maxConsonants = ref(2)
-  const maxLength = ref('innotek'.length)
+  const maxLength = ref(defaultMaxLength)
   const part1MinLetters = ref(defaultPartMinLetters)
   const part1MaxLetters = ref(defaultPartMaxLetters)
   const part2MinLetters = ref(defaultPartMinLetters)
@@ -62,7 +64,7 @@ export const useDomainStore = defineStore('domains', () => {
   let currentCheckRun = 0
   /** Synonym roots from the last thesaurus enrichment, kept separate from PART1/PART2 so they widen generation without rewriting the user's text. */
   const thesaurusAdditions = ref({ part1: [], part2: [] })
-  const checkedCount = computed(() => results.value.filter((item) => item.status !== 'idle').length)
+  const checkedCount = computed(() => results.value.filter((item) => item.status === 'done' || item.status === 'error').length)
   const availableCount = computed(() => results.value.filter((item) => item.availability === 'available').length)
 
   /** Expand a terse naming brief into an explicit query that remains user-editable. */
@@ -127,18 +129,21 @@ export const useDomainStore = defineStore('domains', () => {
     const part1Roots = unique([...query.part1Roots, ...thesaurusAdditions.value.part1])
     const part2Roots = unique([...query.part2Roots, ...thesaurusAdditions.value.part2])
     const part3Roots = unique([...query.part3Roots, ...(thesaurusAdditions.value.part3 || [])])
-    const part1Variants = expandVariantsToLetterLimits(
+    // Cap variants per part so a pasted word list (or a crafted share URL) can't blow the
+    // cross product below up into millions of candidates and freeze the tab.
+    const capVariants = (variants) => variants.slice(0, maxVariantsPerPart)
+    const part1Variants = capVariants(expandVariantsToLetterLimits(
       dedupeVariants(part1Roots.flatMap((root) => spellingVariantRecords(root, query.substitutions))),
       query.part1Limits,
-    )
-    const part2Variants = expandVariantsToLetterLimits(
+    ))
+    const part2Variants = capVariants(expandVariantsToLetterLimits(
       dedupeVariants(part2Roots.flatMap((root) => spellingVariantRecords(root, query.substitutions))),
       query.part2Limits,
-    )
-    const part3Variants = part3Roots.length ? expandVariantsToLetterLimits(
+    ))
+    const part3Variants = part3Roots.length ? capVariants(expandVariantsToLetterLimits(
       dedupeVariants(part3Roots.flatMap((root) => spellingVariantRecords(root, query.substitutions))),
       query.part3Limits,
-    ) : []
+    )) : []
     const makePairs = (lefts, rights, lLimits, rLimits) =>
       lefts.flatMap((left) => rights.flatMap((right) =>
         generateCreativeNames(left.name, right.name, query.strategies, query.suffixes, query.maxConsonants, left.editCost + right.editCost, lLimits, rLimits)))
@@ -273,7 +278,7 @@ export const useDomainStore = defineStore('domains', () => {
   }
 
   expandBrief()
-  const defaults = { brief: defaultBrief, substitutions: defaultSubstitutions, strategies: defaultStrategies, suffixes: defaultSuffixes, maxSyllables: 3, maxConsonants: 2, maxLength: 'novacore'.length, maxNames: 150, part1MinLetters: defaultPartMinLetters, part1MaxLetters: defaultPartMaxLetters, part2MinLetters: defaultPartMinLetters, part2MaxLetters: defaultPartMaxLetters, part3MinLetters: defaultPartMinLetters, part3MaxLetters: defaultPartMaxLetters }
+  const defaults = { brief: defaultBrief, substitutions: defaultSubstitutions, strategies: defaultStrategies, suffixes: defaultSuffixes, maxSyllables: 3, maxConsonants: 2, maxLength: defaultMaxLength, maxNames: 150, part1MinLetters: defaultPartMinLetters, part1MaxLetters: defaultPartMaxLetters, part2MinLetters: defaultPartMinLetters, part2MaxLetters: defaultPartMaxLetters, part3MinLetters: defaultPartMinLetters, part3MaxLetters: defaultPartMaxLetters }
   return { brief, effectiveQuery, keywords, maxSyllables, maxConsonants, maxLength, maxNames, part1MinLetters, part1MaxLetters, part2MinLetters, part2MaxLetters, part3MinLetters, part3MaxLetters, substitutions, strategies, suffixes, useThesaurus, enriching, results, resultsLimited, running, checkedCount, availableCount, defaults, getBriefDefaults, expandBrief, enrichWithThesaurus, generate, checkOne, checkAll, checkExactDomains, stopChecking }
 })
 
@@ -695,7 +700,7 @@ function parseEffectiveQuery(source) {
     part2Limits: { minLetters: defaultPartMinLetters, maxLetters: defaultPartMaxLetters },
     part3Limits: { minLetters: defaultPartMinLetters, maxLetters: defaultPartMaxLetters },
     tlds: [], context: '', substitutions: [], strategies: [], suffixes: [],
-    maxSyllables: 3, maxConsonants: 2, maxLength: 'novacore'.length, maxNames: 150,
+    maxSyllables: 3, maxConsonants: 2, maxLength: defaultMaxLength, maxNames: 150,
   }
   for (const line of source.split('\n')) {
     const [rawKey, ...rest] = line.split(':')
@@ -718,7 +723,7 @@ function parseEffectiveQuery(source) {
     if (key === 'SUFFIXES') parsed.suffixes = value.split(/[\s,]+/).filter((suffix) => allSuffixes.includes(suffix))
     if (key === 'MAX_SYLLABLES') parsed.maxSyllables = clampOption(value, 1, 8, 3)
     if (key === 'MAX_CONSONANTS') parsed.maxConsonants = clampOption(value, 1, 6, 2)
-    if (key === 'MAX_LENGTH') parsed.maxLength = clampOption(value, 4, 24, 'innotek'.length)
+    if (key === 'MAX_LENGTH') parsed.maxLength = clampOption(value, 4, 24, defaultMaxLength)
     if (key === 'MAX_NAMES') parsed.maxNames = clampOption(value, 1, 400, 150)
   }
   parsed.part1Limits = normalizePartLetterLimits(parsed.part1Limits)

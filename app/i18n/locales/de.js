@@ -46,6 +46,7 @@ export default {
     progress: '{checked} von {total} geprüft',
     available: '{count} verfügbar',
     empty: 'Keine verfügbaren Domains in den geprüften Ergebnissen.',
+    noneGenerated: 'Es wurden keine Domainnamen generiert. Erweitere deine Namensteile oder lockere die Generierungsfilter.',
     limited: 'Die ersten {count} werden angezeigt. Schalte Pro frei, um die vollständige Liste zu sehen.',
     limitedPro: 'Die ersten {count} werden angezeigt (gemäß Pro-Tarif). Schalte Unlimited frei, um die vollständige Liste zu sehen und deine Unterstützung zu zeigen.',
     unlimited: 'Du nutzt den Unlimited-Tarif mit unbegrenzt vielen Domains. Viel Freude damit und danke für deine Unterstützung!',

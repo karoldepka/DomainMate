@@ -33,8 +33,8 @@ defineExpose({ open })
       </div>
     </template>
     <template #body>
-      <p class="flags-hint">{{ t('bulkCheck.hint') }}</p>
-      <textarea v-model="text" class="feedback-textarea" rows="8" maxlength="8000" spellcheck="false" :placeholder="t('bulkCheck.placeholder')"></textarea>
+      <p id="bulk-check-hint" class="flags-hint">{{ t('bulkCheck.hint') }}</p>
+      <textarea v-model="text" class="feedback-textarea" rows="8" maxlength="8000" spellcheck="false" :placeholder="t('bulkCheck.placeholder')" :aria-label="t('bulkCheck.title')" aria-describedby="bulk-check-hint"></textarea>
       <p v-if="error" class="payment-error" aria-live="polite">{{ error }}</p>
       <UButton class="primary-button" block :disabled="!text.trim()" @click="submit">{{ t('bulkCheck.submit') }}</UButton>
     </template>

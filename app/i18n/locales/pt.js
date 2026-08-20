@@ -46,6 +46,7 @@ export default {
     progress: '{checked} de {total} verificados',
     available: '{count} disponíveis',
     empty: 'Não há domínios disponíveis nos resultados verificados.',
+    noneGenerated: 'Nenhum nome de domínio foi gerado. Tente ampliar as partes do nome ou relaxar os filtros de geração.',
     limited: 'Mostrando os primeiros {count}. Desbloqueie o pro para a lista completa.',
     limitedPro: 'Mostrando os primeiros {count} (conforme o nível Pro). Desbloqueie o Unlimited para ver a lista completa e mostrar o seu apoio.',
     unlimited: 'Está no nível Unlimited com domínios ilimitados. Aproveite e obrigado pelo seu apoio!',

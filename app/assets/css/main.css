@@ -23,6 +23,9 @@
 .dark { color-scheme: dark; }
 body { margin: 0; min-width: 320px; min-height: 100vh; }
 button:focus-visible, a:focus-visible, input:focus-visible { outline: 3px solid #88c8b0; outline-offset: 2px; }
+/* The chip checkboxes below are visually hidden via clip-path, which also clips their own
+   :focus-visible outline to nothing - show the ring on the visible label chip instead. */
+.substitution-options label:has(input:focus-visible), .strategy-options label:has(input:focus-visible), .suffix-options label:has(input:focus-visible) { outline: 3px solid #88c8b0; outline-offset: 2px; }
 .app-shell { min-height: 100vh; display: flex; flex-direction: column; }
 .topbar { height: 68px; padding: 0 max(24px, calc((100vw - 1180px) / 2)); display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #dfe4e1; background: rgba(255,255,255,.82); }
 .brand { display: inline-flex; align-items: center; gap: 10px; color: #17211d; font-family: Manrope, sans-serif; font-weight: 700; text-decoration: none; font-size: 19px; }
@@ -102,14 +105,14 @@ fieldset { min-width: 0; margin: 0; padding: 0; border: 0; }
 .section-heading h2 { margin: 0; font-family: Manrope, sans-serif; font-size: 22px; }
 .section-heading p { margin: 5px 0 0; color: #76827c; font-size: 13px; }
 .section-heading strong { color: #167054; }
-.free-tier-note { margin: 5px 0 0; padding: 0; border: 0; background: none; color: #b3711a; font-size: 13px; font-weight: 600; text-decoration: underline; text-underline-offset: 2px; cursor: pointer; }.free-tier-note:hover { color: #8f5a15; }
+.free-tier-note { margin: 5px 0 0; padding: 0; border: 0; background: none; color: #8a5313; font-size: 13px; font-weight: 600; text-decoration: underline; text-underline-offset: 2px; cursor: pointer; }.free-tier-note:hover { color: #6e400f; }
 .free-tier-note-bottom { display: block; width: 100%; margin: 0; padding: 20px 18px; text-align: center; border-top: 1px solid #e3e8e5; }
 .unlimited-tier-note { margin: 5px 0 0; color: #287a55; font-size: 13px; font-weight: 600; }
 .unlimited-tier-note-bottom { width: 100%; margin: 0; padding: 20px 18px; text-align: center; border-top: 1px solid #e3e8e5; }
 .secondary-button { min-height: 40px; background: white; border: 1px solid #cdd5d1; color: #33423b; }
 .result-filters { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; }
 .available-filter { min-height: 40px; display: inline-flex; align-items: center; gap: 8px; color: #53615b; font-size: 13px; font-weight: 600; cursor: pointer; }.available-filter input { width: 17px; height: 17px; accent-color: #176b52; }
-.results-table { overflow: hidden; border: 1px solid #dce2df; border-radius: 8px; background: white; }
+.results-table { overflow: hidden; overflow-x: auto; border: 1px solid #dce2df; border-radius: 8px; background: white; }
 .table-head, .result-row { display: grid; grid-template-columns: minmax(200px, 1fr) minmax(140px, .7fr) minmax(150px, .8fr) 290px; align-items: center; }
 .table-head { min-height: 42px; padding: 0 18px; background: #f8f9f8; border-bottom: 1px solid #e6eae8; color: #77827d; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .8px; }
 .result-row { min-height: 70px; padding: 0 18px; border-bottom: 1px solid #edf0ee; }
@@ -223,7 +226,8 @@ footer a { color: #52665d; }
 .dark .strategy-options label.active { border-color: #b9803f; color: #e8c471; background: #2c2013; }
 .dark .featured-input textarea, .dark .query-field textarea, .dark .feedback-textarea { color: #edf4f0; }
 .dark .query-field textarea, .dark .domain-comment { border-color: #425048; background: #141c18; color: #dbe5df; }
-.dark .parts-editor, .dark .options-row, .dark .table-head, .dark .result-row, .dark footer, .dark .flags-list li, .dark .free-tier-note-bottom { border-color: #303d36; }
+.dark .parts-editor, .dark .options-row, .dark .table-head, .dark .result-row, .dark footer, .dark .flags-list li, .dark .free-tier-note-bottom, .dark .unlimited-tier-note-bottom { border-color: #303d36; }
+.dark .status-dot { box-shadow: 0 0 0 3px #163527; }
 .dark .free-tier-note { color: #e8c471; }.dark .free-tier-note:hover { color: #f0d38f; }
 .dark .unlimited-tier-note { color: #7ed7aa; }
 .dark .table-head { background: #141c18; color: #96a39c; }
@@ -254,4 +258,8 @@ footer a { color: #52665d; }
 }
 @media (pointer: coarse) {
   .part-letter-fields input { min-height: 48px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; }
 }

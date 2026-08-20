@@ -46,6 +46,7 @@ export default {
     progress: '{checked} de {total} comprovats',
     available: '{count} disponibles',
     empty: 'No hi ha dominis disponibles en els resultats comprovats.',
+    noneGenerated: "No s'ha generat cap nom de domini. Prova d'ampliar les parts del nom o de relaxar els filtres de generació.",
     limited: 'Es mostren els primers {count}. Desbloqueja el nivell pro per veure la llista completa.',
     limitedPro: 'Es mostren els primers {count} (segons el nivell Pro). Desbloqueja Unlimited per veure la llista completa i mostrar el teu suport.',
     unlimited: 'Tens el nivell Unlimited amb dominis il·limitats. Gaudeix-ne i gràcies pel teu suport!',

@@ -46,6 +46,7 @@ export default {
     progress: 'Sprawdzono {checked} z {total}',
     available: '{count} dostępnych',
     empty: 'Brak dostępnych domen w sprawdzonych wynikach.',
+    noneGenerated: 'Nie wygenerowano żadnych nazw domen. Spróbuj rozszerzyć części nazwy lub złagodzić filtry generowania.',
     limited: 'Wyświetlane pierwsze {count}. Odblokuj pro, aby zobaczyć pełną listę.',
     limitedPro: 'Wyświetlane pierwsze {count} (zgodnie z planem Pro). Odblokuj Unlimited, aby zobaczyć pełną listę i okazać wsparcie.',
     unlimited: 'Korzystasz z planu Unlimited z nieograniczoną liczbą domen. Miłego korzystania i dziękujemy za wsparcie!',

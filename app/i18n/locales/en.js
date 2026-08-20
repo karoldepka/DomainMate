@@ -46,6 +46,7 @@ export default {
     progress: '{checked} of {total} checked',
     available: '{count} available',
     empty: 'No available domains in the checked results.',
+    noneGenerated: 'No domain names were generated. Try broadening your name parts or relaxing the generation filters.',
     limited: 'Showing the first {count}. Unlock Pro to see the full list and show your appreciation.',
     limitedPro: 'Showing the first {count} (as per Pro tier). Unlock Unlimited to see the full list and show your appreciation.',
     unlimited: 'You are on the Unlimited tier with unlimited domains. Enjoy, and thank you for your support!',
