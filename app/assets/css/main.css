@@ -22,6 +22,7 @@
 :root { color-scheme: light; }
 .dark { color-scheme: dark; }
 body { margin: 0; min-width: 320px; min-height: 100vh; }
+.visually-hidden:where(:not(:focus-within, :active)) { position: absolute !important; clip-path: inset(50%) !important; overflow: hidden !important; width: 1px !important; height: 1px !important; margin: -1px !important; padding: 0 !important; border: 0 !important; white-space: nowrap !important; }
 button:focus-visible, a:focus-visible, input:focus-visible { outline: 3px solid #88c8b0; outline-offset: 2px; }
 /* The chip checkboxes below are visually hidden via clip-path, which also clips their own
    :focus-visible outline to nothing - show the ring on the visible label chip instead. */

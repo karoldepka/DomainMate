@@ -376,7 +376,7 @@ test.describe('naming workspace', () => {
     await expect(page.getByText('No events recorded yet.')).toHaveCount(2)
   })
 
-  test('the admin analytics dashboard remembers the token across a reload and via a ?token= query param', async ({ page }) => {
+  test('the admin analytics dashboard retains the token only in the current tab and removes it from the URL', async ({ page }) => {
     await mockAnalyticsSummary(page, { totals: [], daily: [], uniqueClients: 0, recent: [] })
     await page.goto('/admin/analytics')
     await page.waitForLoadState('networkidle')
@@ -389,10 +389,11 @@ test.describe('naming workspace', () => {
     await expect(page.locator('.stat-tiles')).toBeVisible()
     await expect(page.getByLabel('Admin token')).toHaveCount(0)
 
-    await page.evaluate(() => localStorage.removeItem('domainmate.adminToken'))
+    await page.evaluate(() => sessionStorage.removeItem('domainmate.adminToken'))
     await page.goto('/admin/analytics?token=from-query-string')
     await page.waitForLoadState('networkidle')
     await expect(page.locator('.stat-tiles')).toBeVisible()
     await expect(page.getByLabel('Admin token')).toHaveCount(0)
+    await expect(page).not.toHaveURL(/token=/)
   })
 })

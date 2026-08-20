@@ -61,8 +61,8 @@ defineExpose({ open })
         <p class="feedback-success"><UIcon name="i-lucide-check" class="size-4.25" /> {{ t('feedback.success') }}</p>
       </template>
       <template v-else>
-        <p class="flags-hint">{{ t('feedback.hint') }}</p>
-        <textarea v-model="message" class="feedback-textarea" rows="5" maxlength="4000" :placeholder="t('feedback.placeholder')"></textarea>
+        <p id="feedback-hint" class="flags-hint">{{ t('feedback.hint') }}</p>
+        <textarea v-model="message" class="feedback-textarea" rows="5" maxlength="4000" :placeholder="t('feedback.placeholder')" :aria-label="t('feedback.title')" aria-describedby="feedback-hint"></textarea>
         <p v-if="error" class="payment-error" aria-live="polite">{{ error }}</p>
         <UButton class="primary-button" block :loading="submitting" :disabled="!message.trim()" @click="submit">
           {{ submitting ? t('feedback.submitting') : t('feedback.submit') }}
