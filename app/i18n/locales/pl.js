@@ -7,8 +7,6 @@ export default {
     subtitle: 'Łącz sensowne fragmenty słów, sprawdzaj domeny technologiczne i mierz, jak zatłoczona jest już dana nazwa.',
   },
   form: {
-    briefLabel: 'Części nazwy, jedna na linię',
-    expand: 'Rozwiń',
     queryLabel: 'Zapytanie efektywne',
     queryEditable: 'edytowalne',
     part1Label: 'Część nazwy 1',

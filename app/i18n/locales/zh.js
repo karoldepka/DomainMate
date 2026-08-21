@@ -7,8 +7,6 @@ export default {
     subtitle: '组合有意义的词根，检查科技类域名，并衡量该名称的拥挤程度。',
   },
   form: {
-    briefLabel: '名称部分，每行一个',
-    expand: '展开',
     queryLabel: '有效查询',
     queryEditable: '可编辑',
     part1Label: '名称部分 1',

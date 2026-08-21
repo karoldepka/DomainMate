@@ -8,13 +8,12 @@ import { locale, locales, t } from '../i18n/index.js'
 import { basicUnlocked, domainLimit, flags, paidTier } from '../featureFlags.js'
 
 const store = useDomainStore()
-const { brief, effectiveQuery, keywords, part1MinLetters, part1MaxLetters, part2MinLetters, part2MaxLetters, part3MinLetters, part3MaxLetters, maxSyllables, maxConsonants, maxLength, maxNames, substitutions, strategies, suffixes, useThesaurus, enriching, results, resultsLimited, running, checkedCount, availableCount } = storeToRefs(store)
+const { effectiveQuery, keywords, part1MinLetters, part1MaxLetters, part2MinLetters, part2MaxLetters, part3MinLetters, part3MaxLetters, maxSyllables, maxConsonants, maxLength, maxNames, substitutions, strategies, suffixes, useThesaurus, enriching, results, resultsLimited, running, checkedCount, availableCount } = storeToRefs(store)
 const progressText = computed(() => t('results.progress', { checked: checkedCount.value, total: results.value.length }))
 const limitedMessageKey = computed(() => paidTier.value === 'pro' ? 'results.limitedPro' : 'results.limited')
 const paymentDialog = useTemplateRef('paymentDialog')
 const feedbackDialog = useTemplateRef('feedbackDialog')
 const privacyDialog = useTemplateRef('privacyDialog')
-const bulkCheckDialog = useTemplateRef('bulkCheckDialog')
 const favoritesDialog = useTemplateRef('favoritesDialog')
 const colorMode = useColorMode()
 const availableOnly = ref(true)
@@ -27,7 +26,6 @@ const logoClicks = ref(0)
 const languageItems = computed(() => locales.map((item) => ({ label: item.label, value: item.code })))
 const themeIcon = computed(() => ({ system: 'i-lucide-monitor', light: 'i-lucide-sun', dark: 'i-lucide-moon' })[colorMode.preference] || 'i-lucide-monitor')
 const themeLabel = computed(() => t(`theme.${colorMode.preference || 'system'}`))
-const briefPlaceholder = 'nova arc swift\nsync flux core\nhub io labs\n.dev .ai .com'
 const workspaceStorageKey = 'domainmate.workspace'
 const buildInfo = useRuntimeConfig().public.build
 let logoClickResetTimer
@@ -107,7 +105,7 @@ function restoreSavedWorkspace() {
   if (saved) window.history.replaceState({}, '', `${window.location.pathname}?${saved}`)
 }
 
-watch([brief, effectiveQuery, part1MinLetters, part1MaxLetters, part2MinLetters, part2MaxLetters, part3MinLetters, part3MaxLetters, maxSyllables, maxConsonants, maxLength, maxNames, availableOnly, useThesaurus], syncQueryParams)
+watch([effectiveQuery, part1MinLetters, part1MaxLetters, part2MinLetters, part2MaxLetters, part3MinLetters, part3MaxLetters, maxSyllables, maxConsonants, maxLength, maxNames, availableOnly, useThesaurus], syncQueryParams)
 
 /** Enrich parts, generate candidates, and begin availability checks. */
 async function submit() { await store.enrichWithThesaurus(); store.generate(); store.checkAll() }
@@ -329,7 +327,6 @@ function swapParts() {
 function restoreQueryParams() {
   const params = new URLSearchParams(window.location.search)
   const legacyGeneratedUrl = params.has('query')
-  if (params.has('brief')) brief.value = params.get('brief') || brief.value
   if (params.has('syllables')) maxSyllables.value = Number(params.get('syllables')) || 3
   if (params.has('consonants')) maxConsonants.value = Number(params.get('consonants')) || 2
   if (params.has('length')) maxLength.value = Number(params.get('length')) || 'innotek'.length
@@ -392,7 +389,6 @@ function syncQueryParams() {
     normalizeLetterLimit(getQueryLine('PART3_MIN_LETTERS'), store.defaults.part3MinLetters),
     normalizeLetterLimit(getQueryLine('PART3_MAX_LETTERS'), store.defaults.part3MaxLetters),
   )
-  setOverride(params, 'brief', brief.value, store.defaults.brief)
   setOverride(params, 'part1', part1.value, baseline.part1)
   setOverride(params, 'part2', part2.value, baseline.part2)
   setOverride(params, 'part3', part3.value, baseline.part3)
@@ -484,20 +480,9 @@ function normalizeLetterRange(min, max) {
 
       <div role="search" class="search-workspace">
         <form action="/" method="get" @submit.prevent="submit">
-          <div class="brief-grid">
-            <div class="field brief-field">
-              <label for="brief" class="visually-hidden">{{ t('form.briefLabel') }}</label>
-              <div class="input-wrap featured-input">
-                <UIcon name="i-lucide-sparkles" class="size-5" />
-                <textarea id="brief" v-model="brief" name="brief" rows="3" required minlength="2" maxlength="240" :placeholder="briefPlaceholder" autocomplete="off" @change="store.expandBrief"></textarea>
-                <UButton class="expand-button" variant="soft" color="primary" trailing-icon="i-lucide-arrow-down" @click="store.expandBrief">{{ t('form.expand') }}</UButton>
-              </div>
-              <button type="button" class="footer-link bulk-check-trigger" @click="bulkCheckDialog?.open()">{{ t('bulkCheck.trigger') }}</button>
-            </div>
-            <div v-if="flags.advancedQuery" class="field query-field">
-              <label for="effective-query">{{ t('form.queryLabel') }} <span>{{ t('form.queryEditable') }}</span></label>
-              <textarea id="effective-query" v-model="effectiveQuery" name="query" rows="9" spellcheck="false"></textarea>
-            </div>
+          <div v-if="flags.advancedQuery" class="field query-field">
+            <label for="effective-query">{{ t('form.queryLabel') }} <span>{{ t('form.queryEditable') }}</span></label>
+            <textarea id="effective-query" v-model="effectiveQuery" name="query" rows="9" spellcheck="false"></textarea>
           </div>
 
           <div class="parts-editor">
@@ -642,7 +627,6 @@ function normalizeLetterRange(min, max) {
     <LazyFeatureFlagsPanel v-model="showFlagsPanel" />
     <FeedbackDialog v-if="!basicUnlocked" ref="feedbackDialog" />
     <PrivacyPolicyDialog ref="privacyDialog" />
-    <BulkCheckDialog ref="bulkCheckDialog" />
     <FavoritesDialog ref="favoritesDialog" :favorites="favorites" @remove="removeFavorite" />
   </div>
 </template>

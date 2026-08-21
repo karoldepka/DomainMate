@@ -7,8 +7,6 @@ export default {
     subtitle: 'Combine fragmentos de palavras com significado, verifique domínios de tecnologia e meça o quão concorrido já está o nome.',
   },
   form: {
-    briefLabel: 'Partes do nome, uma por linha',
-    expand: 'Expandir',
     queryLabel: 'Consulta efetiva',
     queryEditable: 'editável',
     part1Label: 'Parte do nome 1',

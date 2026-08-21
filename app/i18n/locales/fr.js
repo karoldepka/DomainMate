@@ -7,8 +7,6 @@ export default {
     subtitle: 'Combinez des fragments de mots pertinents, vérifiez des domaines technologiques et mesurez à quel point le nom est déjà utilisé.',
   },
   form: {
-    briefLabel: 'Parties du nom, une par ligne',
-    expand: 'Développer',
     queryLabel: 'Requête effective',
     queryEditable: 'modifiable',
     part1Label: 'Partie du nom 1',

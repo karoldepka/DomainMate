@@ -7,8 +7,6 @@ export default {
     subtitle: 'Combina fragments de paraules amb sentit, comprova dominis tecnològics i mesura com d’ocupat està ja el nom.',
   },
   form: {
-    briefLabel: 'Parts del nom, una per línia',
-    expand: 'Amplia',
     queryLabel: 'Consulta efectiva',
     queryEditable: 'editable',
     part1Label: 'Part del nom 1',

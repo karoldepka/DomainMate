@@ -7,8 +7,6 @@ export default {
     subtitle: 'Combine your ideas, generate brandable names, and check availability and prices from multiple registrars in one workspace.',
   },
   form: {
-    briefLabel: 'Name parts, one per line',
-    expand: 'Expand',
     queryLabel: 'Effective query',
     queryEditable: 'editable',
     part1Label: 'Name part 1',

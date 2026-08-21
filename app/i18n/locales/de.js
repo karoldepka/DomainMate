@@ -7,8 +7,6 @@ export default {
     subtitle: 'Kombiniere sinnvolle Wortteile, prüfe technikorientierte Domains und miss, wie überlaufen der Name bereits ist.',
   },
   form: {
-    briefLabel: 'Namensteile, einer pro Zeile',
-    expand: 'Erweitern',
     queryLabel: 'Effektive Abfrage',
     queryEditable: 'bearbeitbar',
     part1Label: 'Namensteil 1',

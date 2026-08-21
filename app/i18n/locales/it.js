@@ -7,8 +7,6 @@ export default {
     subtitle: 'Combina frammenti di parole significativi, controlla domini tecnologici e misura quanto è già affollato il nome.',
   },
   form: {
-    briefLabel: 'Parti del nome, una per riga',
-    expand: 'Espandi',
     queryLabel: 'Query effettiva',
     queryEditable: 'modificabile',
     part1Label: 'Parte del nome 1',

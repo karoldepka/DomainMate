@@ -7,8 +7,6 @@ export default {
     subtitle: 'Combina fragmentos de palabras con sentido, comprueba dominios tecnológicos y mide cuán saturado está ya el nombre.',
   },
   form: {
-    briefLabel: 'Partes del nombre, una por línea',
-    expand: 'Expandir',
     queryLabel: 'Consulta efectiva',
     queryEditable: 'editable',
     part1Label: 'Parte del nombre 1',
