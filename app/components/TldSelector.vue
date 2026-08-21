@@ -14,7 +14,7 @@ const selected = ref(parseTlds(props.modelValue))
 const normalizedSearch = computed(() => search.value.trim().toLowerCase().replace(/^\.+/, ''))
 const allOptions = computed(() => [...new Set([...catalog.value, ...secondLevelDomains])].sort((left, right) => left.localeCompare(right)))
 const matchingOptions = computed(() => {
-  const options = normalizedSearch.value ? allOptions.value.filter(tld => tld.includes(normalizedSearch.value)) : allOptions.value.slice(0, 80)
+  const options = normalizedSearch.value ? allOptions.value.filter(tld => tld.includes(normalizedSearch.value)) : allOptions.value
   return options.filter(tld => !secondLevelDomains.includes(tld))
 })
 const matchingSecondLevelDomains = computed(() => secondLevelDomains.filter(tld => !normalizedSearch.value || tld.includes(normalizedSearch.value)))
@@ -61,15 +61,16 @@ onMounted(loadCatalog)
 </script>
 
 <template>
-  <fieldset class="tld-selector">
-    <legend>{{ t('form.tldLabel') }}</legend>
+  <div class="tld-selector">
+    <label class="visually-hidden" for="selected-tlds">{{ t('form.tldSelectedList') }}</label>
+    <textarea id="selected-tlds" v-model.lazy="selectedText" class="tld-selected-list" rows="3" spellcheck="false" :placeholder="t('form.tldSelectedList')"></textarea>
+    <fieldset>
+      <legend>{{ t('form.tldLabel') }}</legend>
     <div class="tld-toolbar">
       <input v-model="search" type="search" class="tld-search" :placeholder="t('form.tldSearch')" :aria-label="t('form.tldSearch')" />
       <button type="button" class="suffix-toggle-all" :disabled="loading || (!matchingOptions.length && !matchingSecondLevelDomains.length)" @click="toggleMatches">{{ allMatchesSelected ? t('form.suffixesClearAll') : t('form.tldAll') }}</button>
     </div>
     <p class="tld-summary" aria-live="polite">{{ selected.length }} {{ t('form.tldSelected') }}<template v-if="loading"> · {{ t('form.tldLoading') }}</template></p>
-    <label class="visually-hidden" for="selected-tlds">{{ t('form.tldSelectedList') }}</label>
-    <textarea id="selected-tlds" v-model.lazy="selectedText" class="tld-selected-list" rows="3" spellcheck="false" :placeholder="t('form.tldSelectedList')"></textarea>
     <div v-if="matchingSecondLevelDomains.length" class="tld-group">
       <p>{{ t('form.tldSecondLevel') }}</p>
       <div class="suffix-options">
@@ -83,5 +84,6 @@ onMounted(loadCatalog)
       </div>
       <p v-if="!matchingOptions.length && !matchingSecondLevelDomains.length" class="tld-summary">{{ t('form.tldNoMatch') }}</p>
     </div>
-  </fieldset>
+    </fieldset>
+  </div>
 </template>
