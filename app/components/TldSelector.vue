@@ -18,6 +18,10 @@ const matchingOptions = computed(() => {
   return options.filter(tld => !secondLevelDomains.includes(tld))
 })
 const matchingSecondLevelDomains = computed(() => secondLevelDomains.filter(tld => !normalizedSearch.value || tld.includes(normalizedSearch.value)))
+const selectedText = computed({
+  get: () => selected.value.map(tld => `.${tld}`).join(' '),
+  set: value => { selected.value = parseTlds(value) },
+})
 const allMatchesSelected = computed(() => {
   const matches = [...matchingOptions.value, ...matchingSecondLevelDomains.value]
   return matches.length > 0 && matches.every(tld => selected.value.includes(tld))
@@ -64,6 +68,8 @@ onMounted(loadCatalog)
       <button type="button" class="suffix-toggle-all" :disabled="loading || (!matchingOptions.length && !matchingSecondLevelDomains.length)" @click="toggleMatches">{{ allMatchesSelected ? t('form.suffixesClearAll') : t('form.tldAll') }}</button>
     </div>
     <p class="tld-summary" aria-live="polite">{{ selected.length }} {{ t('form.tldSelected') }}<template v-if="loading"> · {{ t('form.tldLoading') }}</template></p>
+    <label class="visually-hidden" for="selected-tlds">{{ t('form.tldSelectedList') }}</label>
+    <textarea id="selected-tlds" v-model.lazy="selectedText" class="tld-selected-list" rows="3" spellcheck="false" :placeholder="t('form.tldSelectedList')"></textarea>
     <div v-if="matchingSecondLevelDomains.length" class="tld-group">
       <p>{{ t('form.tldSecondLevel') }}</p>
       <div class="suffix-options">

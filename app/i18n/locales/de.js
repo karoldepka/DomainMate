@@ -15,7 +15,7 @@ export default {
     swapParts: 'Reihenfolge der Namensteile umkehren',
     swapPartsAria: 'Reihenfolge der Namensteile umkehren',
     tldLabel: 'Domain-Endungen (TLDs)',
-    tldSearch: 'Endungen suchen', tldAll: 'Alle IANA-Endungen', tldSecondLevel: 'Gängige Domains zweiter Ebene', tldSelected: 'ausgewählt', tldLoading: 'Endungen werden geladen…', tldNoMatch: 'Keine Endungen passen zur Suche.',
+    tldSearch: 'Endungen suchen', tldAll: 'Alle IANA-Endungen', tldSecondLevel: 'Gängige Domains zweiter Ebene', tldSelected: 'ausgewählt', tldSelectedList: 'Ausgewählte Endungen', tldLoading: 'Endungen werden geladen…', tldNoMatch: 'Keine Endungen passen zur Suche.',
     minLetters: 'Minimale Buchstabenanzahl',
     maxLetters: 'Maximale Buchstabenanzahl',
     substitutionsLegend: 'Ersetzungen und Vokabular',

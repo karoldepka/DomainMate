@@ -15,7 +15,7 @@ export default {
     swapParts: '颠倒名称部分的顺序',
     swapPartsAria: '颠倒名称部分的顺序',
     tldLabel: '域名后缀 (TLD)',
-    tldSearch: '搜索后缀', tldAll: '所有 IANA 后缀', tldSecondLevel: '常见二级域名', tldSelected: '已选择', tldLoading: '正在加载后缀…', tldNoMatch: '没有匹配的后缀。',
+    tldSearch: '搜索后缀', tldAll: '所有 IANA 后缀', tldSecondLevel: '常见二级域名', tldSelected: '已选择', tldSelectedList: '已选后缀', tldLoading: '正在加载后缀…', tldNoMatch: '没有匹配的后缀。',
     minLetters: '最少字母数',
     maxLetters: '最多字母数',
     substitutionsLegend: '替换规则与词汇',

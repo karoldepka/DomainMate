@@ -552,7 +552,7 @@ function normalizeLetterRange(min, max) {
               <label for="max-length">{{ t('form.maxLength') }} <input id="max-length" v-model.number="maxLength" type="number" min="4" max="24" @change="setQueryLine('MAX_LENGTH', String(maxLength))" /></label>
               <label for="max-names">{{ t('form.baseNames') }} <input id="max-names" v-model.number="maxNames" type="number" min="1" max="400" @change="setQueryLine('MAX_NAMES', String(maxNames))" /></label>
             </div>
-            <UButton class="primary-button" :class="{ 'is-stopping': running }" type="submit" color="primary" size="xl" :icon="running ? 'i-lucide-square' : 'i-lucide-sparkles'" @click="handlePrimaryButtonClick">
+            <UButton class="primary-button" :class="{ 'is-stopping': running }" type="submit" color="primary" variant="solid" size="xl" :icon="running ? 'i-lucide-square' : 'i-lucide-sparkles'" @click="handlePrimaryButtonClick">
               {{ running ? t('form.checking') : t('form.generate') }}
             </UButton>
           </div>
