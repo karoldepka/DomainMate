@@ -311,7 +311,7 @@ function parseBrief(source) {
 
 /** @param {string|undefined} line */
 function wordsOfLine(line) {
-  return unique((line || '').split(/[\s,]+/).map((token) => token.trim()).filter((token) => token && !token.startsWith('.')).map(clean))
+  return unique((line || '').split(/[\s,;]+/).map((token) => token.trim()).filter((token) => token && !token.startsWith('.')).map(clean))
 }
 
 /** @param {string} word @param {number} maxSyllables @returns {Promise<string[]>} */
@@ -711,7 +711,7 @@ function parseEffectiveQuery(source) {
     const [rawKey, ...rest] = line.split(':')
     const key = rawKey.trim().toUpperCase()
     const value = rest.join(':').trim()
-    const values = value.split(/[\s,]+/).map(clean).filter(Boolean)
+    const values = value.split(/[\s,;]+/).map(clean).filter(Boolean)
     if (key === 'PART1') parsed.part1Roots = unique(values)
     if (key === 'PART2') parsed.part2Roots = unique(values)
     if (key === 'PART3') parsed.part3Roots = unique(values)

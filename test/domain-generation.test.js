@@ -70,6 +70,20 @@ test('honors generation limits and produces unique valid domains', () => {
   assert.ok(store.results.every(({ brand }) => Math.max(0, ...(brand.toLowerCase().match(/[^aeiouy]+/g) || []).map((part) => part.length)) <= 2))
 })
 
+test('name parts accept spaces, commas, and semicolons as delimiters', () => {
+  const store = generateWithPartLimits({
+    part1: 'alpha, delta; gamma',
+    part2: 'home',
+    strategy: 'direct',
+    part1Range: [5, 5],
+    part2Range: [4, 4],
+  })
+  const names = new Set(store.results.map(({ name }) => name))
+  assert.ok(names.has('alphahome.dev'))
+  assert.ok(names.has('deltahome.dev'))
+  assert.ok(names.has('gammahome.dev'))
+})
+
 test('generation order is deterministic', () => {
   const first = createStore().results.map(({ name }) => name)
   const second = createStore().results.map(({ name }) => name)

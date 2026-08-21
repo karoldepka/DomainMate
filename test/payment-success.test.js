@@ -21,7 +21,7 @@ test('Checkout uses dynamic payment methods and preserves the current workspace'
 })
 
 test('a verified paid Stripe return opens the localized thank-you screen', () => {
-  assert.match(indexPage, /<PaymentDialog ref="paymentDialog" \/>/)
+  assert.match(indexPage, /<PaymentDialog\b[^>]*ref="paymentDialog"[^>]*\/>/)
   assert.doesNotMatch(indexPage, /<PaymentDialog v-if=/)
   assert.match(paymentDialog, /fetch\(`\/api\/payments\/verify\?session_id=/)
   assert.match(paymentDialog, /response\.ok\s*&&\s*data\.paid\s*&&\s*data\.tierId/)

@@ -12,12 +12,13 @@ const loading = ref(false)
 const secondLevelDomains = ['ac.uk', 'co.uk', 'com.au', 'com.br', 'com.cn', 'com.hk', 'com.mx', 'co.in', 'co.jp', 'co.nz', 'co.za', 'com.sg', 'com.tr', 'gov.uk', 'net.au', 'org.au', 'org.uk']
 const selected = ref(parseTlds(props.modelValue))
 const normalizedSearch = computed(() => search.value.trim().toLowerCase().replace(/^\.+/, ''))
+const anchoredSearch = computed(() => search.value.trim().startsWith('.'))
 const allOptions = computed(() => [...new Set([...catalog.value, ...secondLevelDomains])].sort((left, right) => left.localeCompare(right)))
 const matchingOptions = computed(() => {
-  const options = normalizedSearch.value ? allOptions.value.filter(tld => tld.includes(normalizedSearch.value)) : allOptions.value
+  const options = normalizedSearch.value ? allOptions.value.filter(matchesSearch) : allOptions.value
   return options.filter(tld => !secondLevelDomains.includes(tld))
 })
-const matchingSecondLevelDomains = computed(() => secondLevelDomains.filter(tld => !normalizedSearch.value || tld.includes(normalizedSearch.value)))
+const matchingSecondLevelDomains = computed(() => secondLevelDomains.filter(tld => !normalizedSearch.value || matchesSearch(tld)))
 const selectedText = computed({
   get: () => selected.value.map(tld => `.${tld}`).join(' '),
   set: value => { selected.value = parseTlds(value) },
@@ -29,6 +30,11 @@ const allMatchesSelected = computed(() => {
 
 watch(() => props.modelValue, value => { selected.value = parseTlds(value) })
 watch(selected, value => emit('update:modelValue', value.map(tld => `.${tld}`).join(' ')), { deep: true })
+
+/** A leading dot means "starts with"; plain text keeps the broader contains search. */
+function matchesSearch(tld) {
+  return anchoredSearch.value ? tld.startsWith(normalizedSearch.value) : tld.includes(normalizedSearch.value)
+}
 
 async function loadCatalog() {
   loading.value = true

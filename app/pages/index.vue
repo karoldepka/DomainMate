@@ -244,10 +244,9 @@ function togglePrices(item) {
 
 function openProPrompt() {
   track('pro_prompt_shown')
-  // The result-limit prompt remains actionable even when the optional header
-  // upgrade button is hidden by a feature flag.
-  if (basicUnlocked.value) paymentDialog?.value?.open()
-  else feedbackDialog?.value?.open()
+  // The result-limit prompt always leads to the paid plans, even when the
+  // optional upgrade button in the header is hidden by a feature flag.
+  paymentDialog?.value?.open()
 }
 
 /** Update immediately in the UI and debounce persistence while the user types. */
@@ -623,7 +622,7 @@ function normalizeLetterRange(min, max) {
     </main>
 
     <footer><span>{{ t('footer.rdap') }}</span><span>{{ t('footer.vocabularyBy') }} <a href="https://www.datamuse.com/api/" target="_blank" rel="noreferrer">Datamuse</a> · DomainMate · <button type="button" class="footer-link" @click="privacyDialog?.open()">{{ t('footer.privacy') }}</button><template v-if="buildInfo?.sha"> · <a class="footer-link build-sha" :href="`https://github.com/karoldepka/DomainMate/commit/${buildInfo.sha}`" target="_blank" rel="noreferrer" :title="buildInfo.timestamp">{{ buildInfo.sha }}</a></template></span></footer>
-    <PaymentDialog ref="paymentDialog" />
+    <PaymentDialog ref="paymentDialog" @unlock-basic="feedbackDialog?.open()" />
     <LazyFeatureFlagsPanel v-model="showFlagsPanel" />
     <FeedbackDialog v-if="!basicUnlocked" ref="feedbackDialog" />
     <PrivacyPolicyDialog ref="privacyDialog" />

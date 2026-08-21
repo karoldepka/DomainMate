@@ -2,10 +2,10 @@
 import { computed, onMounted, ref } from 'vue'
 import { t } from '../i18n/index.js'
 import { track, trackUetEvent } from '../services/analytics.js'
-import { flags, paidTier } from '../featureFlags.js'
+import { basicUnlocked, flags, paidTier } from '../featureFlags.js'
 import { getClientId } from '../services/favorites.js'
 
-const emit = defineEmits(['unlocked'])
+const emit = defineEmits(['unlocked', 'unlock-basic'])
 const isOpen = ref(false)
 const tiers = ref([])
 const configured = ref(false)
@@ -17,11 +17,19 @@ const successTier = ref('')
 const fetching = ref(false)
 const verifying = ref(false)
 const tiersLoaded = ref(false)
+const currentTier = computed(() => paidTier.value || (basicUnlocked.value ? 'basic' : 'free'))
+const showBasicPlan = computed(() => !basicUnlocked.value && !paidTier.value)
 const eligibleTiers = computed(() => tiers.value.filter((tier) => {
   if (paidTier.value === 'unlimited') return false
   if (paidTier.value === 'pro') return tier.id === 'unlimited'
   return true
 }))
+
+/** Hand the free Basic option back to the existing feedback unlock dialog. */
+function openBasicUnlock() {
+  isOpen.value = false
+  emit('unlock-basic')
+}
 
 /** Open the modal and fetch current server-owned pricing. */
 async function open() {
@@ -135,9 +143,18 @@ defineExpose({ open })
       </div>
     </template>
     <template #body>
-      <p class="balance-line"><span>{{ t('payment.currentTierLabel') }}</span><strong>{{ t(`tierName.${paidTier || 'free'}`) }}</strong></p>
+      <p class="balance-line"><span>{{ t('payment.currentTierLabel') }}</span><strong>{{ t(`tierName.${currentTier}`) }}</strong></p>
       <p v-if="fetching" class="payment-loading" role="status"><UIcon name="i-lucide-loader-circle" class="spin size-4.5" />{{ t('payment.loading') }}</p>
       <div v-else class="pack-grid">
+        <article v-if="showBasicPlan" class="pack-option">
+          <div class="pack-heading"><span class="pack-label">{{ t('tierName.basic') }}</span></div>
+          <strong>{{ t('payment.domainsCount', { count: 200 }) }}</strong>
+          <p class="pack-price"><span>{{ t('tierName.free') }}</span><small>{{ t('feedback.eyebrow') }}</small></p>
+          <ul class="pack-benefits">
+            <li><UIcon name="i-lucide-check" class="size-4" />{{ t('payment.benefits.sync') }}</li>
+          </ul>
+          <UButton color="primary" block variant="soft" @click="openBasicUnlock">{{ t('topbar.unlockBasic') }}</UButton>
+        </article>
         <article v-for="tier in eligibleTiers" :key="tier.id" class="pack-option" :class="{ featured: tier.id === 'unlimited' }">
           <div class="pack-heading"><span class="pack-label">{{ t(`tierName.${tier.id}`) }}</span><UIcon v-if="tier.id === 'unlimited'" name="i-lucide-sparkles" class="size-4" /></div>
           <strong>{{ tier.domainLimit ? t('payment.domainsCount', { count: tier.domainLimit }) : t('payment.unlimitedDomains') }}</strong>
