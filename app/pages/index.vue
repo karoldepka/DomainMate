@@ -486,7 +486,7 @@ function normalizeLetterRange(min, max) {
         <form action="/" method="get" @submit.prevent="submit">
           <div class="brief-grid">
             <div class="field brief-field">
-              <label for="brief">{{ t('form.briefLabel') }}</label>
+              <label for="brief" class="visually-hidden">{{ t('form.briefLabel') }}</label>
               <div class="input-wrap featured-input">
                 <UIcon name="i-lucide-sparkles" class="size-5" />
                 <textarea id="brief" v-model="brief" name="brief" rows="3" required minlength="2" maxlength="240" :placeholder="briefPlaceholder" autocomplete="off" @change="store.expandBrief"></textarea>
