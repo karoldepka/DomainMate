@@ -4,6 +4,7 @@ import { storeToRefs } from 'pinia'
 import { allSuffixes, useDomainStore } from '../stores/domain.js'
 import { getClientId, loadAndSyncFavorites, saveComment, saveRating } from '../services/favorites.js'
 import { track } from '../services/analytics.js'
+import { createXlsxWorkbook } from '../services/spreadsheetExport.js'
 import { locale, locales, t } from '../i18n/index.js'
 import { basicUnlocked, domainLimit, flags, paidTier } from '../featureFlags.js'
 
@@ -30,6 +31,8 @@ const workspaceStorageKey = 'domainmate.workspace'
 const buildInfo = useRuntimeConfig().public.build
 let logoClickResetTimer
 const commentSaveTimers = new Map()
+const exportMessage = ref('')
+let exportMessageTimer
 /** Highest rated first, then shortest first among equally rated candidates. */
 const displayedResults = computed(() => {
   const items = availableOnly.value ? results.value.filter((item) => item.availability !== 'registered') : [...results.value]
@@ -133,8 +136,8 @@ function formatCount(value) {
   return new Intl.NumberFormat('en', { notation: value >= 10000 ? 'compact' : 'standard' }).format(value)
 }
 
-/** Download the currently filtered results as a CSV file, e.g. to share a shortlist with a co-founder. */
-function exportCsv() {
+/** Return the currently filtered shortlist in a format Excel and Sheets can both understand. */
+function exportRows() {
   const rows = [['Domain', 'Status', 'Rating', 'Comment', 'Google results']]
   for (const item of displayedResults.value) {
     rows.push([
@@ -145,21 +148,42 @@ function exportCsv() {
       item.search?.totalResults != null ? String(item.search.totalResults) : '',
     ])
   }
-  const csv = rows.map((row) => row.map(csvEscape).join(',')).join('\r\n')
-  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
-  const url = URL.createObjectURL(blob)
-  const link = document.createElement('a')
-  link.href = url
-  link.download = `domainmate-results-${new Date().toISOString().slice(0, 10)}.csv`
-  link.click()
-  URL.revokeObjectURL(url)
-  track('results_exported', { count: displayedResults.value.length })
+  return rows
 }
 
-/** @param {unknown} value */
-function csvEscape(value) {
-  const text = String(value ?? '')
-  return /[",\r\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text
+/** Download the currently filtered shortlist as an Excel workbook. */
+function exportExcel() {
+  downloadFile(createXlsxWorkbook(exportRows()), 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'xlsx')
+  track('results_exported', { count: displayedResults.value.length, format: 'xlsx' })
+}
+
+/** Open a new Google Sheet and copy a tab-separated version ready to paste into cell A1. */
+async function exportGoogleSheets() {
+  window.open('https://sheets.new', '_blank', 'noopener')
+  const sheetData = exportRows().map((row) => row.map((value) => String(value).replace(/[\t\r\n]/g, ' ')).join('\t')).join('\n')
+  try {
+    await navigator.clipboard.writeText(sheetData)
+    showExportMessage(t('filters.googleSheetsCopied'))
+  } catch {
+    showExportMessage(t('filters.googleSheetsCopyFailed'))
+  }
+  track('results_exported', { count: displayedResults.value.length, format: 'google_sheets' })
+}
+
+function downloadFile(blob, type, extension) {
+  const file = blob.type ? blob : new Blob([blob], { type })
+  const url = URL.createObjectURL(file)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = `domainmate-results-${new Date().toISOString().slice(0, 10)}.${extension}`
+  link.click()
+  URL.revokeObjectURL(url)
+}
+
+function showExportMessage(message) {
+  exportMessage.value = message
+  window.clearTimeout(exportMessageTimer)
+  exportMessageTimer = window.setTimeout(() => { exportMessage.value = '' }, 5000)
 }
 
 /** @param {{name: string, copied?: boolean}} item */
@@ -562,14 +586,20 @@ function normalizeLetterRange(min, max) {
         <div class="section-heading">
           <div>
             <h2 id="results-heading">{{ t('results.heading') }}</h2>
-            <p v-if="results.length">{{ progressText }}<template v-if="availableCount"> · <strong>{{ t('results.available', { count: availableCount }) }}</strong></template></p>
+            <p v-if="results.length" class="results-progress-text" aria-live="polite">
+              <UIcon v-if="running" name="i-lucide-loader-circle" class="spin size-3.75" aria-hidden="true" />
+              <span>{{ progressText }}<template v-if="availableCount"> · <strong>{{ t('results.available', { count: availableCount }) }}</strong></template></span>
+            </p>
+            <progress v-if="running" class="domain-check-progress" :value="checkedCount" :max="results.length" :aria-label="progressText">{{ progressText }}</progress>
             <button v-if="!flags.unlimitedPro && results.length" class="free-tier-note" type="button" @click="openProPrompt">{{ t(limitedMessageKey, { count: domainLimit }) }}</button>
             <p v-else-if="results.length" class="unlimited-tier-note">{{ t('results.unlimited') }}</p>
           </div>
           <div class="result-filters">
             <label class="available-filter"><input v-model="availableOnly" type="checkbox" />{{ t('filters.availableOnly') }}</label>
             <UButton v-if="results.length && !running && checkedCount < results.length" class="secondary-button" color="neutral" variant="outline" @click="store.checkAll">{{ t('filters.checkAll') }}</UButton>
-            <UButton v-if="results.length" class="secondary-button" color="neutral" variant="outline" icon="i-lucide-download" @click="exportCsv">{{ t('filters.export') }}</UButton>
+            <UButton v-if="results.length" class="secondary-button" color="neutral" variant="outline" icon="i-lucide-file-spreadsheet" @click="exportExcel">{{ t('filters.exportExcel') }}</UButton>
+            <UButton v-if="results.length" class="secondary-button" color="neutral" variant="outline" icon="i-lucide-table-2" @click="exportGoogleSheets">{{ t('filters.exportGoogleSheets') }}</UButton>
+            <p v-if="exportMessage" class="export-message" role="status">{{ exportMessage }}</p>
           </div>
         </div>
 

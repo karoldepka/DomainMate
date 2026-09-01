@@ -50,7 +50,7 @@ export default {
     limitedPro: 'Es mostren els primers {count} (segons el nivell Pro). Desbloqueja Unlimited per veure la llista completa i mostrar el teu suport.',
     unlimited: 'Tens el nivell Unlimited amb dominis il·limitats. Gaudeix-ne i gràcies pel teu suport!',
   },
-  filters: { availableOnly: 'Només disponibles', checkAll: 'Comprova-ho tot', export: 'Exporta CSV' },
+  filters: { availableOnly: 'Només disponibles', checkAll: 'Comprova-ho tot', exportExcel: 'Exporta a Excel', exportGoogleSheets: 'Fulls de càlcul de Google', googleSheetsCopied: 'Files copiades. Enganxa-les al full de càlcul nou.', googleSheetsCopyFailed: 'S’ha obert un full de càlcul de Google. Enganxa les files exportades a la cel·la A1.' },
   table: { candidate: 'Candidat', status: 'Estat del domini', google: 'Resultats de Google' },
   status: {
     notChecked: 'Sense comprovar',

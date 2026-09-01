@@ -50,7 +50,7 @@ export default {
     limitedPro: '显示前 {count} 个（根据专业版限制）。解锁无限版以查看完整列表并表达您的支持。',
     unlimited: '您正在使用无限版，可查看无限数量的域名。祝您使用愉快，感谢您的支持！',
   },
-  filters: { availableOnly: '仅显示可用', checkAll: '全部检查', export: '导出 CSV' },
+  filters: { availableOnly: '仅显示可用', checkAll: '全部检查', exportExcel: '导出 Excel', exportGoogleSheets: 'Google 表格', googleSheetsCopied: '行已复制。请粘贴到新的 Google 表格中。', googleSheetsCopyFailed: '已打开 Google 表格。请将导出的行粘贴到单元格 A1。' },
   table: { candidate: '候选名称', status: '域名状态', google: 'Google 结果' },
   status: {
     notChecked: '未检查',

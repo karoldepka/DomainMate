@@ -50,7 +50,7 @@ export default {
     limitedPro: 'Showing the first {count} (as per Pro tier). Unlock Unlimited to see the full list and show your appreciation.',
     unlimited: 'You are on the Unlimited tier with unlimited domains. Enjoy, and thank you for your support!',
   },
-  filters: { availableOnly: 'Available only', checkAll: 'Check all', export: 'Export CSV' },
+  filters: { availableOnly: 'Available only', checkAll: 'Check all', exportExcel: 'Export Excel', exportGoogleSheets: 'Google Sheets', googleSheetsCopied: 'Rows copied. Paste them into the new Google Sheet.', googleSheetsCopyFailed: 'Google Sheet opened. Paste the exported rows into cell A1.' },
   table: { candidate: 'Candidate', status: 'Domain status', google: 'Google results' },
   status: {
     notChecked: 'Not checked',

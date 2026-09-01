@@ -14,7 +14,7 @@ export default {
     part3Label: 'Część nazwy 3',
     swapParts: 'Odwrócona kolejność części nazwy',
     swapPartsAria: 'Odwróć kolejność części nazwy',
-    tldLabel: 'Rozszerzenia domeny (TLD)',
+    tldLabel: 'Szukaj Rozszerzeń domeny (TLD)',
     tldSearch: 'Szukaj rozszerzeń', tldAll: 'Wszystkie rozszerzenia IANA', tldSecondLevel: 'Popularne domeny drugiego poziomu', tldSelected: 'wybrano', tldSelectedList: 'Wybrane rozszerzenia', tldLoading: 'Ładowanie rozszerzeń…', tldNoMatch: 'Brak rozszerzeń pasujących do wyszukiwania.',
     minLetters: 'Minimalna liczba liter',
     maxLetters: 'Maksymalna liczba liter',
@@ -50,7 +50,7 @@ export default {
     limitedPro: 'Wyświetlane pierwsze {count} (zgodnie z planem Pro). Odblokuj Unlimited, aby zobaczyć pełną listę i okazać wsparcie.',
     unlimited: 'Korzystasz z planu Unlimited z nieograniczoną liczbą domen. Miłego korzystania i dziękujemy za wsparcie!',
   },
-  filters: { availableOnly: 'Tylko dostępne', checkAll: 'Sprawdź wszystkie', export: 'Eksportuj CSV' },
+  filters: { availableOnly: 'Tylko dostępne', checkAll: 'Sprawdź wszystkie', exportExcel: 'Eksportuj do Excela', exportGoogleSheets: 'Arkusze Google', googleSheetsCopied: 'Wiersze skopiowane. Wklej je do nowego Arkusza Google.', googleSheetsCopyFailed: 'Arkusz Google został otwarty. Wklej wyeksportowane wiersze do komórki A1.' },
   table: { candidate: 'Kandydat', status: 'Status domeny', google: 'Wyniki Google' },
   status: {
     notChecked: 'Niesprawdzone',

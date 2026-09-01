@@ -50,7 +50,7 @@ export default {
     limitedPro: 'Mostrando los primeros {count} (según el nivel Pro). Desbloquea Unlimited para ver la lista completa y mostrar tu apoyo.',
     unlimited: 'Estás en el nivel Unlimited con dominios ilimitados. ¡Disfrútalo y gracias por tu apoyo!',
   },
-  filters: { availableOnly: 'Solo disponibles', checkAll: 'Comprobar todo', export: 'Exportar CSV' },
+  filters: { availableOnly: 'Solo disponibles', checkAll: 'Comprobar todo', exportExcel: 'Exportar a Excel', exportGoogleSheets: 'Hojas de cálculo de Google', googleSheetsCopied: 'Filas copiadas. Pégalas en la nueva hoja de cálculo.', googleSheetsCopyFailed: 'Se abrió una hoja de cálculo de Google. Pega las filas exportadas en la celda A1.' },
   table: { candidate: 'Candidato', status: 'Estado del dominio', google: 'Resultados de Google' },
   status: {
     notChecked: 'Sin comprobar',

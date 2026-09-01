@@ -50,7 +50,7 @@ export default {
     limitedPro: 'Die ersten {count} werden angezeigt (gemäß Pro-Tarif). Schalte Unlimited frei, um die vollständige Liste zu sehen und deine Unterstützung zu zeigen.',
     unlimited: 'Du nutzt den Unlimited-Tarif mit unbegrenzt vielen Domains. Viel Freude damit und danke für deine Unterstützung!',
   },
-  filters: { availableOnly: 'Nur verfügbare', checkAll: 'Alle prüfen', export: 'CSV exportieren' },
+  filters: { availableOnly: 'Nur verfügbare', checkAll: 'Alle prüfen', exportExcel: 'Excel exportieren', exportGoogleSheets: 'Google Tabellen', googleSheetsCopied: 'Zeilen kopiert. Füge sie in die neue Google-Tabelle ein.', googleSheetsCopyFailed: 'Google Tabelle wurde geöffnet. Füge die exportierten Zeilen in Zelle A1 ein.' },
   table: { candidate: 'Kandidat', status: 'Domain-Status', google: 'Google-Ergebnisse' },
   status: {
     notChecked: 'Nicht geprüft',
